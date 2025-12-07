@@ -172,7 +172,7 @@ jobs:
                 # Sort by count desc
                 sorted_stats = sorted(stats.items(), key=lambda item: item[1], reverse=True)
                 parts = [f'{k}: {v}' for k, v in sorted_stats]
-                return f'> *By Category:* {', '.join(parts)}'
+                return '> *By Category:* ' + ', '.join(parts)
             except: return ''
 
         try:
