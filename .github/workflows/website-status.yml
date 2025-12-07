@@ -1,4 +1,4 @@
-name: Website Status
+name: 🛜 Website Status
 
 on:
   schedule:
@@ -15,7 +15,7 @@ jobs:
           echo "Checking website status..."
           STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" https://dilludx.github.io/tgpc/)
           
-          echo "### 🏥 Website Status" >> $GITHUB_STEP_SUMMARY
+          echo "### 🛜 Website Status" >> $GITHUB_STEP_SUMMARY
           echo "> **$(TZ='Asia/Kolkata' date '+%A, %d %B %Y')** • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
