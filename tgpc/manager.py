@@ -132,9 +132,11 @@ class Manager:
         
         modified_count = 0
         modified_details = []
+        modified_ids = []
         for rid in common_ids:
             if existing_map[rid] != current_map[rid]:
                 modified_count += 1
+                modified_ids.append(rid)
                 modified_details.append(f"{current_map[rid].registration_number} - {current_map[rid].name}")
 
         # Category Statistics
@@ -144,7 +146,7 @@ class Manager:
 
         new_cat_stats = get_cat_stats(new_ids, current_map)
         rem_cat_stats = get_cat_stats(removed_ids, existing_map)
-        mod_cat_stats = get_cat_stats(common_ids, current_map) # Use current map for mods
+        mod_cat_stats = get_cat_stats(modified_ids, current_map) # Use modified_ids, NOT common_ids
 
         self.file_manager.save(list(sorted_records))
         self.backup_manager.cleanup()
