@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>
+   Official Website of Pharmacy Council
+  </title>
+  <meta content="text/html; charset=utf-8; X-Content-Type-Options=nosniff" http-equiv="Content-Type"/>
+  <meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1" name="viewport"/>
+  <meta content="" name="description"/>
+  <!--<meta name="referrer" content="origin">-->
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+   <meta content="max-age=0, no-cache, no-store, must-revalidate, Secure, HttpOnly, SameSite=Strict" http-equiv="cache-control">
+    <meta content="Tue, 01 Jan 2022 1:00:00 GMT" http-equiv="expires">
+     <meta content="Tue, 31 Dec 2022 1:00:00 GMT" http-equiv="expires"/>
+     <meta content="no-cache" http-equiv="pragma"/>
+     <meta content="no-cache" http-equiv="cache-control"/>
+     <meta content="no-store" http-equiv="cache-control"/>
+     <meta content="Must-revalidate" http-equiv="cache-control"/>
+     <meta content="Proxy-revalidate" http-equiv="cache-control"/>
+     <meta content="deny" http-equiv="X-Frame-Options"/>
+     <meta content="SAMEORIGIN" http-equiv="X-Frame-Options"/>
+     <meta content="1; mode=block" http-equiv="X-XSS-Protection"/>
+     <meta content="default-src  http:; script-src 'self' 'unsafe-inline' 'unsafe-eval'  http:; style-src http:  'unsafe-inline'; img-src 'self' data: http:; connect-src http:  ws:;" http-equiv="Content-Security-Policy"/>
+     <meta content="none" http-equiv="X-Permitted-Cross-Domain-Policies"/>
+     <meta content="nosniff" http-equiv="X-Content-Type-Options"/>
+     <meta content="GET, POST" http-equiv="Access-Control-Allow-Methods"/>
+     <meta content="Origin" http-equiv="Access-Control-Allow-Origin"/>
+     <!--        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+                <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+                <meta http-equiv="Pragma" content="no-cache" />
+                <meta http-equiv="Expires" content="0" />-->
+     <link href="favicon.ico" rel="icon" type="image/x-icon"/>
+     <link href="/images/favicon.ico;jsessionid=68FA98166EAC20F91450D6B83C1355E7" rel="shortcut icon" type="image/x-icon"/>
+     <link href="/css/style.css;jsessionid=68FA98166EAC20F91450D6B83C1355E7" media="all" rel="stylesheet" type="text/css"/>
+     <link href="/css/stylist.css;jsessionid=68FA98166EAC20F91450D6B83C1355E7" media="all" rel="stylesheet" type="text/css"/>
+     <link href="/css/button.css;jsessionid=68FA98166EAC20F91450D6B83C1355E7" media="all" rel="stylesheet" type="text/css"/>
+     <link href="/css/B2UFroms.css;jsessionid=68FA98166EAC20F91450D6B83C1355E7" media="all" rel="stylesheet" type="text/css"/>
+     <link href="/css/jqueryslidemenu.css;jsessionid=68FA98166EAC20F91450D6B83C1355E7" media="all" rel="stylesheet" type="text/css"/>
+     <link href="/css/verticalcollapsemenu.css;jsessionid=68FA98166EAC20F91450D6B83C1355E7" media="all" rel="stylesheet" type="text/css"/>
+     <link href="/css/tablesorter.css;jsessionid=68FA98166EAC20F91450D6B83C1355E7" media="all" rel="stylesheet" type="text/css"/>
+     <link href="/css/latestnews.css;jsessionid=68FA98166EAC20F91450D6B83C1355E7" media="all" rel="stylesheet" type="text/css"/>
+     <link href="/css/noticeboard.css;jsessionid=68FA98166EAC20F91450D6B83C1355E7" media="all" rel="stylesheet" type="text/css"/>
+     <link href="/css/jquery-ui.css;jsessionid=68FA98166EAC20F91450D6B83C1355E7" rel="stylesheet" type="text/css"/>
+     <script src="/js/jquery-latest.js;jsessionid=68FA98166EAC20F91450D6B83C1355E7">
+     </script>
+     <script src="/js/jquery.min.js;jsessionid=68FA98166EAC20F91450D6B83C1355E7">
+     </script>
+     <script src="/js/jquery.js;jsessionid=68FA98166EAC20F91450D6B83C1355E7">
+     </script>
+     <script src="/js/jquery-validate.js;jsessionid=68FA98166EAC20F91450D6B83C1355E7">
+     </script>
+     <script src="/js/jquery-latest.min.js;jsessionid=68FA98166EAC20F91450D6B83C1355E7">
+     </script>
+     <script src="/js/imgehoverslider.js;jsessionid=68FA98166EAC20F91450D6B83C1355E7">
+     </script>
+     <script src="/js/tablesorter.js;jsessionid=68FA98166EAC20F91450D6B83C1355E7">
+     </script>
+     <script src="/js/jqueryslidemenu.js;jsessionid=68FA98166EAC20F91450D6B83C1355E7">
+     </script>
+     <script src="/js/menu_jquery.js;jsessionid=68FA98166EAC20F91450D6B83C1355E7">
+     </script>
+     <script src="/js/toward.js;jsessionid=68FA98166EAC20F91450D6B83C1355E7">
+     </script>
+     <style type="text/css">
+      body{background:url(../images/i-bg.jpg) repeat-x;}a,a:link,a:visited{ color: #222;}a:hover{ color: #FF0000;}
+     </style>
+     <script type="text/javascript">
+      $.noConflict();
+            $(document).ready(function ($) {
+                $("input,textarea").attr("autocomplete", "off");
+                $.validator.addMethod("alphanumeric", function (value, element) {
+                    return this.optional(element) || /^[a-z0-9]+$/i.test(value); //Alpha numeric only
+                    //return this.optional(element) || /^[a-z0-9\s]+$/i.test(value);//Alpha numeric with space only
+                }, "This field must contain only letters and numbers");
+                $.validator.addMethod("specialChar", function (value, element) {
+                    return this.optional(element) || /^[a-zA-Z0-9- ]*$/.test(value); //no special charectres
+                }, "Special Charecters not allowed");
+                $.validator.addMethod("someSpecialChar", function (value, element) {
+                    return this.optional(element) || /^[a-zA-Z0-9-:;,.#/\s\w]*$/i.test(value); //some special charectres
+                }, "Special Charecters not allowed");
+                $.validator.addMethod("pwdPolicy", function (value, element) {
+                    return this.optional(element) || /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]{8,}/g.test(value);
+                }, "Password must contain: Minimum 8 characters atleast 1 UpperCase Alphabet, 1 LowerCase Alphabet, 1 Number and 1 Special Character");
+
+                var validator = $("#myForm").validate();
+
+                $('#ticker li').hide().slice(0, 3).show();
+                $('input,textarea').bind('copy paste', function (e) {
+                    //e.preventDefault();
+                });
+                $('textarea').keypress(function (e) {
+                    if (e.which === 13){
+                      //  return false;
+                    }
+                });
+            });
+     </script>
+     <script type="text/javascript">
+      function ticker() {
+                $('#ticker li:first').slideUp(function () {
+                    $(this).appendTo($('#ticker')).slideDown();
+                });
+                $('#ticker li').hide().slice(0, 3).show();
+            }
+            setInterval(ticker, 3000);
+     </script>
+     <script>
+      $(function () {
+                $("#datepicker").datepicker({
+                    dateFormat: 'dd-mm-yy',
+                    showOn: "both",
+                    buttonText: "Date Picker",
+                    buttonImage: "../images/calendar.gif",
+                    buttonImageOnly: true,
+                    yearRange: "-100:+0",
+                    changeMonth: true,
+                    changeYear: true});
+                $("#datepicker1").datepicker({
+                    dateFormat: 'dd-mm-yy',
+                    showOn: "both",
+                    buttonText: "Date Picker",
+                    buttonImage: "../images/calendar.gif",
+                    buttonImageOnly: true,
+                    yearRange: "-100:+0",
+                    changeMonth: true,
+                    changeYear: true});
+                $("#datepicker2").datepicker({
+                    dateFormat: 'dd-mm-yy',
+                    showOn: "both",
+                    buttonText: "Date Picker",
+                    buttonImage: "../images/calendar.gif",
+                    buttonImageOnly: true,
+                    yearRange: "-100:+0",
+                    changeMonth: true,
+                    changeYear: true});
+                $("#txtFromDate").datepicker({
+                    dateFormat: 'dd-mm-yy',
+                    showOn: "both",
+                    maxDate: '0',
+                    buttonText: "Date Picker",
+                    buttonImage: "../images/calendar.gif",
+                    buttonImageOnly: true,
+                    yearRange: "-100:+0",
+                    changeMonth: true,
+                    changeYear: true,
+                    onSelect: function (selected) {
+                        $("#txtToDate").datepicker("option", "minDate", selected)
+                    }
+                });
+                $("#txtToDate").datepicker({
+                    dateFormat: 'dd-mm-yy',
+                    showOn: "both",
+                    maxDate: '0',
+                    buttonText: "Date Picker",
+                    buttonImage: "../images/calendar.gif",
+                    buttonImageOnly: true,
+                    yearRange: "-100:+0",
+                    changeMonth: true,
+                    changeYear: true,
+                    onSelect: function (selected) {
+                        $("#txtFromDate").datepicker("option", "maxDate", selected);
+                    }
+                });
+                $("#rptFromDate").datepicker({
+                    dateFormat: 'dd-mm-yy',
+                    showOn: "both",
+                    maxDate: '30',
+                    buttonText: "Date Picker",
+                    buttonImage: "../images/calendar.gif",
+                    buttonImageOnly: true,
+                    yearRange: "-100:+0",
+                    changeMonth: true,
+                    changeYear: true,
+                    onSelect: function (selected) {
+                        $("#rptToDate").datepicker("option", "minDate", selected);
+                    }
+                });
+                $("#rptToDate").datepicker({
+                    dateFormat: 'dd-mm-yy',
+                    showOn: "both",
+                    buttonText: "Date Picker",
+                    buttonImage: "../images/calendar.gif",
+                    buttonImageOnly: true,
+                    yearRange: "-100:+0",
+                    changeMonth: true,
+                    changeYear: true,
+                    onSelect: function (selected) {
+                        $("#rptFromDate").datepicker("option", "maxDate", selected);
+                    }
+                });
+                $("#sltFromDate").datepicker({
+                    dateFormat: 'dd-mm-yy',
+                    showOn: "both",
+                    minDate: '0',
+                    buttonText: "Date Picker",
+                    buttonImage: "../images/calendar.gif",
+                    buttonImageOnly: true,
+                    yearRange: "-100:+0",
+                    changeMonth: true,
+                    changeYear: true,
+                    onSelect: function (selected) {
+                        var test = $(this).datepicker('getDate');
+                        var testm = new Date(test.getTime());
+                        testm.setDate(testm.getDate() + 1);
+                        $("#sltToDate").datepicker("option", "minDate", testm);
+                    }
+                });
+                $("#sltToDate").datepicker({
+                    dateFormat: 'dd-mm-yy',
+                    showOn: "both",
+                    minDate: '+1',
+                    buttonText: "Date Picker",
+                    buttonImage: "../images/calendar.gif",
+                    buttonImageOnly: true,
+                    yearRange: "-100:+0",
+                    changeMonth: true,
+                    changeYear: true,
+                    onSelect: function (selected) {
+                        $("#sltFromDate").datepicker("option", "maxDate", selected);
+                    }
+                });
+            });
+     </script>
+     <script type="text/javascript">
+      window.history.forward();
+     </script>
+     <style>
+      .reportTr{
+                background-color:aliceblue;
+            }
+            .dataTables_filter input[type="text"]{
+                width:15%;
+            }
+            .dataTables_filter{
+                margin-top: -44px;
+                margin-left: 6px;
+            }
+            #report td{
+                text-align: center;
+            }
+     </style>
+     <style type="text/css">
+      @media print
+            {
+                #nav-dalam { display: none; }
+                .back-to-top {display: none; }
+                #footer-bottom { display: none; }
+            }
+     </style>
+     <script src="/js/jquery-3.6.0.js;jsessionid=68FA98166EAC20F91450D6B83C1355E7">
+     </script>
+     <script src="/js/jquery-ui.js;jsessionid=68FA98166EAC20F91450D6B83C1355E7">
+     </script>
+     <script src="/js/jquery-validate.js;jsessionid=68FA98166EAC20F91450D6B83C1355E7">
+     </script>
+    </meta>
+   </meta>
+  </meta>
+ </head>
+ <body oncontextmenu="return false">
+  <div id="topbg" style="background-color:#FFFFFF">
+   <div id="top">
+    <img alt="" src="/images/Banner5.jpg;jsessionid=68FA98166EAC20F91450D6B83C1355E7"/>
+   </div>
+  </div>
+  <!--Wrapper id class hfeed start-->
+  <div class="hfeed" id="wrapper">
+   <div id="nav-dalam">
+    <div class="jqm-main">
+     <div class="jqueryslidemenu" id="myslidemenu">
+      <ul class="jqueryslidemenu" id="nav">
+       <li class="menu-item current-menu-item" id="menu-item">
+        <a href="index" title="Telangana Pharmacy Council">
+         Home
+        </a>
+       </li>
+       <li class="menu-item" id="menu-item">
+        <a href="aboutus">
+         About US
+        </a>
+       </li>
+       <li class="menu-item" id="menu-item">
+        <a href="#">
+         Act &amp; Rules
+        </a>
+        <ul class="sub-menu">
+         <li class="menu-item" id="menu-item">
+          <a href="#">
+           Act
+          </a>
+          <ul class="sub-menu">
+           <li class="menu-item" id="menu-item">
+            <a href="#">
+             The Pharmacy Act 1948
+            </a>
+            <ul class="sub-menu">
+             <li class="menu-item" id="menu-item">
+              <a href="actchapter1">
+               Chapter 1
+              </a>
+             </li>
+             <li class="menu-item" id="menu-item">
+              <a href="actchapter2">
+               Chapter 2
+              </a>
+             </li>
+             <li class="menu-item" id="menu-item">
+              <a href="actchapter3">
+               Chapter 3
+              </a>
+             </li>
+             <li class="menu-item" id="menu-item">
+              <a href="actchapter4">
+               Chapter 4
+              </a>
+             </li>
+             <li class="menu-item" id="menu-item">
+              <a href="actchapter5">
+               Chapter 5
+              </a>
+             </li>
+             <li class="menu-item" id="menu-item">
+              <a href="/pdf/250715_Amendment.pdf;jsessionid=68FA98166EAC20F91450D6B83C1355E7" target="_blank">
+               Amendment
+              </a>
+             </li>
+            </ul>
+           </li>
+          </ul>
+         </li>
+         <li class="menu-item" id="menu-item">
+          <a href="#">
+           Rules
+          </a>
+          <ul class="sub-menu">
+           <li class="menu-item" id="menu-item">
+            <a href="/pdf/Telangana Pharmacy Council Rules - 1955.pdf;jsessionid=68FA98166EAC20F91450D6B83C1355E7" target="_blank">
+             Telangana Pharmacy Council Rules, 1955
+            </a>
+           </li>
+          </ul>
+         </li>
+         <li class="menu-item" id="menu-item">
+          <a href="#">
+           ER
+          </a>
+          <ul class="sub-menu">
+           <li class="menu-item" id="menu-item">
+            <a href="UnderCon">
+             Education Regulations 1991 for D.Pharmacy
+            </a>
+           </li>
+           <li class="menu-item" id="menu-item">
+            <a href="UnderCon">
+             Education Regulations 2008 for Pharm D
+            </a>
+           </li>
+          </ul>
+         </li>
+         <!-- <li id="menu-item" class="menu-item"><a class='ajax' href="circulars" title="Circulars">Circulars</a></li> -->
+         <li class="menu-item" id="menu-item">
+          <a class="ajax" href="regulations" title="Regulations">
+           Regulations
+          </a>
+         </li>
+        </ul>
+       </li>
+       <li class="menu-item" id="menu-item">
+        <a href="council">
+         Council
+        </a>
+       </li>
+       <li class="menu-item current-menu-item" id="menu-item">
+        <a href="pharmacy_services">
+         Online Services
+        </a>
+        <!--                    <li id="menu-item" class="menu-item current-menu-item"><a href="#">Online Services</a>-->
+       </li>
+       <li class="menu-item" id="menu-item">
+        <a href="gallery">
+         Gallery
+        </a>
+       </li>
+       <li class="menu-item" id="menu-item">
+        <a href="noticeboard">
+         Dispatch List
+        </a>
+       </li>
+       <li class="menu-item" id="menu-item">
+        <a href="#">
+         Registered Pharmacist
+        </a>
+        <ul class="sub-menu">
+         <li class="menu-item" id="menu-item">
+          <a href="search_pharmacist">
+           Search By RegNo&amp;Name&amp;DOB
+          </a>
+         </li>
+         <li class="menu-item" id="menu-item">
+          <a href="../pharmacy/srchpharmacisttotal">
+           Total Pharmacist
+          </a>
+         </li>
+         <!--                            <li id="menu-item" class="menu-item" ><a href="../pharmacy/dashboard">dash</a></li>-->
+        </ul>
+       </li>
+       <li class="menu-item current-menu-item" id="menu-item">
+        <a href="#">
+         Login
+        </a>
+        <ul class="sub-menu">
+         <li class="menu-item" id="menu-item">
+          <a href="../pharmacy/userlogin">
+           User Login
+          </a>
+         </li>
+         <li class="menu-item current-menu-item" id="menu-item">
+          <a href="../aconsole/adminconsole">
+           Admin Login
+          </a>
+         </li>
+        </ul>
+       </li>
+       <li class="menu-item" id="menu-item">
+        <a href="fees">
+         <span>
+          Fees
+         </span>
+        </a>
+       </li>
+       <!--   <li id="menu-item" class="menu-item" ><a href="contactus">ContactUS</a></li>   -->
+       <!--                    <li id="menu-item" class="menu-item" ><a href="../pharmacy/userlogin">User Login</a></li>-->
+       <!--                   <li id="menu-item" class="menu-item current-menu-item"><a href="../site/searchPharmacist">Update Data</a></li>-->
+       <!--                   <li id="menu-item" class="menu-item" ><a href="online">Go Online</a></li>
+                    <li id="menu-item" class="menu-item" ><a href="noticeboard">Notice & Dispatch List</a></li>
+                    <li id="menu-item" class="menu-item" ><a href="../pharmacy/dispatchlistreprt">-->
+      </ul>
+     </div>
+    </div>
+   </div>
+   <div style="clear: both;">
+   </div>
+   <div id="conheading">
+    <div style="display:block;width:540px;float:left;">
+     <marquee behavior="alternate" scrollamount="2">
+      <span>
+       TELANGANA PHARMACY COUNCIL
+      </span>
+     </marquee>
+    </div>
+    <div style="width:400px;float:right;">
+     <span style="padding:0px;">
+      <script type="text/javascript">
+       tday = new Array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
+                    tmonth = new Array("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December");
+                    function GetClock() {
+                        d = new Date();
+                        nday = d.getDay();
+                        nmonth = d.getMonth();
+                        ndate = d.getDate();
+                        nyear = d.getYear();
+                        nhour = d.getHours();
+                        nmin = d.getMinutes();
+                        nsec = d.getSeconds();
+                        if (nyear < 1000)
+                            nyear = nyear + 1900;
+
+                        if (nhour == 0) {
+                            ap = " AM";
+                            nhour = 12;
+                        } else if (nhour <= 11) {
+                            ap = " AM";
+                        } else if (nhour == 12) {
+                            ap = " PM";
+                        } else if (nhour >= 13) {
+                            ap = " PM";
+                            nhour -= 12;
+                        }
+                        if (nmin <= 9) {
+                            nmin = "0" + nmin;
+                        }
+                        if (nsec <= 9) {
+                            nsec = "0" + nsec;
+                        }
+                        document.getElementById('clockbox').innerHTML = "" + tday[nday] + ", " + tmonth[nmonth] + " " + ndate + ", " + nyear + " " + nhour + ":" + nmin + ":" + nsec + ap + "";
+                        setTimeout("GetClock()", 1000);
+                    }
+                    window.onload = GetClock;
+      </script>
+      <p style="text-align:right;padding:0px;">
+       <span id="clockbox" style="font-size:12px;padding:0px;">
+       </span>
+      </p>
+     </span>
+    </div>
+   </div>
+   <div style="clear: both;">
+   </div>
+   <style>
+    #content2 tr td {
+            padding: 4px 10px;
+            text-align: center;
+            font-size: 11px;
+        }
+        #content2 tr th{
+            color:#01407E;
+            font-size: 11px;
+        }
+   </style>
+   <div style="clear: both;">
+   </div>
+   <div id="main">
+    <div align="center" id="content2">
+     <div align="left" id="features_heading">
+      <div class="B2U-sheet">
+       <div class="B2U-postheader">
+        Pharmacist Info
+       </div>
+       <!--If exist in application-->
+       <!--Registered applicant basic info from Registration table-->
+       <table class="B2U-article tablesorter">
+        <thead>
+         <tr class="reportTr">
+          <th>
+           Registration No
+          </th>
+          <th>
+           Name
+          </th>
+          <th>
+           Father Name
+          </th>
+          <th>
+           Gender
+          </th>
+          <th>
+           Validity
+          </th>
+          <th>
+           Category
+          </th>
+          <th>
+           Status
+          </th>
+          <th>
+           Photo
+          </th>
+         </tr>
+        </thead>
+        <tbody>
+         <tr>
+          <td>
+           TG061012
+          </td>
+          <td>
+           VRANDA
+          </td>
+          <td>
+           VINAYAK
+          </td>
+          <td>
+           Female
+          </td>
+          <td>
+           31-Dec-2028
+          </td>
+          <td>
+           DPharm
+          </td>
+          <td>
+           Active
+          </td>
+          <td>
+           <img align="center" alt="No Image" height="80" src="data:image/jpg;base64,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" width="70"/>
+          </td>
+         </tr>
+        </tbody>
+       </table>
+       <div class="B2U-postheader">
+        <span style="font-size: 14px">
+         Academic Information..
+        </span>
+       </div>
+       <table class="B2U-article">
+        <tr class="reportTr">
+         <th scope="col">
+          Category
+         </th>
+         <th scope="col">
+          Board/University
+         </th>
+         <th scope="col">
+          College Name
+         </th>
+         <th scope="col">
+          College Address
+         </th>
+         <th scope="col">
+          From
+         </th>
+         <th scope="col">
+          To
+         </th>
+         <th scope="col">
+          HT No
+         </th>
+        </tr>
+        <tr>
+         <th scope="row" style="text-align: left">
+          DPharm
+         </th>
+         <td>
+          Others
+         </td>
+         <td>
+         </td>
+         <td>
+         </td>
+         <td>
+          Aug-2017
+         </td>
+         <td>
+          Jun-2019
+         </td>
+         <td>
+          X827058
+         </td>
+        </tr>
+       </table>
+       <div style="clear: both;">
+       </div>
+       <style>
+        #addresstab tr th {
+        font-size: 11px;
+        padding: 1px 10px;
+    }
+    #addresstab tr td {
+        font-size: 11px;
+        padding: 1px 10px;
+    }
+       </style>
+       <div class="B2U-postheader">
+        <span style="font-size: 14px">
+         Working / Studying Information..
+        </span>
+       </div>
+       <table class="B2U-article" id="addresstab">
+        <tr>
+         <th class="tdstyle">
+          Address
+         </th>
+         <th class="tdstyle">
+          State
+         </th>
+         <th class="tdstyle">
+          District
+         </th>
+         <th class="tdstyle">
+          Pin code
+         </th>
+        </tr>
+        <tr>
+         <td>
+          as per letter submitted she not working in medplus wrongly entered /MEDPLUS HYDERABAD ROAD NARAYANKHED
+         </td>
+         <td>
+          TELANGANA
+         </td>
+         <td>
+          SANGAREDDY
+         </td>
+         <td>
+         </td>
+        </tr>
+       </table>
+       <div style="clear: both;">
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+   <!--Wrapper id class hfeed end-->
+  </div>
+  <div style="clear: both;">
+  </div>
+  <a class="back-to-top" href="#" title="Click to go top">
+   <img src="../images/gototop.png"/>
+  </a>
+  <script>
+   jQuery(document).ready(function () {
+        var offset = 220;
+        var duration = 500;
+        jQuery(window).scroll(function () {
+            if (jQuery(this).scrollTop() > offset) {
+                jQuery('.back-to-top').fadeIn(duration);
+            } else {
+                jQuery('.back-to-top').fadeOut(duration);
+            }
+        });
+
+        jQuery('.back-to-top').click(function (event) {
+            event.preventDefault();
+            jQuery('html, body').animate({scrollTop: 0}, duration);
+            return false;
+        })
+    });
+  </script>
+  <div id="footer-bottom">
+   <div class="footer-info">
+    <div class="jqm-main2">
+     <div class="jqueryslidemenu2" id="yslidemenu">
+      <ul class="jqueryslidemenu2" id="navs">
+       <li class="menu-item">
+        <a href="home">
+         <span>
+          Home
+         </span>
+        </a>
+       </li>
+       <!-- 
+                                 <li class="menu-item"><a href="editapplicantdetails"><span>edit</span></a></li>
+                    <li class="menu-item"><a href="show_doc"><span>Print</span></a></li>
+                                        <li class="menu-item"><a href="printExp"><span>Print</span></a></li>-->
+       <!--                    <li class="menu-item"><a href="univinvoice_searchforreferenceid"><span>invoice ref</span></a></li>
+                    <li class="menu-item"><a href="univinvoice_searchforunivname"><span>invoice ref</span></a></li>-->
+      </ul>
+     </div>
+     <div style="text-align:right;padding-top:3px;padding-left:20px;">
+      <span style="text-align:right;">
+       Designed &amp; Hosted by
+       <a href="http://www.nic.in/" target="_blank">
+        <span style="font-weight:bold;">
+         National Informatics Centre
+        </span>
+       </a>
+       ,
+       <!--Telangana State Centre,-->
+       Hyderabad.
+      </span>
+     </div>
+    </div>
+   </div>
+  </div>
+  <style id="antiClickjack">
+   body{display:none !important;}
+  </style>
+  <script type="text/javascript">
+   if (self === top) {
+        var antiClickjack = document.getElementById("antiClickjack");
+        antiClickjack.parentNode.removeChild(antiClickjack);
+    } else {
+        top.location = self.location;
+    }
+  </script>
+ </body>
+</html>
