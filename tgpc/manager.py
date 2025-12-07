@@ -7,6 +7,8 @@ import json
 import shutil
 import hashlib
 import os
+import base64
+import time
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Tuple
@@ -181,4 +183,82 @@ class Manager:
             
         except Exception as e:
             logger.error(f"Sync failed: {e}")
+
+    def run_enrichment(self, batch_size: int = 50):
+        """Run enrichment pipeline."""
+        logger.info(f"Starting enrichment batch ({batch_size})...")
+        
+        # Load Data
+        rx_records = self.file_manager.load("rx.json")
+        details_path = Path(self.config.data_directory) / "rxdetails.json"
+        
+        existing_details = {}
+        if details_path.exists():
+            with open(details_path, 'r', encoding='utf-8') as f:
+                existing_details = json.load(f)
+                
+        # Identify Pending
+        all_ids = {r.registration_number for r in rx_records}
+        done_ids = set(existing_details.keys())
+        pending_ids = list(all_ids - done_ids)
+        pending_ids.sort() # Deterministic order
+        
+        if not pending_ids:
+            logger.info("No pending records to enrich.")
+            return
+
+        batch_ids = pending_ids[:batch_size]
+        logger.info(f"Processing {len(batch_ids)} records...")
+        
+        # Setup Photos Directory
+        photos_dir = Path(self.config.data_directory) / "photos"
+        photos_dir.mkdir(parents=True, exist_ok=True)
+        
+        processed_count = 0
+        
+        for reg_no in batch_ids:
+            try:
+                # Scrape
+                details = self.scraper.extract_detailed_info(reg_no)
+                if not details: 
+                    continue
+                
+                # CRITICAL SAFETY CHECK
+                # Ensure the data we got belongs to the ID we asked for
+                if details.registration_number != reg_no:
+                    logger.critical(f"SECURITY MISMATCH! Requested {reg_no} but got data for {details.registration_number}")
+                    raise RuntimeError("Data Integrity Violation: Stopping immediately to prevent corruption.")
+
+                logger.info(f"✅ MATCH CONFIRMED: {reg_no}")
+
+                # Save Photo Locally
+                if details.photo_base64:
+                    try:
+                        file_data = base64.b64decode(details.photo_base64)
+                        file_path = photos_dir / f"{reg_no}.jpg"
+                        
+                        with open(file_path, "wb") as f:
+                            f.write(file_data)
+                            
+                        # Store relative path
+                        data['photo_path'] = f"photos/{reg_no}.jpg"
+                        
+                    except Exception as e:
+                        logger.error(f"Photo save failed for {reg_no}: {e}")
+                
+                # Save to memory
+                existing_details[reg_no] = data
+                processed_count += 1
+                
+                # Rate limit
+                time.sleep(1) 
+                
+            except Exception as e:
+                logger.error(f"Enrichment failed for {reg_no}: {e}")
+                
+        # Save to Disk
+        with open(details_path, 'w', encoding='utf-8') as f:
+            json.dump(existing_details, f, indent=2, ensure_ascii=False)
+            
+        logger.info(f"Enrichment complete. Processed {processed_count}/{len(batch_ids)}")
 
