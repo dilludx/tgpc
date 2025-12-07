@@ -14,9 +14,16 @@ jobs:
           echo "Checking website status..."
           STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" https://dilludx.github.io/tgpc/)
           
+          echo "### 🏥 Health Check" >> $GITHUB_STEP_SUMMARY
+          echo "> **$(date '+%A, %d %B %Y')** • $(date '+%H:%M %Z')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
           if [ "$STATUS" -eq 200 ]; then
             echo "✅ Website is UP (Status: $STATUS)"
+            echo "- **Status**: ✅ Online ($STATUS)" >> $GITHUB_STEP_SUMMARY
+            echo "- **URL**: https://dilludx.github.io/tgpc/" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Website is DOWN (Status: $STATUS)"
+            echo "- **Status**: ❌ Offline ($STATUS)" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
