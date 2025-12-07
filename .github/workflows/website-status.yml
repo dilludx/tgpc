@@ -16,7 +16,7 @@ jobs:
           STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" https://dilludx.github.io/tgpc/)
           
           echo "### 🏥 Website Status" >> $GITHUB_STEP_SUMMARY
-          echo "> **$(date '+%A, %d %B %Y')** • $(date '+%H:%M %Z')" >> $GITHUB_STEP_SUMMARY
+          echo "> **$(TZ='Asia/Kolkata' date '+%A, %d %B %Y')** • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "$STATUS" -eq 200 ]; then
