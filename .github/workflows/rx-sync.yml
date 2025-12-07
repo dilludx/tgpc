@@ -125,7 +125,7 @@ jobs:
         fi
     
     - name: Sync to Supabase
-      if: steps.check_update.outputs.already_updated == 'false' && steps.changes.outputs.changes == 'true'
+      if: (steps.check_update.outputs.already_updated == 'false' && steps.changes.outputs.changes == 'true') || github.event.inputs.force_sync == 'true'
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
