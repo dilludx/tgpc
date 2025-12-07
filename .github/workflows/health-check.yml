@@ -1,4 +1,4 @@
-name: Health Check
+name: Web Health Check
 
 on:
   schedule:
@@ -15,7 +15,7 @@ jobs:
           echo "Checking website status..."
           STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" https://dilludx.github.io/tgpc/)
           
-          echo "### 🏥 Health Check" >> $GITHUB_STEP_SUMMARY
+          echo "### 🏥 Web Health Check" >> $GITHUB_STEP_SUMMARY
           echo "> **$(date '+%A, %d %B %Y')** • $(date '+%H:%M %Z')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
