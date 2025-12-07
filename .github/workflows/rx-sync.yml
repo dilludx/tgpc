@@ -152,6 +152,10 @@ jobs:
         REM_DETAILS='${{ steps.update.outputs.removed_details }}'
         MOD_DETAILS='${{ steps.update.outputs.modified_details }}'
         
+        NEW_CATS='${{ steps.update.outputs.new_cat_stats }}'
+        REM_CATS='${{ steps.update.outputs.rem_cat_stats }}'
+        MOD_CATS='${{ steps.update.outputs.mod_cat_stats }}'
+        
         echo "### ♻️ Rx Sync" >> $GITHUB_STEP_SUMMARY
         echo "> **$(TZ='Asia/Kolkata' date '+%A, %d %B %Y')** • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
@@ -161,6 +165,16 @@ jobs:
         import json
         import os
         
+        def format_cats(json_str):
+            try:
+                stats = json.loads(json_str) if json_str else {}
+                if not stats: return ''
+                # Sort by count desc
+                sorted_stats = sorted(stats.items(), key=lambda item: item[1], reverse=True)
+                parts = [f'{k}: {v}' for k, v in sorted_stats]
+                return f'> *By Category:* {', '.join(parts)}'
+            except: return ''
+
         try:
             # Handle potential empty strings by defaulting to empty list JSON
             new_json = '$NEW_DETAILS' if '$NEW_DETAILS' else '[]'
@@ -171,8 +185,13 @@ jobs:
             rem_recs = json.loads(rem_json) or []
             mod_recs = json.loads(mod_json) or []
             
+            new_cat_str = format_cats('$NEW_CATS')
+            rem_cat_str = format_cats('$REM_CATS')
+            mod_cat_str = format_cats('$MOD_CATS')
+            
             # New Additions
             print(f'#### 🆕 New Additions (+{len(new_recs)})')
+            if new_cat_str: print(new_cat_str)
             if new_recs:
                 for r in new_recs:
                     print(f'- {r}')
@@ -182,6 +201,7 @@ jobs:
             
             # Modifications
             print(f'#### ✏️ Modifications (+{len(mod_recs)})')
+            if mod_cat_str: print(mod_cat_str)
             if mod_recs:
                 for r in mod_recs:
                     print(f'- {r}')
@@ -189,6 +209,7 @@ jobs:
                 
             # Removals
             print(f'#### 🗑️ Removals (+{len(rem_recs)})')
+            if rem_cat_str: print(rem_cat_str)
             if rem_recs:
                 for r in rem_recs:
                     print(f'- {r}')

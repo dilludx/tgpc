@@ -12,6 +12,7 @@ import time
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Tuple
+from collections import Counter
 from dataclasses import asdict
 
 from supabase import create_client
@@ -136,6 +137,15 @@ class Manager:
                 modified_count += 1
                 modified_details.append(f"{current_map[rid].registration_number} - {current_map[rid].name}")
 
+        # Category Statistics
+        def get_cat_stats(ids, mapping):
+            counts = Counter(mapping[i].category for i in ids)
+            return dict(counts)
+
+        new_cat_stats = get_cat_stats(new_ids, current_map)
+        rem_cat_stats = get_cat_stats(removed_ids, existing_map)
+        mod_cat_stats = get_cat_stats(common_ids, current_map) # Use current map for mods
+
         self.file_manager.save(list(sorted_records))
         self.backup_manager.cleanup()
         
@@ -156,6 +166,11 @@ class Manager:
                 f.write(f"new_details={json.dumps(new_details[:50])}\n")
                 f.write(f"removed_details={json.dumps(removed_details[:50])}\n")
                 f.write(f"modified_details={json.dumps(modified_details[:50])}\n")
+                
+                # Output Category Stats
+                f.write(f"new_cat_stats={json.dumps(new_cat_stats)}\n")
+                f.write(f"rem_cat_stats={json.dumps(rem_cat_stats)}\n")
+                f.write(f"mod_cat_stats={json.dumps(mod_cat_stats)}\n")
 
     def sync_to_supabase(self):
         """Sync data to Supabase."""
