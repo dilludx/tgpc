@@ -31,7 +31,7 @@ SAMPLE_HTML = """
 """
 
 def run_sanity_check():
-    print("🏥 Running Sanity Check...")
+    print("♻️ Running Sanity Check...")
     
     # Mock the network request
     with patch('requests.Session.request') as mock_request:
