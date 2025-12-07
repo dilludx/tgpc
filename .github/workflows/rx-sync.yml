@@ -59,7 +59,7 @@ jobs:
       if: steps.check_update.outputs.already_updated == 'false'
       id: update
       run: |
-        echo "🔄 Starting daily TGPC data update during business hours..."
+        echo "♻️ Starting daily TGPC data update during business hours..."
         
         # Run the update via CLI
         python -m tgpc update
@@ -124,7 +124,7 @@ jobs:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
       run: |
-        echo "☁️ Syncing data to Supabase cloud database..."
+        echo "♻️ Syncing data to Supabase cloud database..."
         python -m tgpc sync
     
     - name: Commit and push changes
