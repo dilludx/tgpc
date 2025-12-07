@@ -7,6 +7,7 @@ on:
 
 jobs:
   check-website:
+    name: Website Status
     runs-on: ubuntu-latest
     steps:
       - name: Check Website Availability
