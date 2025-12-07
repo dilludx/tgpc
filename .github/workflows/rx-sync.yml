@@ -152,7 +152,7 @@ jobs:
         REM_DETAILS='${{ steps.update.outputs.removed_details }}'
         MOD_DETAILS='${{ steps.update.outputs.modified_details }}'
         
-        echo "### 🏥 Rx Sync" >> $GITHUB_STEP_SUMMARY
+        echo "### ♻️ Rx Sync" >> $GITHUB_STEP_SUMMARY
         echo "> **$(TZ='Asia/Kolkata' date '+%A, %d %B %Y')** • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
