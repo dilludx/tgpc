@@ -1,4 +1,4 @@
-name: Rx Auto Sync
+name: Rx Sync
 
 on:
   schedule:
@@ -152,8 +152,8 @@ jobs:
         REM_DETAILS='${{ steps.update.outputs.removed_details }}'
         MOD_DETAILS='${{ steps.update.outputs.modified_details }}'
         
-        echo "### ♻️ Rx Sync" >> $GITHUB_STEP_SUMMARY
-        echo "> **$(date '+%A, %d %B %Y')** • $(date '+%H:%M %Z')" >> $GITHUB_STEP_SUMMARY
+        echo "### 🏥 Rx Sync" >> $GITHUB_STEP_SUMMARY
+        echo "> **$(TZ='Asia/Kolkata' date '+%A, %d %B %Y')** • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Use python to parse JSON and output lists
