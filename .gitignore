@@ -29,6 +29,7 @@ data/photos/
 *.bak
 *.tmp
 *.log
+debug_*.html
 
 # Database files (we use Supabase cloud)
 *.db
