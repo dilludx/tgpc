@@ -151,7 +151,7 @@ async function loadAnalytics() {
 
         // Get all unique categories using a more efficient query
         // We'll query each known category plus check for others
-        const knownCategories = ['BPharm', 'DPharm', 'MPharm', 'PharmD'];
+        const knownCategories = ['BPharm', 'DPharm', 'MPharm', 'PharmD', 'QC', 'QP'];
 
         // First, get counts for known categories
         const knownPromises = knownCategories.map(cat =>
