@@ -5,7 +5,9 @@ Handles data extraction, rate limiting, and parsing.
 
 import time
 import random
-from typing import Optional
+import re
+from datetime import datetime
+from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
 import requests
@@ -26,9 +28,16 @@ class PharmacistRecord:
     father_name: str
     category: str
     serial_number: Optional[int] = None
+    
+    # Detailed fields (Not included in basic rx.json)
+    validity_date: Optional[str] = None
+    education: Optional[List[Dict[str, str]]] = None
+    work_experience: Optional[Dict[str, str]] = None
+    photo_base64: Optional[str] = None  # Temporary storage during scrap
+    photo_path: Optional[str] = None    # Relative local path
 
     def to_dict(self):
-        """Convert to dictionary, strictly maintaining the 5-field schema."""
+        """Convert to dictionary, strictly maintaining the 5-field schema for rx.json."""
         return {
             "registration_number": self.registration_number,
             "name": self.name,
@@ -36,6 +45,16 @@ class PharmacistRecord:
             "category": self.category,
             "serial_number": self.serial_number
         }
+    
+    def to_detailed_dict(self):
+        """Convert to detailed dictionary for rxdetails.json."""
+        data = {
+            "validity_date": self.validity_date,
+            "education": self.education,
+            "work_experience": self.work_experience,
+            "photo_path": self.photo_path
+        }
+        return {k: v for k, v in data.items() if v}
 
 # --- Rate Limiter ---
 
@@ -153,4 +172,69 @@ class Scraper:
                 
         logger.info(f"Extracted {len(records)} records")
         return records
+
+    def extract_detailed_info(self, reg_no: str) -> Optional[PharmacistRecord]:
+        """Extract detailed info for a single pharmacist."""
+        try:
+            logger.info(f"Enriching {reg_no}...")
+            response = self._request("POST", self.urls['search'], data={
+                'registration_no': reg_no,
+                'submit': 'Submit'
+            })
+            
+            if 'No Records Found' in response.text:
+                return None
+
+            soup = BeautifulSoup(response.content, 'html.parser')
+            tables = soup.find_all('table')
+            
+            if not tables:
+                return None
+
+            # Initialize record with dummy basic data (will be merged later)
+            record = PharmacistRecord(
+                registration_number=reg_no, 
+                name="", father_name="", category=""
+            )
+
+            # 1. Parse Image
+            img = soup.find('img', id=re.compile(r'imgPhoto', re.I))
+            if img and img.get('src'):
+                src = img['src']
+                if 'base64' in src:
+                    record.photo_base64 = src.split(',')[-1]
+
+            # 2. Parse Main Info & Validity
+            main_text = soup.get_text()
+            validity_match = re.search(r'Valid\s*(?:Upto|Up\s*to)\s*[:\-]䀖?\s*(\d{2}[-/]\d{2}[-/]\d{4})', main_text, re.I)
+            if validity_match:
+                try:
+                    date_str = validity_match.group(1)
+                    date_str = date_str.replace('/', '-')
+                    dt = datetime.strptime(date_str, '%d-%m-%Y')
+                    record.validity_date = dt.strftime('%Y-%m-%d')
+                except ValueError:
+                    pass
+
+            # 3. Parse Education
+            for table in tables:
+                headers = [th.get_text(strip=True).lower() for th in table.find_all('th')]
+                if any('qualification' in h for h in headers):
+                    edu_list = []
+                    rows = table.find_all('tr')[1:] 
+                    for row in rows:
+                        cols = [td.get_text(strip=True) for td in row.find_all('td')]
+                        if len(cols) >= 3:
+                            edu_list.append({
+                                'qualification': cols[1], 
+                                'university': cols[2], 
+                                'year': cols[3] if len(cols) > 3 else ""
+                            })
+                    record.education = edu_list
+
+            return record
+
+        except Exception as e:
+            logger.error(f"Failed to extract details for {reg_no}: {e}")
+            return None
 
