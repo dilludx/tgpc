@@ -106,9 +106,11 @@ async function checkConnection() {
     }
 }
 
-// Load analytics - always fetch live data
+// Load analytics - smart caching based on total count
 async function loadAnalytics() {
-    // Show fallback values instantly while fetching live data
+    const CACHE_KEY = 'tgpc_analytics';
+
+    // Fallback stats (shown instantly)
     const fallbackStats = {
         total: 83103,
         categories: {
@@ -120,17 +122,39 @@ async function loadAnalytics() {
             'QP': 231
         }
     };
-    displayAnalytics(fallbackStats);
+
+    // Try to load from cache first
+    const cached = localStorage.getItem(CACHE_KEY);
+    let cachedStats = null;
+
+    if (cached) {
+        try {
+            cachedStats = JSON.parse(cached);
+            displayAnalytics(cachedStats);
+        } catch (e) {
+            localStorage.removeItem(CACHE_KEY);
+        }
+    } else {
+        displayAnalytics(fallbackStats);
+    }
 
     try {
-        // Fetch fresh data from Supabase
-        const { count: total, error: totalError } = await supabase
+        // Quick check: Get only the total count (1 API call)
+        const { count: liveTotal, error: totalError } = await supabase
             .from('rx')
             .select('*', { count: 'exact', head: true });
 
         if (totalError) throw totalError;
 
-        // Get counts for all known categories
+        // If cached total matches live total, data hasn't changed - we're done
+        if (cachedStats && cachedStats.total === liveTotal) {
+            console.log('✓ Cache is fresh (total unchanged:', liveTotal, ')');
+            return;
+        }
+
+        console.log('Data changed, fetching fresh stats...');
+
+        // Data changed - fetch all category counts
         const knownCategories = ['BPharm', 'DPharm', 'MPharm', 'PharmD', 'QC', 'QP'];
 
         const categoryPromises = knownCategories.map(cat =>
@@ -140,7 +164,7 @@ async function loadAnalytics() {
         const categoryResults = await Promise.all(categoryPromises);
 
         const stats = {
-            total: total,
+            total: liveTotal,
             categories: {}
         };
 
@@ -149,14 +173,17 @@ async function loadAnalytics() {
             stats.categories[cat] = count;
         });
 
-        console.log('✓ Analytics loaded from Supabase:', stats);
+        console.log('✓ Fresh analytics loaded:', stats);
+
+        // Save to cache
+        localStorage.setItem(CACHE_KEY, JSON.stringify(stats));
 
         // Display fresh data
         displayAnalytics(stats);
 
     } catch (error) {
         console.error('Error loading analytics:', error);
-        // Fallback values already displayed, no action needed
+        // Fallback already displayed, no action needed
     }
 }
 
