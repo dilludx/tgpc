@@ -138,8 +138,18 @@ async function loadAnalytics() {
                 localStorage.removeItem(CACHE_KEY);
             }
         } else {
-            // No cache, show loading state
-            document.getElementById('totalRecords').textContent = '...';
+            // No cache, show fallback values instantly while fetching
+            displayAnalytics({
+                total: 83103,
+                categories: {
+                    'BPharm': 57955,
+                    'DPharm': 16141,
+                    'MPharm': 2354,
+                    'PharmD': 6393,
+                    'QC': 29,
+                    'QP': 231
+                }
+            });
         }
 
         // Fetch fresh data from Supabase
@@ -208,12 +218,14 @@ async function loadAnalytics() {
         console.error('Error loading analytics:', error);
         // Fallback to approximate values if query fails
         displayAnalytics({
-            total: 82621,
+            total: 83103,
             categories: {
-                'BPharm': 57543,
-                'DPharm': 16112,
+                'BPharm': 57955,
+                'DPharm': 16141,
                 'MPharm': 2354,
-                'PharmD': 6352
+                'PharmD': 6393,
+                'QC': 29,
+                'QP': 231
             }
         });
     }
