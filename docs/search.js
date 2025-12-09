@@ -106,116 +106,61 @@ async function checkConnection() {
     }
 }
 
-// Load analytics with localStorage caching for instant display
+// Load analytics - production grade with single RPC call
 async function loadAnalytics() {
     const CACHE_KEY = 'tgpc_analytics';
-    const CACHE_DURATION = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
+
+    // Fallback stats (shown instantly)
+    const fallbackStats = {
+        total: 83103,
+        categories: {
+            'BPharm': 57955,
+            'DPharm': 16141,
+            'MPharm': 2354,
+            'PharmD': 6393,
+            'QC': 29,
+            'QP': 231
+        }
+    };
+
+    // Try to load from cache first
+    const cached = localStorage.getItem(CACHE_KEY);
+    let cachedStats = null;
+
+    if (cached) {
+        try {
+            cachedStats = JSON.parse(cached);
+            displayAnalytics(cachedStats);
+        } catch (e) {
+            localStorage.removeItem(CACHE_KEY);
+        }
+    } else {
+        displayAnalytics(fallbackStats);
+    }
 
     try {
-        // Try to load from cache first
-        const cached = localStorage.getItem(CACHE_KEY);
-        const now = Date.now();
+        // Single RPC call to get all stats (production grade)
+        const { data: stats, error } = await supabase.rpc('get_rx_stats');
 
-        if (cached) {
-            const { data, timestamp } = JSON.parse(cached);
-            const age = now - timestamp;
+        if (error) throw error;
 
-            // Check if cached data has the new format (with categories object)
-            if (data.categories) {
-                // Display cached data immediately
-                displayAnalytics(data);
-
-                // If cache is fresh (less than 1 hour old), we're done
-                if (age < CACHE_DURATION) {
-                    console.log('✓ Analytics loaded from cache (age: ' + Math.round(age / 60000) + ' min)');
-                    return;
-                }
-
-                console.log('Cache expired, fetching fresh data...');
-            } else {
-                // Old cache format, clear it and fetch fresh
-                console.log('Old cache format detected, clearing and fetching fresh data...');
-                localStorage.removeItem(CACHE_KEY);
-            }
-        } else {
-            // No cache, show loading state
-            document.getElementById('totalRecords').textContent = '...';
+        // If cached total matches live total, data hasn't changed - we're done
+        if (cachedStats && cachedStats.total === stats.total) {
+            console.log('✓ Cache is fresh (total unchanged:', stats.total, ')');
+            return;
         }
 
-        // Fetch fresh data from Supabase
-        const { count: total, error: totalError } = await supabase
-            .from('rx')
-            .select('*', { count: 'exact', head: true });
-
-        if (totalError) throw totalError;
-
-        // Get all unique categories using a more efficient query
-        // We'll query each known category plus check for others
-        const knownCategories = ['BPharm', 'DPharm', 'MPharm', 'PharmD'];
-
-        // First, get counts for known categories
-        const knownPromises = knownCategories.map(cat =>
-            supabase.from('rx').select('*', { count: 'exact', head: true }).eq('category', cat)
-        );
-
-        // Also get a sample to check for other categories
-        const { data: sampleData, error: sampleError } = await supabase
-            .from('rx')
-            .select('category')
-            .limit(10000);
-
-        if (sampleError) throw sampleError;
-
-        // Get all unique categories from sample
-        const allUniqueCategories = [...new Set(sampleData.map(r => r.category))].filter(c => c).sort();
-        console.log('All unique categories found:', allUniqueCategories);
-
-        // Find categories not in known list
-        const additionalCategories = allUniqueCategories.filter(cat => !knownCategories.includes(cat));
-
-        // Get counts for additional categories
-        const additionalPromises = additionalCategories.map(cat =>
-            supabase.from('rx').select('*', { count: 'exact', head: true }).eq('category', cat)
-        );
-
-        const allPromises = [...knownPromises, ...additionalPromises];
-        const allResults = await Promise.all(allPromises);
-        const allCategories = [...knownCategories, ...additionalCategories];
-
-        const stats = {
-            total: total,
-            categories: {}
-        };
-
-        allCategories.forEach((cat, index) => {
-            const count = allResults[index]?.count || 0;
-            stats.categories[cat] = count;
-            console.log(`Category ${cat}: ${count}`);
-        });
-
-        console.log('✓ Analytics loaded from Supabase:', stats);
+        console.log('✓ Fresh analytics loaded via RPC:', stats);
 
         // Save to cache
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-            data: stats,
-            timestamp: now
-        }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify(stats));
 
         // Display fresh data
         displayAnalytics(stats);
 
     } catch (error) {
         console.error('Error loading analytics:', error);
-        // Fallback to approximate values if query fails
-        displayAnalytics({
-            total: 82621,
-            categories: {
-                'BPharm': 57543,
-                'DPharm': 16112,
-                'MPharm': 2354,
-                'PharmD': 6352
-            }
-        });
+        // Fallback already displayed, no action needed
     }
 }
 

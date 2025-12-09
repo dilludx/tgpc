@@ -16,6 +16,10 @@ def main():
     # Sync command
     sync_parser = subparsers.add_parser('sync', help='Sync data to Supabase')
 
+    # Enrich command
+    enrich_parser = subparsers.add_parser('enrich', help='Run enrichment pipeline')
+    enrich_parser.add_argument('--batch-size', type=int, default=50, help='Number of records to process')
+
     args = parser.parse_args()
     
     manager = Manager()
@@ -24,6 +28,8 @@ def main():
         manager.run_daily_update()
     elif args.command == 'sync':
         manager.sync_to_supabase()
+    elif args.command == 'enrich':
+        manager.run_enrichment(batch_size=args.batch_size)
     else:
         parser.print_help()
 

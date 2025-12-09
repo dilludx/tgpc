@@ -24,10 +24,12 @@ env/
 data/backups/
 data/detailed/
 data/metadata/
+data/photos/
 *.backup
 *.bak
 *.tmp
 *.log
+debug_*.html
 
 # Database files (we use Supabase cloud)
 *.db

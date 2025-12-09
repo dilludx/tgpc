@@ -1,4 +1,4 @@
-name: Rx Auto Sync
+name: ♻️ Rx Sync
 
 on:
   schedule:
@@ -12,6 +12,12 @@ on:
     - cron: '15 6 * * 6'   # Saturday 11:45 AM IST
     - cron: '40 8 * * 0'   # Sunday 2:10 PM IST
   workflow_dispatch:  # Allow manual triggering
+    inputs:
+      force_sync:
+        description: 'Force Sync to Supabase'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   rx-sync:
@@ -59,7 +65,7 @@ jobs:
       if: steps.check_update.outputs.already_updated == 'false'
       id: update
       run: |
-        echo "🔄 Starting daily TGPC data update during business hours..."
+        echo "♻️ Starting daily TGPC data update during business hours..."
         
         # Run the update via CLI
         python -m tgpc update
@@ -119,12 +125,12 @@ jobs:
         fi
     
     - name: Sync to Supabase
-      if: steps.check_update.outputs.already_updated == 'false' && steps.changes.outputs.changes == 'true'
+      if: (steps.check_update.outputs.already_updated == 'false' && steps.changes.outputs.changes == 'true') || github.event.inputs.force_sync == 'true'
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
       run: |
-        echo "☁️ Syncing data to Supabase cloud database..."
+        echo "♻️ Syncing data to Supabase cloud database..."
         python -m tgpc sync
     
     - name: Commit and push changes
@@ -140,7 +146,9 @@ jobs:
         git commit -m "Rx Auto Update - $(date '+%Y-%m-%d')
         
         Total: ${{ steps.update.outputs.total_records }} | New: ${{ steps.update.outputs.new_records }} | Removed: ${{ steps.update.outputs.removed_records }} | Duplicates: ${{ steps.update.outputs.duplicates_removed }} | Integrity: ${{ steps.update.outputs.integrity_score }}"
-
+        
+        # Pull latest changes to avoid push rejection
+        git pull --rebase origin main
         
         git push
     
@@ -152,8 +160,12 @@ jobs:
         REM_DETAILS='${{ steps.update.outputs.removed_details }}'
         MOD_DETAILS='${{ steps.update.outputs.modified_details }}'
         
+        NEW_CATS='${{ steps.update.outputs.new_cat_stats }}'
+        REM_CATS='${{ steps.update.outputs.rem_cat_stats }}'
+        MOD_CATS='${{ steps.update.outputs.mod_cat_stats }}'
+        
         echo "### ♻️ Rx Sync" >> $GITHUB_STEP_SUMMARY
-        echo "> **$(date '+%A, %d %B %Y')** • $(date '+%H:%M %Z')" >> $GITHUB_STEP_SUMMARY
+        echo "> **$(TZ='Asia/Kolkata' date '+%A, %d %B %Y')** • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Use python to parse JSON and output lists
@@ -161,6 +173,16 @@ jobs:
         import json
         import os
         
+        def format_cats(json_str):
+            try:
+                stats = json.loads(json_str) if json_str else {}
+                if not stats: return ''
+                # Sort by count desc
+                sorted_stats = sorted(stats.items(), key=lambda item: item[1], reverse=True)
+                parts = [f'{k}: {v}' for k, v in sorted_stats]
+                return '> *By Category:* ' + ', '.join(parts)
+            except: return ''
+
         try:
             # Handle potential empty strings by defaulting to empty list JSON
             new_json = '$NEW_DETAILS' if '$NEW_DETAILS' else '[]'
@@ -171,8 +193,13 @@ jobs:
             rem_recs = json.loads(rem_json) or []
             mod_recs = json.loads(mod_json) or []
             
+            new_cat_str = format_cats('$NEW_CATS')
+            rem_cat_str = format_cats('$REM_CATS')
+            mod_cat_str = format_cats('$MOD_CATS')
+            
             # New Additions
             print(f'#### 🆕 New Additions (+{len(new_recs)})')
+            if new_cat_str: print(new_cat_str)
             if new_recs:
                 for r in new_recs:
                     print(f'- {r}')
@@ -182,6 +209,7 @@ jobs:
             
             # Modifications
             print(f'#### ✏️ Modifications (+{len(mod_recs)})')
+            if mod_cat_str: print(mod_cat_str)
             if mod_recs:
                 for r in mod_recs:
                     print(f'- {r}')
@@ -189,6 +217,7 @@ jobs:
                 
             # Removals
             print(f'#### 🗑️ Removals (+{len(rem_recs)})')
+            if rem_cat_str: print(rem_cat_str)
             if rem_recs:
                 for r in rem_recs:
                     print(f'- {r}')
