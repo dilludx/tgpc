@@ -545,3 +545,37 @@ function exportResults() {
     // Save PDF
     doc.save(`tgpc_rx_search_${new Date().toISOString().split('T')[0]}.pdf`);
 }
+
+// Export results to CSV
+function exportCSV() {
+    if (currentResults.length === 0) {
+        alert('No results to export. Please perform a search first.');
+        return;
+    }
+
+    // CSV header
+    const headers = ['Registration Number', 'Name', 'Father Name', 'Category'];
+
+    // Build CSV content
+    const csvRows = [headers.join(',')];
+
+    currentResults.forEach(record => {
+        const row = [
+            `"${record.registration_number || ''}"`,
+            `"${(record.name || '').replace(/"/g, '""')}"`,
+            `"${(record.father_name || '').replace(/"/g, '""')}"`,
+            `"${record.category || ''}"`
+        ];
+        csvRows.push(row.join(','));
+    });
+
+    const csvContent = csvRows.join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `tgpc_rx_search_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+}
