@@ -106,7 +106,7 @@ async function checkConnection() {
     }
 }
 
-// Load analytics - smart caching based on total count
+// Load analytics - production grade with single RPC call
 async function loadAnalytics() {
     const CACHE_KEY = 'tgpc_analytics';
 
@@ -139,41 +139,18 @@ async function loadAnalytics() {
     }
 
     try {
-        // Quick check: Get only the total count (1 API call)
-        const { count: liveTotal, error: totalError } = await supabase
-            .from('rx')
-            .select('*', { count: 'exact', head: true });
+        // Single RPC call to get all stats (production grade)
+        const { data: stats, error } = await supabase.rpc('get_rx_stats');
 
-        if (totalError) throw totalError;
+        if (error) throw error;
 
         // If cached total matches live total, data hasn't changed - we're done
-        if (cachedStats && cachedStats.total === liveTotal) {
-            console.log('✓ Cache is fresh (total unchanged:', liveTotal, ')');
+        if (cachedStats && cachedStats.total === stats.total) {
+            console.log('✓ Cache is fresh (total unchanged:', stats.total, ')');
             return;
         }
 
-        console.log('Data changed, fetching fresh stats...');
-
-        // Data changed - fetch all category counts
-        const knownCategories = ['BPharm', 'DPharm', 'MPharm', 'PharmD', 'QC', 'QP'];
-
-        const categoryPromises = knownCategories.map(cat =>
-            supabase.from('rx').select('*', { count: 'exact', head: true }).eq('category', cat)
-        );
-
-        const categoryResults = await Promise.all(categoryPromises);
-
-        const stats = {
-            total: liveTotal,
-            categories: {}
-        };
-
-        knownCategories.forEach((cat, index) => {
-            const count = categoryResults[index]?.count || 0;
-            stats.categories[cat] = count;
-        });
-
-        console.log('✓ Fresh analytics loaded:', stats);
+        console.log('✓ Fresh analytics loaded via RPC:', stats);
 
         // Save to cache
         localStorage.setItem(CACHE_KEY, JSON.stringify(stats));
