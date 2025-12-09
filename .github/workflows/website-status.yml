@@ -13,7 +13,7 @@ jobs:
       - name: Check Website Availability
         run: |
           echo "Checking website status..."
-          STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" https://dilludx.github.io/tgpc/)
+          STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" https://tgpc.pages.dev/)
           
           echo "### 🛜 Website Status" >> $GITHUB_STEP_SUMMARY
           echo "> **$(TZ='Asia/Kolkata' date '+%A, %d %B %Y')** • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
@@ -22,7 +22,7 @@ jobs:
           if [ "$STATUS" -eq 200 ]; then
             echo "✅ Website is UP (Status: $STATUS)"
             echo "- **Status**: ✅ Online ($STATUS)" >> $GITHUB_STEP_SUMMARY
-            echo "- **URL**: https://dilludx.github.io/tgpc/" >> $GITHUB_STEP_SUMMARY
+            echo "- **URL**: https://tgpc.pages.dev/" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Website is DOWN (Status: $STATUS)"
             echo "- **Status**: ❌ Offline ($STATUS)" >> $GITHUB_STEP_SUMMARY
