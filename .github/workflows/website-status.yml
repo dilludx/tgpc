@@ -11,6 +11,11 @@ jobs:
     name: Website Status
     runs-on: ubuntu-latest
     steps:
+      - name: Wait for changes to propagate
+        run: |
+          echo "⏳ Waiting 5 minutes for any changes to propagate..."
+          sleep 300
+
       - name: Check Website Availability
         run: |
           echo "Checking website status..."
