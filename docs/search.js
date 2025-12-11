@@ -128,7 +128,7 @@ function startLiveClock() {
     setInterval(updateTime, 1000);
 }
 
-// Format timestamp for "Updated" display: "Updated THU 11 DEC 2025 08:00"
+// Format timestamp for display: "THU 11 DEC 2025 17:31"
 function formatUpdatedTimestamp(date) {
     const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -140,7 +140,7 @@ function formatUpdatedTimestamp(date) {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
 
-    return `Updated ${dayName} ${dayNum} ${monthName} ${year} ${hours}:${minutes}`;
+    return `${dayName} ${dayNum} ${monthName} ${year} ${hours}:${minutes}`;
 }
 
 // Fetch and display the last sync timestamp
@@ -150,12 +150,16 @@ async function loadStatsUpdated() {
 
     if (!statsUpdatedEl) return;
 
+    function updateDisplay(dateStr) {
+        statsUpdatedEl.textContent = `Synced ${dateStr}`;
+    }
+
     // Try to load from cache first
     const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
         try {
             const cachedDate = new Date(cached);
-            statsUpdatedEl.textContent = formatUpdatedTimestamp(cachedDate);
+            updateDisplay(formatUpdatedTimestamp(cachedDate));
         } catch (e) {
             localStorage.removeItem(CACHE_KEY);
         }
@@ -173,14 +177,14 @@ async function loadStatsUpdated() {
 
         if (data && data.value) {
             const syncDate = new Date(data.value);
-            statsUpdatedEl.textContent = formatUpdatedTimestamp(syncDate);
+            updateDisplay(formatUpdatedTimestamp(syncDate));
             localStorage.setItem(CACHE_KEY, data.value);
         }
     } catch (error) {
         console.log('Metadata table not available, using cache/fallback');
-        // If no cached value either, show nothing or a default
+        // If no cached value either, hide the element
         if (!cached) {
-            statsUpdatedEl.textContent = '';
+            statsUpdatedEl.style.display = 'none';
         }
     }
 }
@@ -261,60 +265,10 @@ function displayAnalytics(stats) {
                 element.textContent = stats.categories[cat].toLocaleString();
                 console.log(`Set ${cat} to ${stats.categories[cat]}`);
             } else {
-                console.warn(`Element not found for category: ${cat}`);
             }
         });
 
-        // Get the stats grid and filters container
-        const statsGrid = document.querySelector('.stats-grid');
-        const filtersContainer = document.querySelector('.filters');
-
-        // Remove any previously added dynamic elements
-        statsGrid.querySelectorAll('.stat-card.dynamic').forEach(card => card.remove());
-        filtersContainer.querySelectorAll('.filter-chip.dynamic').forEach(chip => chip.remove());
-
-        // Get all categories sorted
-        const allCategories = Object.keys(stats.categories).sort();
-        const knownCategories = ['BPharm', 'DPharm', 'MPharm', 'PharmD'];
-        const additionalCategories = allCategories.filter(cat => !knownCategories.includes(cat));
-
-        // Add stat cards and filter chips for additional categories
-        additionalCategories.forEach(cat => {
-            // Add stat card
-            const card = document.createElement('div');
-            card.className = 'stat-card dynamic';
-            card.innerHTML = `
-                <div class="stat-header">
-                    <div class="stat-content">
-                        <h3>${cat}</h3>
-                        <div class="stat-value">${stats.categories[cat].toLocaleString()}</div>
-                    </div>
-                </div>
-            `;
-            statsGrid.appendChild(card);
-
-            // Add filter chip
-            const chip = document.createElement('button');
-            chip.className = 'filter-chip dynamic';
-            chip.setAttribute('data-filter', 'category');
-            chip.setAttribute('data-value', cat);
-            chip.textContent = cat;
-            chip.addEventListener('click', function () {
-                document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                currentFilters.category = cat;
-                const query = document.getElementById('searchInput').value.trim();
-                if (query.length >= 2) {
-                    performSearch();
-                }
-            });
-            filtersContainer.appendChild(chip);
-        });
-
-        console.log('Displayed categories:', allCategories);
-        if (additionalCategories.length > 0) {
-            console.log('Additional categories added:', additionalCategories);
-        }
+        console.log('Displayed categories:', Object.keys(stats.categories));
     }
 
     // Set last updated date with time
