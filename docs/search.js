@@ -81,18 +81,19 @@ async function checkConnection() {
         if (error) throw error;
 
         // Connected successfully
-        // Generate current date for display
+        // Generate current date for display (static)
         const now = new Date();
         const day = now.getDate().toString().padStart(2, '0');
         const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
         const month = months[now.getMonth()];
         const year = now.getFullYear();
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const dateText = `${day} ${month} ${year} ${hours}:${minutes}`;
+        const dateText = `${day} ${month} ${year}`;
 
         statusEl.className = 'header-status connected';
-        statusEl.innerHTML = `<span class="status-dot"></span><span class="status-text">Live</span><span class="status-separator">|</span><span class="status-date" id="lastUpdated">${dateText}</span>`;
+        statusEl.innerHTML = `<span class="status-dot"></span><span class="status-text">Live</span><span class="status-separator">|</span><span class="status-date" id="lastUpdated">${dateText} <span id="liveTime"></span></span>`;
+
+        // Start the live clock for time portion only
+        startLiveClock();
 
     } catch (error) {
         console.error('Connection error:', error);
@@ -104,6 +105,26 @@ async function checkConnection() {
         statusEl.className = 'header-status error';
         statusEl.innerHTML = `<span class="status-dot"></span><span class="status-text">Offline</span>`;
     }
+}
+
+// Live clock - updates time every second (HH:MM:SS)
+function startLiveClock() {
+    function updateTime() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const timeStr = `${hours}:${minutes}:${seconds}`;
+
+        const liveTimeEl = document.getElementById('liveTime');
+        if (liveTimeEl) {
+            liveTimeEl.textContent = timeStr;
+        }
+    }
+
+    // Update immediately, then every second
+    updateTime();
+    setInterval(updateTime, 1000);
 }
 
 // Load analytics - production grade with single RPC call
