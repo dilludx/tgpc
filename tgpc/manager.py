@@ -195,6 +195,17 @@ class Manager:
                 batch = [r.to_dict() for r in records[i:i+batch_size]]
                 supabase.table('rx').upsert(batch, on_conflict='registration_number').execute()
                 logger.info(f"Synced batch {i//batch_size + 1}")
+            
+            # Update last_sync timestamp in metadata table
+            try:
+                sync_time = datetime.now().isoformat()
+                supabase.table('metadata').upsert({
+                    'key': 'last_sync',
+                    'value': sync_time
+                }, on_conflict='key').execute()
+                logger.info(f"Updated last_sync timestamp: {sync_time}")
+            except Exception as e:
+                logger.warning(f"Could not update metadata (table may not exist): {e}")
                 
             logger.info("Supabase sync complete")
             
