@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     checkConnection();
     loadAnalytics();
+    loadStatsUpdated();
 });
 
 function setupEventListeners() {
@@ -125,6 +126,63 @@ function startLiveClock() {
     // Update immediately, then every second
     updateTime();
     setInterval(updateTime, 1000);
+}
+
+// Format timestamp for "Updated" display: "Updated THU 11 DEC 2025 08:00"
+function formatUpdatedTimestamp(date) {
+    const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+    const dayName = days[date.getDay()];
+    const dayNum = String(date.getDate()).padStart(2, '0');
+    const monthName = months[date.getMonth()];
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `Updated ${dayName} ${dayNum} ${monthName} ${year} ${hours}:${minutes}`;
+}
+
+// Fetch and display the last sync timestamp
+async function loadStatsUpdated() {
+    const CACHE_KEY = 'tgpc_last_sync';
+    const statsUpdatedEl = document.getElementById('statsUpdated');
+
+    if (!statsUpdatedEl) return;
+
+    // Try to load from cache first
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+        try {
+            const cachedDate = new Date(cached);
+            statsUpdatedEl.textContent = formatUpdatedTimestamp(cachedDate);
+        } catch (e) {
+            localStorage.removeItem(CACHE_KEY);
+        }
+    }
+
+    try {
+        // Fetch from Supabase metadata table
+        const { data, error } = await supabase
+            .from('metadata')
+            .select('value')
+            .eq('key', 'last_sync')
+            .single();
+
+        if (error) throw error;
+
+        if (data && data.value) {
+            const syncDate = new Date(data.value);
+            statsUpdatedEl.textContent = formatUpdatedTimestamp(syncDate);
+            localStorage.setItem(CACHE_KEY, data.value);
+        }
+    } catch (error) {
+        console.log('Metadata table not available, using cache/fallback');
+        // If no cached value either, show nothing or a default
+        if (!cached) {
+            statsUpdatedEl.textContent = '';
+        }
+    }
 }
 
 // Load analytics - production grade with single RPC call
