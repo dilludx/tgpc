@@ -1,10 +1,9 @@
 name: 🛜 Website Status
 
 on:
-  schedule:
-    - cron: '30 4 * * *'   # 10:00 IST
-    - cron: '30 12 * * *'  # 18:00 IST
-    - cron: '30 20 * * *'  # 02:00 IST
+  # Called by rx-sync workflow after sync completes
+  workflow_call:
+  # Manual trigger
   workflow_dispatch:
 
 jobs:
