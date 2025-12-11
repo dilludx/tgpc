@@ -53,8 +53,16 @@
             background: #ffffff;
             border: 1px solid #e5e7eb;
             border-radius: 12px;
-            padding: 16px;
+            padding: 16px 16px 8px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .stats-row {
+            display: flex;
             gap: 16px;
+            align-items: center;
         }
 
         .brand {
@@ -110,7 +118,7 @@
 
         .brand-text p {
             font-size: 0.8125rem;
-            color: #71717a;
+            color: #808080;
             margin: 0;
             /* Removed margin-top */
             width: 100%;
@@ -265,7 +273,7 @@
 
         .updated-time {
             font-size: 0.75rem;
-            color: #71717a;
+            color: #808080;
             margin-top: 2px;
         }
 
@@ -280,17 +288,17 @@
         .stats-grid {
             display: flex;
             gap: 24px;
-            margin-bottom: 8px;
         }
 
         /* Stats Updated Timestamp */
         .stats-updated {
             text-align: right;
-            font-size: 0.6875rem;
+            font-size: 0.625rem;
             color: #a1a1aa;
-            margin-bottom: 32px;
             font-weight: 500;
             letter-spacing: 0.3px;
+            text-transform: uppercase;
+            margin-top: 10px;
         }
 
         .stat-card {
@@ -321,12 +329,12 @@
             margin-bottom: 6px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: #71717a;
+            color: #808080;
         }
 
         .stat-card:nth-child(1) h3 {
             /* Removed blue gradient to allow brand colors to show */
-            color: #71717a;
+            color: #808080;
         }
 
         .stat-content h3 .brand-rx {
@@ -496,7 +504,7 @@
 
         .results-info {
             font-size: 0.9375rem;
-            color: #71717a;
+            color: #808080;
         }
 
         .results-info strong {
@@ -512,7 +520,7 @@
 
         .sort-label {
             font-size: 0.875rem;
-            color: #71717a;
+            color: #808080;
             font-weight: 500;
         }
 
@@ -609,13 +617,13 @@
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #71717a;
+            color: #808080;
         }
 
         .loading {
             text-align: center;
             padding: 40px;
-            color: #71717a;
+            color: #808080;
         }
 
         .error {
@@ -795,49 +803,66 @@
             </div>
             <!-- Statistics -->
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-content">
-                            <h3>Total <span class="brand-rx">Rx</span></h3>
-                            <div class="stat-value" id="totalRecords">...</div>
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-content">
+                                <h3>Total <span class="brand-rx">Rx</span></h3>
+                                <div class="stat-value" id="totalRecords">...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-content">
+                                <h3>BPharm</h3>
+                                <div class="stat-value" id="bpharmCount">...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-content">
+                                <h3>DPharm</h3>
+                                <div class="stat-value" id="dpharmCount">...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-content">
+                                <h3>MPharm</h3>
+                                <div class="stat-value" id="mpharmCount">...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-content">
+                                <h3>PharmD</h3>
+                                <div class="stat-value" id="pharmdCount">...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-content">
+                                <h3>QC</h3>
+                                <div class="stat-value" id="qcCount">...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-content">
+                                <h3>QP</h3>
+                                <div class="stat-value" id="qpCount">...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-content">
-                            <h3>BPharm</h3>
-                            <div class="stat-value" id="bpharmCount">...</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-content">
-                            <h3>DPharm</h3>
-                            <div class="stat-value" id="dpharmCount">...</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-content">
-                            <h3>MPharm</h3>
-                            <div class="stat-value" id="mpharmCount">...</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-content">
-                            <h3>PharmD</h3>
-                            <div class="stat-value" id="pharmdCount">...</div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Additional category cards will be dynamically added here -->
+                <div class="stats-updated" id="statsUpdated">Synced ...</div>
             </div>
-            <div class="stats-updated" id="statsUpdated">Updated ...</div>
         </div>
     </header>
 
@@ -846,7 +871,7 @@
         <!-- Search -->
         <section class="search-section">
             <div class="section-header">
-                <h2 class="section-title"><span style="color: #71717a;">Search</span> <span
+                <h2 class="section-title"><span style="color: #808080;">Search</span> <span
                         style="color: #ef4444;">Rx</span></h2>
             </div>
 
@@ -864,7 +889,8 @@
                 <button class="filter-chip" data-filter="category" data-value="DPharm">DPharm</button>
                 <button class="filter-chip" data-filter="category" data-value="MPharm">MPharm</button>
                 <button class="filter-chip" data-filter="category" data-value="PharmD">PharmD</button>
-                <!-- Additional category filter chips will be dynamically added here -->
+                <button class="filter-chip" data-filter="category" data-value="QC">QC</button>
+                <button class="filter-chip" data-filter="category" data-value="QP">QP</button>
             </div>
         </section>
 
