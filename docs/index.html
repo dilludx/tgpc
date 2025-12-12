@@ -791,6 +791,89 @@
                 font-size: 2rem;
             }
         }
+
+        /* Print-friendly styles */
+        @media print {
+
+            /* Hide everything except results */
+            header,
+            .search-section .section-header,
+            .search-bar,
+            .filters,
+            .results-header,
+            .btn,
+            .loading,
+            .error,
+            .empty-state,
+            #connectionStatus {
+                display: none !important;
+            }
+
+            /* Reset page styling */
+            body {
+                background: white !important;
+                color: black !important;
+                font-size: 12pt;
+            }
+
+            /* Show results panel */
+            .search-section {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            #resultsPanel {
+                display: block !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+
+            /* Clean table styling */
+            .data-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 10pt;
+            }
+
+            .data-table th,
+            .data-table td {
+                border: 1px solid #333 !important;
+                padding: 6px 8px !important;
+                text-align: left;
+            }
+
+            .data-table th {
+                background: #f0f0f0 !important;
+                font-weight: bold;
+            }
+
+            /* Remove badge styling */
+            .badge {
+                background: none !important;
+                color: black !important;
+                padding: 0 !important;
+            }
+
+            .reg-number {
+                color: black !important;
+                font-weight: bold;
+            }
+
+            /* Print header */
+            #resultsPanel::before {
+                content: "TGPC Rx Registry - Search Results";
+                display: block;
+                font-size: 16pt;
+                font-weight: bold;
+                margin-bottom: 10px;
+                text-align: center;
+            }
+
+            /* Page breaks */
+            tr {
+                page-break-inside: avoid;
+            }
+        }
     </style>
 </head>
 
