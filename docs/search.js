@@ -534,6 +534,9 @@ function resetSearch() {
     document.getElementById('resultsPanel').style.display = 'none';
     document.getElementById('error').innerHTML = '';
     document.getElementById('loading').style.display = 'none';
+
+    // Clear URL query parameter
+    updateUrlQuery('');
 }
 
 // Export results to PDF
