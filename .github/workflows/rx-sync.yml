@@ -182,7 +182,7 @@ jobs:
         ")
         
         # Create commit message with category details
-        git commit -m "Rx Auto Update - $(date '+%Y-%m-%d')
+        git commit -m "♻️ Rx Sync - $(date '+%Y-%m-%d')
         
         New: $NEW_MSG | Modified: $MOD_MSG | Removed: $REM_MSG | Total: ${{ steps.update.outputs.total_records }}"
         
