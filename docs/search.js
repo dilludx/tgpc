@@ -15,6 +15,14 @@ let searchTimeout;
 let currentPage = 1;
 const RESULTS_PER_PAGE = 100;
 
+// Security: Escape HTML to prevent XSS attacks
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -327,7 +335,7 @@ async function performSearch() {
             queryBuilder = queryBuilder.eq('category', currentFilters.category);
         }
 
-        const { data, error } = await queryBuilder.limit(5000);
+        const { data, error } = await queryBuilder.limit(500);
 
         if (error) throw error;
 
@@ -409,10 +417,10 @@ function displayResults(data, append = false) {
             <tbody>
                 ${paginatedData.map(record => `
                     <tr>
-                        <td><span class="reg-number">${record.registration_number}</span></td>
-                        <td>${record.name}</td>
-                        <td>${record.father_name || 'N/A'}</td>
-                        <td><span class="badge ${record.category.toLowerCase()}">${record.category}</span></td>
+                        <td><span class="reg-number">${escapeHtml(record.registration_number)}</span></td>
+                        <td>${escapeHtml(record.name)}</td>
+                        <td>${escapeHtml(record.father_name) || 'N/A'}</td>
+                        <td><span class="badge ${escapeHtml(record.category).toLowerCase()}">${escapeHtml(record.category)}</span></td>
                     </tr>
                 `).join('')}
             </tbody>
