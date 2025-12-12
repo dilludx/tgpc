@@ -15,6 +15,10 @@ let searchTimeout;
 let currentPage = 1;
 const RESULTS_PER_PAGE = 100;
 
+// Date/Time constants (shared across functions)
+const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
 // Security: Escape HTML to prevent XSS attacks
 function escapeHtml(text) {
     if (!text) return '';
@@ -94,8 +98,7 @@ async function checkConnection() {
         // Generate current date for display (static)
         const now = new Date();
         const day = now.getDate().toString().padStart(2, '0');
-        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-        const month = months[now.getMonth()];
+        const month = MONTHS[now.getMonth()];
         const year = now.getFullYear();
         const dateText = `${day} ${month} ${year}`;
 
@@ -139,12 +142,9 @@ function startLiveClock() {
 
 // Format timestamp for display: "THU 11 DEC 2025 17:31"
 function formatUpdatedTimestamp(date) {
-    const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-
-    const dayName = days[date.getDay()];
+    const dayName = DAYS[date.getDay()];
     const dayNum = String(date.getDate()).padStart(2, '0');
-    const monthName = months[date.getMonth()];
+    const monthName = MONTHS[date.getMonth()];
     const year = date.getFullYear();
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
@@ -281,15 +281,11 @@ function displayAnalytics(stats) {
     }
 
     // Set last updated date with time
-    // Custom format: TUE 02DEC2025 AT 00:00
     const now = new Date();
 
-    const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-
-    const dayName = days[now.getDay()];
+    const dayName = DAYS[now.getDay()];
     const dayNum = String(now.getDate()).padStart(2, '0');
-    const monthName = months[now.getMonth()];
+    const monthName = MONTHS[now.getMonth()];
     const year = now.getFullYear();
 
     const hours = String(now.getHours()).padStart(2, '0');
