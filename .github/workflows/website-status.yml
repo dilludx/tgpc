@@ -22,7 +22,7 @@ jobs:
           STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" https://tgpc.pages.dev/)
           
           echo "### 🛜 Website Status" >> $GITHUB_STEP_SUMMARY
-          echo "> **$(TZ='Asia/Kolkata' date '+%A, %d %B %Y')** • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
+          echo "> **$(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]')** • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "$STATUS" -eq 200 ]; then

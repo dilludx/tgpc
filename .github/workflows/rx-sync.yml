@@ -137,10 +137,55 @@ jobs:
         # Add data files (JSON only)
         git add data/rx.json
         
-        # Create commit message with update details
-        git commit -m "Rx Auto Update - $(date '+%Y-%m-%d')
+        # Format category stats for commit message
+        NEW_CATS='${{ steps.update.outputs.new_cat_stats }}'
+        REM_CATS='${{ steps.update.outputs.rem_cat_stats }}'
+        MOD_CATS='${{ steps.update.outputs.mod_cat_stats }}'
         
-        Total: ${{ steps.update.outputs.total_records }} | New: ${{ steps.update.outputs.new_records }} | Removed: ${{ steps.update.outputs.removed_records }} | Duplicates: ${{ steps.update.outputs.duplicates_removed }} | Integrity: ${{ steps.update.outputs.integrity_score }}"
+        NEW_MSG=$(python3 -c "
+        import json
+        try:
+            stats = json.loads('$NEW_CATS') if '$NEW_CATS' else {}
+            if stats:
+                parts = [f'{k}: {v}' for k, v in sorted(stats.items(), key=lambda x: x[1], reverse=True)]
+                print(', '.join(parts))
+            else:
+                print('0')
+        except:
+            print('0')
+        ")
+        
+        MOD_MSG=$(python3 -c "
+        import json
+        try:
+            stats = json.loads('$MOD_CATS') if '$MOD_CATS' else {}
+            if stats:
+                parts = [f'{k}: {v}' for k, v in sorted(stats.items(), key=lambda x: x[1], reverse=True)]
+                print(', '.join(parts))
+            else:
+                print('0')
+        except:
+            print('0')
+        ")
+        
+        REM_MSG=$(python3 -c "
+        import json
+        try:
+            stats = json.loads('$REM_CATS') if '$REM_CATS' else {}
+            if stats:
+                parts = [f'{k}: {v}' for k, v in sorted(stats.items(), key=lambda x: x[1], reverse=True)]
+                print(', '.join(parts))
+            else:
+                print('0')
+        except:
+            print('0')
+        ")
+        
+        # Create commit message with category details
+        COMMIT_DATE=$(TZ='Asia/Kolkata' date '+%a %d %b %Y %H:%M IST' | tr '[:lower:]' '[:upper:]')
+        git commit -m "♻️ Rx Sync - $COMMIT_DATE
+        
+        New: $NEW_MSG | Modified: $MOD_MSG | Removed: $REM_MSG | Total: ${{ steps.update.outputs.total_records }}"
         
         # Pull latest changes to avoid push rejection
         git pull --rebase origin main
@@ -160,7 +205,7 @@ jobs:
         MOD_CATS='${{ steps.update.outputs.mod_cat_stats }}'
         
         echo "### ♻️ Rx Sync" >> $GITHUB_STEP_SUMMARY
-        echo "> **$(TZ='Asia/Kolkata' date '+%A, %d %B %Y')** • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
+        echo "> **$(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]')** • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Use python to parse JSON and output lists
@@ -175,7 +220,7 @@ jobs:
                 # Sort by count desc
                 sorted_stats = sorted(stats.items(), key=lambda item: item[1], reverse=True)
                 parts = [f'{k}: {v}' for k, v in sorted_stats]
-                return '> *By Category:* ' + ', '.join(parts)
+                return ', '.join(parts)
             except: return ''
 
         try:
@@ -192,27 +237,31 @@ jobs:
             rem_cat_str = format_cats('$REM_CATS')
             mod_cat_str = format_cats('$MOD_CATS')
             
-            # New Additions
-            print(f'#### 🆕 New Additions (+{len(new_recs)})')
-            if new_cat_str: print(new_cat_str)
+            # New Additions - show category counts directly
+            if new_cat_str:
+                print(f'#### 🆕 New Additions: {new_cat_str}')
+            else:
+                print(f'#### 🆕 New Additions: 0')
             if new_recs:
                 for r in new_recs:
                     print(f'- {r}')
-            else:
-                pass # print('No new records.')
             print('')
             
-            # Modifications
-            print(f'#### ✏️ Modifications (+{len(mod_recs)})')
-            if mod_cat_str: print(mod_cat_str)
+            # Modifications - show category counts directly
+            if mod_cat_str:
+                print(f'#### ✏️ Modifications: {mod_cat_str}')
+            else:
+                print(f'#### ✏️ Modifications: 0')
             if mod_recs:
                 for r in mod_recs:
                     print(f'- {r}')
             print('')
                 
-            # Removals
-            print(f'#### 🗑️ Removals (+{len(rem_recs)})')
-            if rem_cat_str: print(rem_cat_str)
+            # Removals - show category counts directly
+            if rem_cat_str:
+                print(f'#### 🗑️ Removals: {rem_cat_str}')
+            else:
+                print(f'#### 🗑️ Removals: 0')
             if rem_recs:
                 for r in rem_recs:
                     print(f'- {r}')

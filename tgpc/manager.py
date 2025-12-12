@@ -259,6 +259,9 @@ class Manager:
 
                 logger.info(f"✅ MATCH CONFIRMED: {reg_no}")
 
+                # Convert to dictionary for storage
+                data = details.to_detailed_dict()
+
                 # Save Photo Locally
                 if details.photo_base64:
                     try:
