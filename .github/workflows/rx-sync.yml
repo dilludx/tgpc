@@ -182,7 +182,8 @@ jobs:
         ")
         
         # Create commit message with category details
-        git commit -m "♻️ Rx Sync - $(date '+%Y-%m-%d')
+        COMMIT_DATE=$(TZ='Asia/Kolkata' date '+%a %d %b %Y %H:%M IST' | tr '[:lower:]' '[:upper:]')
+        git commit -m "♻️ Rx Sync - $COMMIT_DATE
         
         New: $NEW_MSG | Modified: $MOD_MSG | Removed: $REM_MSG | Total: ${{ steps.update.outputs.total_records }}"
         
