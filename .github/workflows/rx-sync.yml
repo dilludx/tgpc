@@ -140,11 +140,25 @@ jobs:
         # Format category stats for commit message
         NEW_CATS='${{ steps.update.outputs.new_cat_stats }}'
         REM_CATS='${{ steps.update.outputs.rem_cat_stats }}'
+        MOD_CATS='${{ steps.update.outputs.mod_cat_stats }}'
         
         NEW_MSG=$(python3 -c "
         import json
         try:
             stats = json.loads('$NEW_CATS') if '$NEW_CATS' else {}
+            if stats:
+                parts = [f'{k}: {v}' for k, v in sorted(stats.items(), key=lambda x: x[1], reverse=True)]
+                print(', '.join(parts))
+            else:
+                print('0')
+        except:
+            print('0')
+        ")
+        
+        MOD_MSG=$(python3 -c "
+        import json
+        try:
+            stats = json.loads('$MOD_CATS') if '$MOD_CATS' else {}
             if stats:
                 parts = [f'{k}: {v}' for k, v in sorted(stats.items(), key=lambda x: x[1], reverse=True)]
                 print(', '.join(parts))
@@ -170,7 +184,7 @@ jobs:
         # Create commit message with category details
         git commit -m "Rx Auto Update - $(date '+%Y-%m-%d')
         
-        New: $NEW_MSG | Removed: $REM_MSG | Total: ${{ steps.update.outputs.total_records }}"
+        New: $NEW_MSG | Modified: $MOD_MSG | Removed: $REM_MSG | Total: ${{ steps.update.outputs.total_records }}"
         
         # Pull latest changes to avoid push rejection
         git pull --rebase origin main
