@@ -193,7 +193,7 @@ jobs:
             mod_cat_str = format_cats('$MOD_CATS')
             
             # New Additions
-            print(f'#### 🆕 New Additions (+{len(new_recs)})')
+            print(f'#### 🆕 New Additions ({len(new_recs)})')
             if new_cat_str: print(new_cat_str)
             if new_recs:
                 for r in new_recs:
@@ -203,7 +203,7 @@ jobs:
             print('')
             
             # Modifications
-            print(f'#### ✏️ Modifications (+{len(mod_recs)})')
+            print(f'#### ✏️ Modifications ({len(mod_recs)})')
             if mod_cat_str: print(mod_cat_str)
             if mod_recs:
                 for r in mod_recs:
@@ -211,7 +211,7 @@ jobs:
             print('')
                 
             # Removals
-            print(f'#### 🗑️ Removals (+{len(rem_recs)})')
+            print(f'#### 🗑️ Removals ({len(rem_recs)})')
             if rem_cat_str: print(rem_cat_str)
             if rem_recs:
                 for r in rem_recs:
