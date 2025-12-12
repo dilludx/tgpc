@@ -308,17 +308,57 @@ function displayAnalytics(stats) {
     }
 }
 
+// Security: Rate limiting
+const rateLimiter = {
+    requests: [],
+    maxRequests: 10,
+    windowMs: 60000, // 1 minute
+
+    canMakeRequest() {
+        const now = Date.now();
+        this.requests = this.requests.filter(time => now - time < this.windowMs);
+        if (this.requests.length >= this.maxRequests) {
+            return false;
+        }
+        this.requests.push(now);
+        return true;
+    }
+};
+
+// Security: Sanitize search query
+function sanitizeQuery(query) {
+    // Remove any SQL-like characters and limit length
+    return query
+        .replace(/[;'"\\]/g, '')  // Remove dangerous chars
+        .substring(0, 100);        // Max 100 characters
+}
+
 // Perform search
 async function performSearch() {
-    const query = document.getElementById('searchInput').value.trim();
+    const rawQuery = document.getElementById('searchInput').value.trim();
     const loadingDiv = document.getElementById('loading');
     const errorDiv = document.getElementById('error');
     const resultsPanel = document.getElementById('resultsPanel');
 
-    if (query.length < 2) {
+    // Input validation
+    if (rawQuery.length < 2) {
         resultsPanel.style.display = 'none';
         return;
     }
+
+    if (rawQuery.length > 100) {
+        errorDiv.innerHTML = '<div class="error">⚠️ Search query too long (max 100 characters)</div>';
+        return;
+    }
+
+    // Rate limiting
+    if (!rateLimiter.canMakeRequest()) {
+        errorDiv.innerHTML = '<div class="error">⚠️ Too many requests. Please wait a moment.</div>';
+        return;
+    }
+
+    // Sanitize query
+    const query = sanitizeQuery(rawQuery);
 
     loadingDiv.style.display = 'block';
     resultsPanel.style.display = 'none';
@@ -349,7 +389,7 @@ async function performSearch() {
     } catch (error) {
         console.error('Search error:', error);
         loadingDiv.style.display = 'none';
-        errorDiv.innerHTML = `<div class="error">❌ Search failed: ${error.message}</div>`;
+        errorDiv.innerHTML = `<div class="error">❌ Search failed. Please try again.</div>`;
     }
 }
 
