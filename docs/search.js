@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkConnection();
     loadAnalytics();
     loadStatsUpdated();
+    checkUrlQuery(); // Check if URL has a search query
 });
 
 function setupEventListeners() {
@@ -384,12 +385,44 @@ async function performSearch() {
         loadingDiv.style.display = 'none';
         resultsPanel.style.display = 'block';
 
+        // Update URL with search query (shareable link)
+        updateUrlQuery(query);
+
         sortResults();
 
     } catch (error) {
         console.error('Search error:', error);
         loadingDiv.style.display = 'none';
         errorDiv.innerHTML = `<div class="error">❌ Search failed. Please try again.</div>`;
+    }
+}
+
+// Shareable URLs: Check if URL has a query parameter
+function checkUrlQuery() {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q');
+        if (query && query.length >= 2) {
+            document.getElementById('searchInput').value = query;
+            performSearch();
+        }
+    } catch (e) {
+        // Silently fail if URL parsing fails
+    }
+}
+
+// Shareable URLs: Update URL with current query
+function updateUrlQuery(query) {
+    try {
+        const url = new URL(window.location);
+        if (query && query.length >= 2) {
+            url.searchParams.set('q', query);
+        } else {
+            url.searchParams.delete('q');
+        }
+        window.history.replaceState({}, '', url);
+    } catch (e) {
+        // Silently fail if URL update fails
     }
 }
 
