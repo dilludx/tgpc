@@ -40,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupEventListeners() {
     // Search input with debounce
     document.getElementById('searchInput').addEventListener('input', (e) => {
+        // Clear URL immediately when user starts typing
+        updateUrlQuery('');
+
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             if (e.target.value.trim().length >= 2) {
