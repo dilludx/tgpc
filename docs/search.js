@@ -163,7 +163,7 @@ async function loadStatsUpdated() {
     if (!statsUpdatedEl) return;
 
     function updateDisplay(dateStr) {
-        statsUpdatedEl.textContent = `Synced ${dateStr}`;
+        statsUpdatedEl.innerHTML = `<span style="color: #00cc66;">✓</span> Synced ${dateStr}`;
     }
 
     // Try to load from cache first
