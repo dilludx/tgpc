@@ -327,6 +327,24 @@
             letter-spacing: 0.3px;
             text-transform: uppercase;
             margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+        }
+
+        .sync-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 9px;
+            height: 9px;
+            background: #00cc66;
+            border-radius: 50%;
+            color: white;
+            font-size: 6px;
+            font-weight: bold;
+            line-height: 1;
         }
 
         .stat-card {
@@ -1020,7 +1038,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="stats-updated" id="statsUpdated"><span style="color: #00cc66;">✓</span> Synced ...</div>
+                <div class="stats-updated" id="statsUpdated"><span class="sync-icon">✓</span> Synced ...</div>
             </div>
         </div>
     </header>
