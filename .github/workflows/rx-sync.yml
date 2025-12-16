@@ -2,10 +2,13 @@ name: ♻️ Rx Sync
 
 on:
   schedule:
-    # Run 3 times daily, evenly spaced (every 8 hours)
+    # Run 6 times daily, evenly spaced (every 4 hours)
     - cron: '30 2 * * *'   # 8:00 AM IST
+    - cron: '30 6 * * *'   # 12:00 PM IST (noon)
     - cron: '30 10 * * *'  # 4:00 PM IST
+    - cron: '30 14 * * *'  # 8:00 PM IST
     - cron: '30 18 * * *'  # 12:00 AM IST (midnight)
+    - cron: '30 22 * * *'  # 4:00 AM IST
   workflow_dispatch:  # Allow manual triggering
     inputs:
       force_sync:
@@ -41,26 +44,10 @@ jobs:
       run: |
         mkdir -p data/backups
     
-    - name: Check if already updated today
-      id: check_update
-      run: |
-        # Check if we already updated today by looking at recent commits
-        TODAY=$(date -u +%Y-%m-%d)
-        RECENT_COMMIT=$(git log --oneline --since="$TODAY 00:00:00" --until="$TODAY 23:59:59" --grep="🤖 Daily data update" | head -1)
-        
-        if [ -n "$RECENT_COMMIT" ]; then
-          echo "already_updated=true" >> $GITHUB_OUTPUT
-          echo "ℹ️ Already updated today: $RECENT_COMMIT"
-        else
-          echo "already_updated=false" >> $GITHUB_OUTPUT
-          echo "✅ No update today yet, proceeding..."
-        fi
-
-    - name: Run daily update
-      if: steps.check_update.outputs.already_updated == 'false'
+    - name: Run data update
       id: update
       run: |
-        echo "♻️ Starting daily TGPC data update during business hours..."
+        echo "♻️ Starting TGPC data update..."
         
         # Run the update via CLI
         python -m tgpc update
@@ -73,7 +60,6 @@ jobs:
 
     
     - name: Check for changes and save new records
-      if: steps.check_update.outputs.already_updated == 'false'
       id: changes
       run: |
         if git diff --quiet data/rx.json; then
@@ -120,7 +106,7 @@ jobs:
         fi
     
     - name: Sync to Supabase
-      if: (steps.check_update.outputs.already_updated == 'false' && steps.changes.outputs.changes == 'true') || github.event.inputs.force_sync == 'true'
+      if: steps.changes.outputs.changes == 'true' || github.event.inputs.force_sync == 'true'
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -129,7 +115,7 @@ jobs:
         python -m tgpc sync
     
     - name: Commit and push changes
-      if: steps.check_update.outputs.already_updated == 'false' && steps.changes.outputs.changes == 'true'
+      if: steps.changes.outputs.changes == 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
