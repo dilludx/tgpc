@@ -312,6 +312,17 @@
             padding: 32px;
         }
 
+        /* Footer Styling */
+        .site-footer {
+            background: #ffffff;
+            border-top: 1px solid #e5e7eb;
+            padding: 24px 32px;
+            text-align: center;
+            font-size: 0.68rem;
+            color: #6b7280;
+            line-height: 2.2;
+        }
+
         /* Stats Grid */
         .stats-grid {
             display: flex;
@@ -320,17 +331,18 @@
 
         /* Stats Updated Timestamp */
         .stats-updated {
-            text-align: right;
             font-size: 0.625rem;
             color: #a1a1aa;
             font-weight: 500;
             letter-spacing: 0.3px;
             text-transform: uppercase;
-            margin-top: 10px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e5e7eb;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            gap: 4px;
+            justify-content: flex-start;
+            gap: 6px;
         }
 
         /* Sync Badge - Check Circle in Light Badge */
@@ -362,6 +374,48 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.3px;
+        }
+
+        .stats-sep {
+            color: #d1d5db;
+            font-size: 10px;
+        }
+
+        .stats-spacer {
+            flex: 1;
+        }
+
+        /* Growth Badge */
+        .growth-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            font-size: 0.55rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+
+        /* Source Badge */
+        .source-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.55rem;
+            color: #6b7280;
+            padding: 3px 8px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+        }
+
+        .source-badge .dot {
+            width: 5px;
+            height: 5px;
+            background: #00cc66;
+            border-radius: 50%;
         }
 
         .stat-card {
@@ -438,6 +492,24 @@
             background-clip: text;
             color: #dc2626;
             border-color: #dc2626;
+        }
+
+        .stat-card:nth-child(6) h3 {
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: #2563eb;
+            border-color: #2563eb;
+        }
+
+        .stat-card:nth-child(7) h3 {
+            background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: #ea580c;
+            border-color: #ea580c;
         }
 
         .stat-value {
@@ -1055,8 +1127,10 @@
                         </div>
                     </div>
                 </div>
-                <div class="stats-updated" id="statsUpdated"><span class="sync-badge"><span class="check">✓</span><span
-                            class="text">Synced</span></span> ...</div>
+                <div class="stats-updated" id="statsUpdated">
+                    <span class="sync-badge"><span class="check">✓</span><span class="text">Synced</span></span>
+                    <span id="syncTimestamp">...</span>
+                </div>
             </div>
         </div>
     </header>
@@ -1124,6 +1198,18 @@
     <button class="scroll-top-btn" id="scrollTopBtn" onclick="scrollToTop()" aria-label="Scroll to top">
         ↑
     </button>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        ⚠️ <strong>DISCLAIMER:</strong> This is an unofficial tool for educational and research purposes only, not
+        affiliated with or endorsed by TGPC or any government authority. All data is the intellectual property of their
+        respective owners.
+        <br>
+        🚫 The creator and contributors assume no liability for any lawsuits, damages, data loss, or legal consequences.
+        Users assume full responsibility. ⚖️ Protected under Fair Dealing, Section 52, Indian Copyright Act 1957.
+        <br>
+        © 2024 TGPC Rx Registry
+    </footer>
 
     <script>
         // Scroll to top functionality
