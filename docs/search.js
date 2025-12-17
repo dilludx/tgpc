@@ -155,79 +155,40 @@ function formatUpdatedTimestamp(date) {
     return `${dayName} ${dayNum} ${monthName} ${year} ${hours}:${minutes}`;
 }
 
-// Fetch and display the last sync timestamp and growth stats
+// Fetch and display the last sync timestamp
 async function loadStatsUpdated() {
-    const SYNC_CACHE_KEY = 'tgpc_last_sync';
-    const GROWTH_CACHE_KEY = 'tgpc_month_growth';
+    const CACHE_KEY = 'tgpc_last_sync';
     const syncTimestampEl = document.getElementById('syncTimestamp');
-    const growthBadgeEl = document.getElementById('growthBadge');
 
-    // Update sync timestamp display
-    function updateSyncDisplay(dateStr) {
-        if (syncTimestampEl) {
-            syncTimestampEl.textContent = dateStr;
-        }
+    if (!syncTimestampEl) return;
+
+    function updateDisplay(dateStr) {
+        syncTimestampEl.textContent = dateStr;
     }
 
-    // Update growth badge display
-    function updateGrowthDisplay(count, monthName) {
-        if (growthBadgeEl) {
-            growthBadgeEl.textContent = `↑ ${count} in ${monthName}`;
-        }
-    }
-
-    // Try to load sync timestamp from cache first
-    const cachedSync = localStorage.getItem(SYNC_CACHE_KEY);
-    if (cachedSync) {
+    // Try to load from cache first
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
         try {
-            const cachedDate = new Date(cachedSync);
-            updateSyncDisplay(formatUpdatedTimestamp(cachedDate));
+            const cachedDate = new Date(cached);
+            updateDisplay(formatUpdatedTimestamp(cachedDate));
         } catch (e) {
-            localStorage.removeItem(SYNC_CACHE_KEY);
-        }
-    }
-
-    // Try to load growth from cache
-    const cachedGrowth = localStorage.getItem(GROWTH_CACHE_KEY);
-    if (cachedGrowth) {
-        try {
-            const growth = JSON.parse(cachedGrowth);
-            updateGrowthDisplay(growth.count, growth.month);
-        } catch (e) {
-            localStorage.removeItem(GROWTH_CACHE_KEY);
+            localStorage.removeItem(CACHE_KEY);
         }
     }
 
     try {
-        // Fetch sync timestamp from Supabase metadata table
-        const { data: syncData, error: syncError } = await supabase
+        // Fetch from Supabase metadata table
+        const { data, error } = await supabase
             .from('metadata')
             .select('value')
             .eq('key', 'last_sync')
             .single();
 
-        if (!syncError && syncData && syncData.value) {
-            const syncDate = new Date(syncData.value);
-            updateSyncDisplay(formatUpdatedTimestamp(syncDate));
-            localStorage.setItem(SYNC_CACHE_KEY, syncData.value);
-        }
-
-        // Fetch monthly growth from metadata table
-        const { data: growthData, error: growthError } = await supabase
-            .from('metadata')
-            .select('value')
-            .eq('key', 'month_growth')
-            .single();
-
-        if (!growthError && growthData && growthData.value) {
-            const growth = JSON.parse(growthData.value);
-            updateGrowthDisplay(growth.count, growth.month);
-            localStorage.setItem(GROWTH_CACHE_KEY, growthData.value);
-        } else {
-            // Fallback: calculate from current month name
-            const now = new Date();
-            const monthName = MONTHS[now.getMonth()];
-            updateGrowthDisplay('...', monthName);
+        if (!error && data && data.value) {
+            const syncDate = new Date(data.value);
+            updateDisplay(formatUpdatedTimestamp(syncDate));
+            localStorage.setItem(CACHE_KEY, data.value);
         }
     } catch (error) {
         console.log('Metadata table not available, using cache/fallback');
