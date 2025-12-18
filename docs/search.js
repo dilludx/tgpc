@@ -54,6 +54,16 @@ function setupEventListeners() {
         // updateUrlQuery(''); // Removed: shareable links disabled
 
         clearTimeout(searchTimeout);
+
+        // If input is cleared, hide results
+        if (e.target.value.trim().length === 0) {
+            document.getElementById('resultsPanel').style.display = 'none';
+            document.getElementById('error').innerHTML = '';
+            currentResults = [];
+            displayedResults = [];
+            return;
+        }
+
         searchTimeout = setTimeout(() => {
             if (e.target.value.trim().length >= 2) {
                 performSearch();
@@ -68,7 +78,8 @@ function setupEventListeners() {
         }
     });
 
-    // Filter chips
+    // Filter chips with debounce
+    let filterTimeout;
     document.querySelectorAll('.filter-chip').forEach(btn => {
         btn.addEventListener('click', () => {
             const filterType = btn.dataset.filter;
@@ -83,11 +94,14 @@ function setupEventListeners() {
             // Update filter
             currentFilters[filterType] = filterValue;
 
-            // Re-search if there's a query
-            const query = document.getElementById('searchInput').value.trim();
-            if (query.length >= 2) {
-                performSearch();
-            }
+            // Debounced search to prevent rate limiting
+            clearTimeout(filterTimeout);
+            filterTimeout = setTimeout(() => {
+                const query = document.getElementById('searchInput').value.trim();
+                if (query.length >= 2) {
+                    performSearch();
+                }
+            }, 300);
         });
     });
 }
@@ -342,11 +356,11 @@ function displayAnalytics(stats) {
     }
 }
 
-// Security: Rate limiting
+// Security: Rate limiting (6 requests per 30 seconds)
 const rateLimiter = {
     requests: [],
-    maxRequests: 10,
-    windowMs: 60000, // 1 minute
+    maxRequests: 6,
+    windowMs: 30000, // 30 seconds
 
     canMakeRequest() {
         const now = Date.now();
@@ -388,6 +402,12 @@ async function performSearch() {
     // Rate limiting
     if (!rateLimiter.canMakeRequest()) {
         errorDiv.innerHTML = '<div class="error">⚠️ Too many requests. Please wait a moment.</div>';
+        // Auto-dismiss after 3 seconds
+        setTimeout(() => {
+            if (errorDiv.innerHTML.includes('Too many requests')) {
+                errorDiv.innerHTML = '';
+            }
+        }, 3000);
         return;
     }
 
