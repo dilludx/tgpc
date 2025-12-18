@@ -37,6 +37,10 @@
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%2300cc66'/><text x='50' y='66' font-size='55' font-weight='bold' font-family='Arial,sans-serif' fill='white' text-anchor='middle'>Rx</text></svg>">
     <style>
+        :root {
+            --content-padding: 32px;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -46,6 +50,7 @@
         html {
             scroll-behavior: smooth;
             height: 100%;
+            scrollbar-gutter: stable;
         }
 
         body {
@@ -55,9 +60,7 @@
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            min-height: 100%;
-            display: flex;
-            flex-direction: column;
+            min-height: 100vh;
             padding-bottom: 50px;
             /* Space for fixed footer */
         }
@@ -74,11 +77,12 @@
         .header-content {
             max-width: 100%;
             margin: 0 auto;
-            padding: 20px 32px;
+            padding: 20px var(--content-padding);
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 32px;
+            box-sizing: border-box;
         }
 
         .header-content .stats-grid {
@@ -314,8 +318,9 @@
         /* Main Container */
         .container {
             max-width: 100%;
-            margin: 0;
-            padding: 0;
+            margin: 0 auto;
+            padding: 20px var(--content-padding);
+            box-sizing: border-box;
         }
 
         /* Footer Styling */
@@ -532,14 +537,16 @@
 
         /* Search Section */
         .search-section {
+            display: block;
+            width: 100% !important;
+            max-width: 100% !important;
             background: #fafafa;
-            border-top: 1px solid #e5e7eb;
-            border-bottom: 1px solid #e5e7eb;
-            border-left: none;
-            border-right: none;
-            border-radius: 0;
-            padding: 28px 32px;
-            margin-bottom: 0;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
         }
 
         .section-header {
@@ -636,6 +643,7 @@
 
         /* Results Section */
         .results-section {
+            width: 100%;
             background: #fafafa;
             border: 1px solid #e5e7eb;
             border-radius: 12px;
