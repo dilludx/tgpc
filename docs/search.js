@@ -153,20 +153,23 @@ function startLiveClock() {
     setInterval(updateTime, 1000);
 }
 
-// Format timestamp for display in IST: "THU 11 DEC 2025 17:31 IST"
+// Format timestamp for display in IST: "THU 11 DEC 2025 17:31"
 function formatUpdatedTimestamp(date) {
-    // Convert to IST (UTC + 5:30)
-    const istOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in ms
-    const istDate = new Date(date.getTime() + istOffset + (date.getTimezoneOffset() * 60 * 1000));
+    // Force IST timezone using toLocaleString
+    const options = {
+        timeZone: 'Asia/Kolkata',
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    };
 
-    const dayName = DAYS[istDate.getDay()];
-    const dayNum = String(istDate.getDate()).padStart(2, '0');
-    const monthName = MONTHS[istDate.getMonth()];
-    const year = istDate.getFullYear();
-    const hours = String(istDate.getHours()).padStart(2, '0');
-    const minutes = String(istDate.getMinutes()).padStart(2, '0');
-
-    return `${dayName} ${dayNum} ${monthName} ${year} ${hours}:${minutes}`;
+    const formatted = date.toLocaleString('en-IN', options);
+    // Convert to uppercase format: "THU 18 DEC 2025 13:15"
+    return formatted.toUpperCase().replace(',', '');
 }
 
 // Fetch and display the last sync timestamp
@@ -192,7 +195,9 @@ async function loadStatsUpdated() {
     console.log('loadStatsUpdated: Cached value:', cached);
     if (cached) {
         try {
-            const cachedDate = new Date(cached);
+            // Ensure timestamp is treated as UTC by appending Z if missing
+            const utcValue = cached.endsWith('Z') ? cached : cached + 'Z';
+            const cachedDate = new Date(utcValue);
             updateDisplay(formatUpdatedTimestamp(cachedDate));
         } catch (e) {
             console.log('loadStatsUpdated: Cache parse error:', e);
@@ -216,9 +221,11 @@ async function loadStatsUpdated() {
         }
 
         if (!error && data && data.value) {
-            const syncDate = new Date(data.value);
+            // Ensure timestamp is treated as UTC by appending Z if missing
+            const utcValue = data.value.endsWith('Z') ? data.value : data.value + 'Z';
+            const syncDate = new Date(utcValue);
             updateDisplay(formatUpdatedTimestamp(syncDate));
-            localStorage.setItem(CACHE_KEY, data.value);
+            localStorage.setItem(CACHE_KEY, utcValue);
             console.log('loadStatsUpdated: Successfully updated to:', data.value);
         } else {
             console.log('loadStatsUpdated: No valid data received');
