@@ -153,16 +153,20 @@ function startLiveClock() {
     setInterval(updateTime, 1000);
 }
 
-// Format timestamp for display: "THU 11 DEC 2025 17:31"
+// Format timestamp for display in IST: "THU 11 DEC 2025 17:31 IST"
 function formatUpdatedTimestamp(date) {
-    const dayName = DAYS[date.getDay()];
-    const dayNum = String(date.getDate()).padStart(2, '0');
-    const monthName = MONTHS[date.getMonth()];
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    // Convert to IST (UTC + 5:30)
+    const istOffset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in ms
+    const istDate = new Date(date.getTime() + istOffset + (date.getTimezoneOffset() * 60 * 1000));
 
-    return `${dayName} ${dayNum} ${monthName} ${year} ${hours}:${minutes}`;
+    const dayName = DAYS[istDate.getDay()];
+    const dayNum = String(istDate.getDate()).padStart(2, '0');
+    const monthName = MONTHS[istDate.getMonth()];
+    const year = istDate.getFullYear();
+    const hours = String(istDate.getHours()).padStart(2, '0');
+    const minutes = String(istDate.getMinutes()).padStart(2, '0');
+
+    return `${dayName} ${dayNum} ${monthName} ${year} ${hours}:${minutes} IST`;
 }
 
 // Fetch and display the last sync timestamp
