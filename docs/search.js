@@ -166,7 +166,7 @@ function formatUpdatedTimestamp(date) {
     const hours = String(istDate.getHours()).padStart(2, '0');
     const minutes = String(istDate.getMinutes()).padStart(2, '0');
 
-    return `${dayName} ${dayNum} ${monthName} ${year} ${hours}:${minutes} IST`;
+    return `${dayName} ${dayNum} ${monthName} ${year} ${hours}:${minutes}`;
 }
 
 // Fetch and display the last sync timestamp
