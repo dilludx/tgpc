@@ -43,6 +43,11 @@
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+            height: 100%;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
             background: #ffffff;
@@ -50,10 +55,9 @@
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-        }
-
-        html {
-            scroll-behavior: smooth;
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         /* Header */
@@ -321,6 +325,7 @@
             font-size: 0.68rem;
             color: #6b7280;
             line-height: 2.2;
+            margin-top: auto;
         }
 
         /* Stats Grid */
