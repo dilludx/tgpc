@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGPC Test Page</title>
+</head>
+
+<body>
+    <h1>Test with search.js</h1>
+    <div id="statsUpdated">
+        <span>✓ Synced</span>
+        <span id="syncTimestamp">...</span>
+    </div>
+
+    <!-- Debug output -->
+    <pre id="debugLog" style="background: #f5f5f5; padding: 10px; margin-top: 20px;"></pre>
+
+    <!-- Same script order as index.html -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="search.js?v=uniquetest1"></script>
+
+    <script>
+        // Add debug output after search.js loads
+        setTimeout(() => {
+            const debug = document.getElementById('debugLog');
+            let msg = '';
+            msg += 'SUPABASE_URL defined: ' + (typeof SUPABASE_URL !== 'undefined') + '\n';
+            msg += 'supabase defined: ' + (typeof supabase !== 'undefined') + '\n';
+            if (typeof supabase !== 'undefined') {
+                msg += 'supabase type: ' + typeof supabase + '\n';
+                msg += 'supabase.from: ' + typeof (supabase && supabase.from) + '\n';
+            }
+            msg += 'syncTimestamp: ' + document.getElementById('syncTimestamp')?.textContent + '\n';
+            debug.textContent = msg;
+        }, 3000);
+    </script>
+</body>
+
+</html>

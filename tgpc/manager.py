@@ -29,7 +29,7 @@ class FileManager:
         self.data_dir = Path(config.data_directory)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-    def save(self, records: List[PharmacistRecord], filename: str = "rx.json"):
+    def save(self, records: List[PharmacistRecord], filename: str = "rx.json") -> Path:
         """Save records to JSON."""
         path = self.data_dir / filename
         data = [r.to_dict() for r in records]
@@ -66,15 +66,21 @@ class BackupManager:
         logger.info(f"Backup created: {dest}")
         return str(dest)
 
-    def cleanup(self, days: int = 30):
-        """Remove old backups."""
+    def cleanup(self, days: int = 30) -> int:
+        """Remove old backups. Returns count of deleted files."""
         cutoff = datetime.now() - timedelta(days=days)
+        deleted = 0
         for f in self.backup_dir.glob("rx_backup_*.json"):
             try:
                 ts = f.stem.split('_', 2)[2]
                 if datetime.strptime(ts, "%Y%m%d_%H%M%S") < cutoff:
                     f.unlink()
-            except: pass
+                    deleted += 1
+            except (ValueError, IndexError) as e:
+                logger.warning(f"Could not parse backup file {f.name}: {e}")
+            except OSError as e:
+                logger.warning(f"Could not delete backup file {f.name}: {e}")
+        return deleted
 
 class Manager:
     """Main management class."""

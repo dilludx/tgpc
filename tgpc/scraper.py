@@ -206,7 +206,7 @@ class Scraper:
 
             # 2. Parse Main Info & Validity
             main_text = soup.get_text()
-            validity_match = re.search(r'Valid\s*(?:Upto|Up\s*to)\s*[:\-]䀖?\s*(\d{2}[-/]\d{2}[-/]\d{4})', main_text, re.I)
+            validity_match = re.search(r'Valid\s*(?:Upto|Up\s*to)\s*[:\-]?\s*(\d{2}[-/]\d{2}[-/]\d{4})', main_text, re.I)
             if validity_match:
                 try:
                     date_str = validity_match.group(1)

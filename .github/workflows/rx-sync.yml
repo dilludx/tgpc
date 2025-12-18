@@ -49,12 +49,8 @@ jobs:
       run: |
         echo "♻️ Starting TGPC data update..."
         
-        # Run the update via CLI
+        # Run the update via CLI (outputs stats to GITHUB_OUTPUT automatically)
         python -m tgpc update
-        
-        # Note: The new CLI doesn't output GITHUB_OUTPUT variables yet. 
-        # For now, we'll assume success if the command exits with 0.
-        # We can enhance the CLI later to output these stats if needed.
         
         echo "success=True" >> $GITHUB_OUTPUT
 
