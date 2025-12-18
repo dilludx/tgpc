@@ -51,7 +51,7 @@ function setupEventListeners() {
     // Search input with debounce
     document.getElementById('searchInput').addEventListener('input', (e) => {
         // Clear URL immediately when user starts typing
-        updateUrlQuery('');
+        // updateUrlQuery(''); // Removed: shareable links disabled
 
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
@@ -418,8 +418,8 @@ async function performSearch() {
         loadingDiv.style.display = 'none';
         resultsPanel.style.display = 'block';
 
-        // Update URL with search query (shareable link)
-        updateUrlQuery(query);
+        // Shareable URL removed
+        // updateUrlQuery(query);
 
         sortResults();
 
@@ -430,33 +430,10 @@ async function performSearch() {
     }
 }
 
-// Shareable URLs: Check if URL has a query parameter
+// Shareable URLs: DISABLED
 function checkUrlQuery() {
-    try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const query = urlParams.get('q');
-        if (query && query.length >= 2) {
-            document.getElementById('searchInput').value = query;
-            performSearch();
-        }
-    } catch (e) {
-        // Silently fail if URL parsing fails
-    }
-}
-
-// Shareable URLs: Update URL with current query
-function updateUrlQuery(query) {
-    try {
-        const url = new URL(window.location);
-        if (query && query.length >= 2) {
-            url.searchParams.set('q', query);
-        } else {
-            url.searchParams.delete('q');
-        }
-        window.history.replaceState({}, '', url);
-    } catch (e) {
-        // Silently fail if URL update fails
-    }
+    // Shareable links functionality removed
+    return;
 }
 
 // Sort results
@@ -573,7 +550,7 @@ function resetSearch() {
     document.getElementById('loading').style.display = 'none';
 
     // Clear URL query parameter
-    updateUrlQuery('');
+    // updateUrlQuery(''); // Removed: shareable links disabled
 }
 
 // Export results to PDF
