@@ -2,7 +2,8 @@
 const SUPABASE_URL = 'https://vhgpyvzgmvhijqgsapnk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoZ3B5dnpnbXZoaWpxZ3NhcG5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4Njc1MjAsImV4cCI6MjA3ODQ0MzUyMH0.Cp4oyw2M72RCFnsKeLg49hSMvGs4pm6-ul0sFmAasRs';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Supabase client - initialized in DOMContentLoaded
+let supabaseClient;
 
 // State
 let currentResults = [];
@@ -30,6 +31,15 @@ function escapeHtml(text) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Supabase client here to ensure library is loaded
+    console.log('DOMContentLoaded: Initializing Supabase...');
+    if (window.supabase && window.supabase.createClient) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('DOMContentLoaded: Supabase client created successfully');
+    } else {
+        console.error('DOMContentLoaded: window.supabase not available!');
+    }
+
     setupEventListeners();
     checkConnection();
     loadAnalytics();
@@ -90,7 +100,7 @@ async function checkConnection() {
         // statusEl is already set to 'Busy' in static HTML
 
         // Try a simple query to check connection
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('rx')
             .select('id')
             .limit(1);
@@ -160,38 +170,57 @@ async function loadStatsUpdated() {
     const CACHE_KEY = 'tgpc_last_sync';
     const syncTimestampEl = document.getElementById('syncTimestamp');
 
-    if (!syncTimestampEl) return;
+    console.log('loadStatsUpdated: Starting...');
+    console.log('loadStatsUpdated: syncTimestampEl found:', !!syncTimestampEl);
+
+    if (!syncTimestampEl) {
+        console.log('loadStatsUpdated: Element not found, returning');
+        return;
+    }
 
     function updateDisplay(dateStr) {
+        console.log('loadStatsUpdated: Updating display to:', dateStr);
         syncTimestampEl.textContent = dateStr;
     }
 
     // Try to load from cache first
     const cached = localStorage.getItem(CACHE_KEY);
+    console.log('loadStatsUpdated: Cached value:', cached);
     if (cached) {
         try {
             const cachedDate = new Date(cached);
             updateDisplay(formatUpdatedTimestamp(cachedDate));
         } catch (e) {
+            console.log('loadStatsUpdated: Cache parse error:', e);
             localStorage.removeItem(CACHE_KEY);
         }
     }
 
     try {
         // Fetch from Supabase metadata table
-        const { data, error } = await supabase
+        console.log('loadStatsUpdated: Fetching from Supabase...');
+        const { data, error } = await supabaseClient
             .from('metadata')
             .select('value')
             .eq('key', 'last_sync')
             .single();
 
+        console.log('loadStatsUpdated: Supabase response - data:', data, 'error:', error);
+
+        if (error) {
+            console.error('loadStatsUpdated: Supabase error:', error);
+        }
+
         if (!error && data && data.value) {
             const syncDate = new Date(data.value);
             updateDisplay(formatUpdatedTimestamp(syncDate));
             localStorage.setItem(CACHE_KEY, data.value);
+            console.log('loadStatsUpdated: Successfully updated to:', data.value);
+        } else {
+            console.log('loadStatsUpdated: No valid data received');
         }
     } catch (error) {
-        console.log('Metadata table not available, using cache/fallback');
+        console.error('loadStatsUpdated: Exception:', error);
     }
 }
 
@@ -229,7 +258,7 @@ async function loadAnalytics() {
 
     try {
         // Single RPC call to get all stats (production grade)
-        const { data: stats, error } = await supabase.rpc('get_rx_stats');
+        const { data: stats, error } = await supabaseClient.rpc('get_rx_stats');
 
         if (error) throw error;
 
@@ -359,7 +388,7 @@ async function performSearch() {
     errorDiv.innerHTML = '';
 
     try {
-        let queryBuilder = supabase
+        let queryBuilder = supabaseClient
             .from('rx')
             .select('registration_number,name,father_name,category')
             .or(`registration_number.ilike.%${query}%,name.ilike.%${query}%,father_name.ilike.%${query}%`);
