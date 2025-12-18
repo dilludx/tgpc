@@ -58,6 +58,8 @@
             min-height: 100%;
             display: flex;
             flex-direction: column;
+            padding-bottom: 50px;
+            /* Space for fixed footer */
         }
 
         /* Header */
@@ -70,7 +72,7 @@
         }
 
         .header-content {
-            max-width: 1400px;
+            max-width: 100%;
             margin: 0 auto;
             padding: 20px 32px;
             display: flex;
@@ -311,13 +313,17 @@
 
         /* Main Container */
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 32px;
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
         }
 
         /* Footer Styling */
         .site-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background: #fafafa;
             border-top: 1px solid #e5e7eb;
             padding: 6px 12px;
@@ -325,7 +331,7 @@
             font-size: 0.55rem;
             color: #9ca3af;
             line-height: 1.2;
-            margin-top: auto;
+            z-index: 100;
         }
 
         /* Stats Grid */
@@ -527,10 +533,13 @@
         /* Search Section */
         .search-section {
             background: #fafafa;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 28px;
-            margin-bottom: 24px;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+            border-left: none;
+            border-right: none;
+            border-radius: 0;
+            padding: 28px 32px;
+            margin-bottom: 0;
         }
 
         .section-header {
@@ -1201,7 +1210,10 @@
 
     <!-- Scroll to Top Button -->
     <button class="scroll-top-btn" id="scrollTopBtn" onclick="scrollToTop()" aria-label="Scroll to top">
-        ↑
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
     </button>
 
     <!-- Footer -->
