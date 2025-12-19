@@ -488,8 +488,8 @@ function loadMore() {
     displayResults(displayedResults, true);
 }
 
-// Display results with pagination
-function displayResults(data, append = false) {
+// Display all results (no pagination)
+function displayResults(data) {
     const resultsDiv = document.getElementById('results');
     const resultsCount = document.getElementById('resultsCount');
 
@@ -500,12 +500,6 @@ function displayResults(data, append = false) {
         resultsDiv.innerHTML = '<div class="empty-state">No results found. Try different search terms or filters.</div>';
         return;
     }
-
-    // Calculate pagination
-    const startIndex = append ? (currentPage - 1) * RESULTS_PER_PAGE : 0;
-    const endIndex = currentPage * RESULTS_PER_PAGE;
-    const paginatedData = data.slice(0, endIndex);
-    const hasMore = endIndex < data.length;
 
     const tableHtml = `
         <table class="data-table">
@@ -518,7 +512,7 @@ function displayResults(data, append = false) {
                 </tr>
             </thead>
             <tbody>
-                ${paginatedData.map(record => `
+                ${data.map(record => `
                     <tr>
                         <td><span class="reg-number">${escapeHtml(record.registration_number)}</span></td>
                         <td>${escapeHtml(record.name)}</td>
@@ -530,15 +524,7 @@ function displayResults(data, append = false) {
         </table>
     `;
 
-    const loadMoreHtml = hasMore ? `
-        <div style="text-align: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid #f4f4f5;">
-            <button class="btn btn-secondary" onclick="loadMore()">
-                Load More (${Math.min(RESULTS_PER_PAGE, data.length - endIndex)} of ${data.length - endIndex} remaining)
-            </button>
-        </div>
-    ` : '';
-
-    resultsDiv.innerHTML = tableHtml + loadMoreHtml;
+    resultsDiv.innerHTML = tableHtml;
 }
 
 // Reset search
