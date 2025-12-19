@@ -674,10 +674,10 @@
             border: 1px solid #e5e7eb;
             border-radius: 8px;
             padding: 10px 14px;
-            max-height: calc(100vh - 210px);
+            max-height: calc(100vh - 225px);
             display: flex;
             flex-direction: column;
-            overflow: visible;
+            overflow: hidden;
         }
 
         .results-header {
@@ -730,8 +730,10 @@
         /* Table */
         .table-container {
             flex: 1;
+            min-height: 0;
+            max-height: calc(100vh - 300px);
             overflow-x: auto;
-            overflow-y: auto;
+            overflow-y: scroll;
         }
 
         .data-table {
