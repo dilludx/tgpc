@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>TGPC Mockups</title>
+    <title>TGPC Mockups - Disclaimer Options</title>
     <style>
         * {
             margin: 0;
@@ -18,7 +18,13 @@
 
         h1 {
             color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
             margin-bottom: 30px;
+            font-size: 0.9rem;
         }
 
         h2 {
@@ -30,361 +36,190 @@
         .mockup-container {
             background: white;
             border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 30px;
+            padding: 20px;
+            margin-bottom: 20px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .mockup-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #9ca3af;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             padding-bottom: 8px;
             border-bottom: 1px solid #e5e7eb;
         }
 
-        /* ============================================
-           MOCKUP STYLES - Add your mockup CSS here
-           ============================================ */
-
-        .search-section {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 12px;
-            background: #fafafa;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px 24px;
-        }
-
-        .section-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
-        .section-title .gray {
-            color: #808080;
-        }
-
-        .section-title .red {
-            color: #ef4444;
-        }
-
-        .search-bar {
+        .synced-bar {
             display: flex;
             align-items: center;
             gap: 8px;
-            flex: 1;
-            min-width: 300px;
+            font-size: 0.625rem;
+            color: #a1a1aa;
+            padding: 6px 10px;
+            background: #fafafa;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
         }
 
-        .search-input {
-            flex: 1;
-            padding: 10px 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 25px;
-            font-size: 0.875rem;
-            outline: none;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.8125rem;
-            font-weight: 500;
-            cursor: pointer;
-            border: none;
-            white-space: nowrap;
-        }
-
-        .btn-primary {
-            background: #00cc66;
-            color: white;
-        }
-
-        .btn-secondary {
-            background: white;
-            color: #1a1a1a;
-            border: 1px solid #d1d5db;
-        }
-
-        .separator {
-            width: 1px;
-            height: 24px;
-            background: #d1d5db;
-            margin: 0 8px;
-        }
-
-        /* Option A: Inline label */
-        .filters-inline {
-            display: flex;
+        .sync-badge {
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 3px;
+            background: rgba(0, 204, 102, 0.1);
+            padding: 2px 6px;
+            border-radius: 10px;
         }
 
-        .filters-label-inline {
-            font-size: 0.7rem;
-            color: #6b7280;
-            font-weight: 500;
-            margin-right: 4px;
+        .sync-dot {
+            width: 6px;
+            height: 6px;
+            background: #00cc66;
+            border-radius: 50%;
         }
 
-        /* Option B: Stacked label */
-        .filters-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 4px;
+        .sync-text {
+            color: #16a34a;
+            font-weight: 600;
         }
 
-        .filters-label-stacked {
-            font-size: 0.65rem;
+        .divider {
+            opacity: 0.5;
+        }
+
+        .disclaimer-inline {
+            font-size: 0.55rem;
             color: #9ca3af;
+            font-style: italic;
+        }
+
+        .disclaimer-badge {
+            background: rgba(234, 179, 8, 0.1);
+            color: #a16207;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.55rem;
             font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
-        .filters {
-            display: flex;
+        .info-icon {
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
-        }
-
-        .filter-chip {
-            padding: 6px 12px;
-            border: 1px solid #d1d5db;
-            background: white;
-            border-radius: 16px;
-            font-size: 0.75rem;
-            color: #4b5563;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            background: #e5e7eb;
+            border-radius: 50%;
+            font-size: 0.5rem;
+            color: #6b7280;
             cursor: pointer;
-        }
-
-        .filter-chip.active {
-            background: #00cc66;
-            color: white;
-            border-color: #00cc66;
         }
     </style>
 </head>
 
 <body>
-    <h1>🎨 TGPC Mockups</h1>
+    <h1>📋 Disclaimer Mockup Options</h1>
+    <p class="subtitle">Different ways to display a disclaimer in the synced area</p>
 
-    <!-- ============================================
-         MOCKUP A: Inline Categories Label
-         ============================================ -->
-    <h2>Option A: Inline Label</h2>
+    <!-- Option A: Current (No Disclaimer) -->
+    <h2>Option A: Current (No Disclaimer)</h2>
     <div class="mockup-container">
-        <div class="mockup-label">Categories label inline with chips</div>
-        <section class="search-section">
-            <div class="section-header">
-                <h2 class="section-title"><span class="gray">Search</span> <span class="red">Rx</span></h2>
-            </div>
-
-            <div class="search-bar">
-                <input type="text" class="search-input" placeholder="Search">
-                <button class="btn btn-primary">Search</button>
-                <button class="btn btn-secondary">Reset</button>
-                <button class="btn btn-secondary">Export PDF</button>
-                <button class="btn btn-secondary">Export CSV</button>
-            </div>
-
-            <span class="separator"></span>
-
-            <div class="filters-inline">
-                <span class="filters-label-inline">Categories:</span>
-                <button class="filter-chip active">All</button>
-                <button class="filter-chip">BPharm</button>
-                <button class="filter-chip">DPharm</button>
-                <button class="filter-chip">MPharm</button>
-                <button class="filter-chip">PharmD</button>
-                <button class="filter-chip">QC</button>
-                <button class="filter-chip">QP</button>
-            </div>
-        </section>
+        <div class="mockup-label">Existing design</div>
+        <div class="synced-bar">
+            <span class="sync-badge">
+                <span class="sync-dot"></span>
+                <span class="sync-text">SYNCED</span>
+            </span>
+            <span>FRI 19 DEC, 2025, 09:15</span>
+        </div>
     </div>
 
-    <!-- ============================================
-         MOCKUP B: Stacked Categories Label
-         ============================================ -->
-    <h2>Option B: Stacked Label</h2>
+    <!-- Option B: Inline Disclaimer -->
+    <h2>Option B: Inline Disclaimer Text</h2>
     <div class="mockup-container">
-        <div class="mockup-label">Categories label above chips</div>
-        <section class="search-section">
-            <div class="section-header">
-                <h2 class="section-title"><span class="gray">Search</span> <span class="red">Rx</span></h2>
-            </div>
-
-            <div class="search-bar">
-                <input type="text" class="search-input" placeholder="Search">
-                <button class="btn btn-primary">Search</button>
-                <button class="btn btn-secondary">Reset</button>
-                <button class="btn btn-secondary">Export PDF</button>
-                <button class="btn btn-secondary">Export CSV</button>
-            </div>
-
-            <span class="separator" style="height: 40px;"></span>
-
-            <div class="filters-wrapper">
-                <span class="filters-label-stacked">Categories</span>
-                <div class="filters">
-                    <button class="filter-chip active">All</button>
-                    <button class="filter-chip">BPharm</button>
-                    <button class="filter-chip">DPharm</button>
-                    <button class="filter-chip">MPharm</button>
-                    <button class="filter-chip">PharmD</button>
-                    <button class="filter-chip">QC</button>
-                    <button class="filter-chip">QP</button>
-                </div>
-            </div>
-        </section>
-    </div>
-
-    <!-- ============================================
-         MOCKUP C: Badge Style Label
-         ============================================ -->
-    <h2>Option C: Badge Style Label</h2>
-    <div class="mockup-container">
-        <div class="mockup-label">Categories as a distinct badge</div>
-        <section class="search-section">
-            <div class="section-header">
-                <h2 class="section-title"><span class="gray">Search</span> <span class="red">Rx</span></h2>
-            </div>
-
-            <div class="search-bar">
-                <input type="text" class="search-input" placeholder="Search">
-                <button class="btn btn-primary">Search</button>
-                <button class="btn btn-secondary">Reset</button>
-                <button class="btn btn-secondary">Export PDF</button>
-                <button class="btn btn-secondary">Export CSV</button>
-            </div>
-
-            <span class="separator"></span>
-
-            <div class="filters-inline">
-                <span
-                    style="background: #e5e7eb; padding: 5px 10px; border-radius: 12px; font-size: 0.65rem; color: #4b5563; font-weight: 600;">CATEGORIES</span>
-                <button class="filter-chip active">All</button>
-                <button class="filter-chip">BPharm</button>
-                <button class="filter-chip">DPharm</button>
-                <button class="filter-chip">MPharm</button>
-                <button class="filter-chip">PharmD</button>
-                <button class="filter-chip">QC</button>
-                <button class="filter-chip">QP</button>
-            </div>
-        </section>
-    </div>
-
-    <!-- ============================================
-         MOCKUP D: Icon + Text Label
-         ============================================ -->
-    <h2>Option D: Filter Icon + Label</h2>
-    <div class="mockup-container">
-        <div class="mockup-label">Filter icon with text</div>
-        <section class="search-section">
-            <div class="section-header">
-                <h2 class="section-title"><span class="gray">Search</span> <span class="red">Rx</span></h2>
-            </div>
-
-            <div class="search-bar">
-                <input type="text" class="search-input" placeholder="Search">
-                <button class="btn btn-primary">Search</button>
-                <button class="btn btn-secondary">Reset</button>
-                <button class="btn btn-secondary">Export PDF</button>
-                <button class="btn btn-secondary">Export CSV</button>
-            </div>
-
-            <span class="separator"></span>
-
-            <div class="filters-inline">
-                <span style="font-size: 0.75rem; color: #6b7280; display: flex; align-items: center; gap: 4px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                    </svg>
-                    Filter:
+        <div class="mockup-label">Small disclaimer text inline</div>
+        <div class="synced-bar" style="justify-content: space-between; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="sync-badge">
+                    <span class="sync-dot"></span>
+                    <span class="sync-text">SYNCED</span>
                 </span>
-                <button class="filter-chip active">All</button>
-                <button class="filter-chip">BPharm</button>
-                <button class="filter-chip">DPharm</button>
-                <button class="filter-chip">MPharm</button>
-                <button class="filter-chip">PharmD</button>
-                <button class="filter-chip">QC</button>
-                <button class="filter-chip">QP</button>
+                <span>FRI 19 DEC, 2025, 09:15</span>
             </div>
-        </section>
+            <span class="disclaimer-inline">For informational purposes only</span>
+        </div>
     </div>
 
-    <!-- ============================================
-         MOCKUP E: Bordered Group
-         ============================================ -->
-    <h2>Option E: Bordered Group Box</h2>
+    <!-- Option C: Disclaimer Badge -->
+    <h2>Option C: Disclaimer Badge</h2>
     <div class="mockup-container">
-        <div class="mockup-label">Chips in a bordered container with legend</div>
-        <section class="search-section">
-            <div class="section-header">
-                <h2 class="section-title"><span class="gray">Search</span> <span class="red">Rx</span></h2>
-            </div>
-
-            <div class="search-bar">
-                <input type="text" class="search-input" placeholder="Search">
-                <button class="btn btn-primary">Search</button>
-                <button class="btn btn-secondary">Reset</button>
-                <button class="btn btn-secondary">Export PDF</button>
-                <button class="btn btn-secondary">Export CSV</button>
-            </div>
-
-            <fieldset style="border: 1px solid #d1d5db; border-radius: 8px; padding: 8px 12px; margin: 0;">
-                <legend style="font-size: 0.6rem; color: #9ca3af; padding: 0 6px; font-weight: 500;">Categories</legend>
-                <div class="filters">
-                    <button class="filter-chip active">All</button>
-                    <button class="filter-chip">BPharm</button>
-                    <button class="filter-chip">DPharm</button>
-                    <button class="filter-chip">MPharm</button>
-                    <button class="filter-chip">PharmD</button>
-                    <button class="filter-chip">QC</button>
-                    <button class="filter-chip">QP</button>
-                </div>
-            </fieldset>
-        </section>
+        <div class="mockup-label">Highlighted disclaimer badge</div>
+        <div class="synced-bar">
+            <span class="sync-badge">
+                <span class="sync-dot"></span>
+                <span class="sync-text">SYNCED</span>
+            </span>
+            <span>FRI 19 DEC, 2025, 09:15</span>
+            <span class="divider">|</span>
+            <span class="disclaimer-badge">⚠ Informational Only</span>
+        </div>
     </div>
 
-    <!-- ============================================
-         MOCKUP F: No Label (Just Better Spacing)
-         ============================================ -->
-    <h2>Option F: No Label (Visual Separation Only)</h2>
+    <!-- Option D: Info Icon with Tooltip -->
+    <h2>Option D: Info Icon (Hover for Disclaimer)</h2>
     <div class="mockup-container">
-        <div class="mockup-label">Just the separator, no text label</div>
-        <section class="search-section">
-            <div class="section-header">
-                <h2 class="section-title"><span class="gray">Search</span> <span class="red">Rx</span></h2>
+        <div class="mockup-label">Minimal - icon expands on hover</div>
+        <div class="synced-bar" style="justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="sync-badge">
+                    <span class="sync-dot"></span>
+                    <span class="sync-text">SYNCED</span>
+                </span>
+                <span>FRI 19 DEC, 2025, 09:15</span>
             </div>
+            <span class="info-icon"
+                title="For informational purposes only. Not affiliated with any government authority.">ⓘ</span>
+        </div>
+    </div>
 
-            <div class="search-bar">
-                <input type="text" class="search-input" placeholder="Search">
-                <button class="btn btn-primary">Search</button>
-                <button class="btn btn-secondary">Reset</button>
-                <button class="btn btn-secondary">Export PDF</button>
-                <button class="btn btn-secondary">Export CSV</button>
+    <!-- Option E: Full Disclaimer Row -->
+    <h2>Option E: Full Disclaimer (Two Lines)</h2>
+    <div class="mockup-container">
+        <div class="mockup-label">Complete disclaimer on second line</div>
+        <div style="background: #fafafa; border-radius: 8px; border: 1px solid #e5e7eb; padding: 6px 10px;">
+            <div class="synced-bar" style="border: none; padding: 0; background: none; margin-bottom: 4px;">
+                <span class="sync-badge">
+                    <span class="sync-dot"></span>
+                    <span class="sync-text">SYNCED</span>
+                </span>
+                <span>FRI 19 DEC, 2025, 09:15</span>
             </div>
-
-            <span class="separator"></span>
-
-            <div class="filters">
-                <button class="filter-chip active">All</button>
-                <button class="filter-chip">BPharm</button>
-                <button class="filter-chip">DPharm</button>
-                <button class="filter-chip">MPharm</button>
-                <button class="filter-chip">PharmD</button>
-                <button class="filter-chip">QC</button>
-                <button class="filter-chip">QP</button>
+            <div style="font-size: 0.5rem; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 4px;">
+                ⚠ This is an unofficial tool for educational and research purposes only. Not affiliated with any
+                government authority.
             </div>
-        </section>
+        </div>
+    </div>
+
+    <!-- Option F: Combined with Liability Notice -->
+    <h2>Option F: Disclaimer + No Liability</h2>
+    <div class="mockup-container">
+        <div class="mockup-label">Complete legal language</div>
+        <div style="background: #fafafa; border-radius: 8px; border: 1px solid #e5e7eb; padding: 6px 10px;">
+            <div class="synced-bar" style="border: none; padding: 0; background: none; margin-bottom: 4px;">
+                <span class="sync-badge">
+                    <span class="sync-dot"></span>
+                    <span class="sync-text">SYNCED</span>
+                </span>
+                <span>FRI 19 DEC, 2025, 09:15</span>
+            </div>
+            <div
+                style="font-size: 0.5rem; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 4px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <span>⚠ For educational and research purposes only.</span>
+                <span>🚫 No liability accepted for any damages.</span>
+            </div>
+        </div>
     </div>
 
 </body>
