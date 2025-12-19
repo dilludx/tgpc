@@ -78,11 +78,11 @@
         .header-content {
             max-width: 100%;
             margin: 0 auto;
-            padding: 20px var(--content-padding);
+            padding: 10px var(--content-padding);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 32px;
+            gap: 20px;
             box-sizing: border-box;
         }
 
@@ -91,8 +91,8 @@
             flex: 0 0 auto;
             background: #ffffff;
             border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px 16px 8px 16px;
+            border-radius: 8px;
+            padding: 8px 10px 4px 10px;
             display: flex;
             flex-direction: column;
             gap: 0;
@@ -100,14 +100,14 @@
 
         .stats-row {
             display: flex;
-            gap: 16px;
+            gap: 10px;
             align-items: center;
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
         }
 
         .btn-logout {
@@ -139,7 +139,7 @@
         }
 
         .brand-text h1 {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
             color: #00cc66;
             line-height: 1.2;
@@ -156,7 +156,7 @@
         }
 
         .brand-text p {
-            font-size: 0.8125rem;
+            font-size: 0.75rem;
             color: #808080;
             margin: 0;
             /* Removed margin-top */
@@ -180,12 +180,12 @@
             /* left-aligned within brand-text */
             width: 100%;
             /* fixed width to prevent size changes */
-            height: 24px;
-            padding: 0 6px;
+            height: 20px;
+            padding: 0 5px;
             border: 1px solid transparent;
             border-radius: 50px !important;
             overflow: hidden;
-            font-size: 0.75rem;
+            font-size: 0.625rem;
             font-weight: 500;
             box-sizing: border-box;
             vertical-align: middle;
@@ -204,10 +204,10 @@
         .status-text {
             flex-shrink: 1;
             margin: 0;
-            font-size: 12px !important;
+            font-size: 10px !important;
             font-weight: 500 !important;
-            height: 22px;
-            line-height: 22px !important;
+            height: 18px;
+            line-height: 18px !important;
             display: inline-block;
             vertical-align: middle;
             text-align: center;
@@ -227,8 +227,8 @@
             opacity: 0.8;
             flex-shrink: 1;
             margin-left: 2px;
-            height: 22px;
-            line-height: 22px !important;
+            height: 18px;
+            line-height: 18px !important;
             display: inline-block;
             white-space: nowrap;
             overflow: hidden;
@@ -320,7 +320,7 @@
         .container {
             max-width: 100%;
             margin: 0 auto;
-            padding: 20px var(--content-padding);
+            padding: 10px var(--content-padding);
             box-sizing: border-box;
         }
 
@@ -353,8 +353,8 @@
             font-weight: 500;
             letter-spacing: 0.3px;
             text-transform: uppercase;
-            margin-top: 12px;
-            padding-top: 12px;
+            margin-top: 6px;
+            padding-top: 6px;
             border-top: 1px solid #e5e7eb;
             display: flex;
             align-items: center;
@@ -441,7 +441,7 @@
             border-radius: 0;
             padding: 0;
             border-right: 1px solid #e5e7eb;
-            padding-right: 24px;
+            padding-right: 16px;
         }
 
         .stat-card:last-child {
@@ -452,7 +452,7 @@
         .stat-header {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 6px;
         }
 
 
@@ -541,13 +541,13 @@
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
             width: 100%;
             background: #fafafa;
             border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px 24px;
-            margin-bottom: 12px;
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-bottom: 8px;
         }
 
         .section-header {
@@ -672,11 +672,12 @@
             width: 100%;
             background: #fafafa;
             border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px 20px;
-            max-height: calc(100vh - 300px);
+            border-radius: 8px;
+            padding: 10px 14px;
+            max-height: calc(100vh - 220px);
             display: flex;
             flex-direction: column;
+            overflow: visible;
         }
 
         .results-header {
@@ -728,9 +729,10 @@
 
         /* Table */
         .table-container {
+            flex: 1;
             overflow-x: auto;
             overflow-y: auto;
-            max-height: 50vh;
+            max-height: calc(100vh - 400px);
         }
 
         .data-table {
