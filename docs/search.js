@@ -182,8 +182,8 @@ function formatUpdatedTimestamp(date) {
     };
 
     const formatted = date.toLocaleString('en-IN', options);
-    // Convert to uppercase format: "THU 18 DEC 2025 13:15"
-    return formatted.toUpperCase().replace(',', '');
+    // Convert to uppercase format: "THU 18 DEC 2025 13:15" - remove all commas
+    return formatted.toUpperCase().replace(/,/g, '');
 }
 
 // Fetch and display the last sync timestamp
