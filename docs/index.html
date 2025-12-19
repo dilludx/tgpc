@@ -674,7 +674,7 @@
             border: 1px solid #e5e7eb;
             border-radius: 8px;
             padding: 10px 14px;
-            max-height: calc(100vh - 220px);
+            max-height: calc(100vh - 210px);
             display: flex;
             flex-direction: column;
             overflow: visible;
@@ -732,7 +732,6 @@
             flex: 1;
             overflow-x: auto;
             overflow-y: auto;
-            max-height: calc(100vh - 400px);
         }
 
         .data-table {
@@ -1200,7 +1199,8 @@
             </div>
 
             <div class="search-bar">
-                <input type="text" class="search-input" id="searchInput" placeholder="Search" autocomplete="off">
+                <input type="text" class="search-input" id="searchInput"
+                    placeholder="Enter name or registration number (min 2 chars)" autocomplete="off">
                 <button class="btn btn-primary" onclick="performSearch()">Search</button>
                 <button class="btn btn-secondary" onclick="resetSearch()">Reset</button>
                 <button class="btn btn-secondary" onclick="exportResults()">Export PDF</button>
