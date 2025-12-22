@@ -133,8 +133,8 @@ class Manager:
         duplicates = len(fresh_records) - len(sorted_records)
         
         # Detailed changes
-        new_details = [f"{current_map[i].registration_number} - {current_map[i].name}" for i in new_ids]
-        removed_details = [f"{existing_map[i].registration_number} - {existing_map[i].name}" for i in removed_ids]
+        new_details = [f"{current_map[i].registration_number} - {current_map[i].name} ({current_map[i].category})" for i in new_ids]
+        removed_details = [f"{existing_map[i].registration_number} - {existing_map[i].name} ({existing_map[i].category})" for i in removed_ids]
         
         modified_count = 0
         modified_details = []
@@ -143,7 +143,7 @@ class Manager:
             if existing_map[rid] != current_map[rid]:
                 modified_count += 1
                 modified_ids.append(rid)
-                modified_details.append(f"{current_map[rid].registration_number} - {current_map[rid].name}")
+                modified_details.append(f"{current_map[rid].registration_number} - {current_map[rid].name} ({current_map[rid].category})")
 
         # Category Statistics
         def get_cat_stats(ids, mapping):

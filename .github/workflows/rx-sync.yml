@@ -145,55 +145,78 @@ jobs:
         # Add data files (JSON only)
         git add data/rx.json
         
-        # Format category stats for commit message
+        # Format category stats and details for commit message
         NEW_CATS='${{ steps.update.outputs.new_cat_stats }}'
         REM_CATS='${{ steps.update.outputs.rem_cat_stats }}'
         MOD_CATS='${{ steps.update.outputs.mod_cat_stats }}'
+        NEW_DETAILS='${{ steps.update.outputs.new_details }}'
+        MOD_DETAILS='${{ steps.update.outputs.modified_details }}'
+        REM_DETAILS='${{ steps.update.outputs.removed_details }}'
         
-        NEW_MSG=$(python3 -c "
+        # Generate commit message using Python
+        COMMIT_MSG=$(python3 << 'PYEOF'
         import json
-        try:
-            stats = json.loads('$NEW_CATS') if '$NEW_CATS' else {}
-            if stats:
-                parts = [f'{k}: {v}' for k, v in sorted(stats.items(), key=lambda x: x[1], reverse=True)]
-                print(', '.join(parts))
-            else:
-                print('0')
-        except:
-            print('0')
-        ")
+        from datetime import datetime
+        import pytz
         
-        MOD_MSG=$(python3 -c "
-        import json
-        try:
-            stats = json.loads('$MOD_CATS') if '$MOD_CATS' else {}
-            if stats:
-                parts = [f'{k}: {v}' for k, v in sorted(stats.items(), key=lambda x: x[1], reverse=True)]
-                print(', '.join(parts))
-            else:
-                print('0')
-        except:
-            print('0')
-        ")
+        def format_cats(json_str):
+            try:
+                stats = json.loads(json_str) if json_str else {}
+                if stats:
+                    parts = [f'{k}: {v}' for k, v in sorted(stats.items(), key=lambda x: x[1], reverse=True)]
+                    return ', '.join(parts)
+                return '0'
+            except:
+                return '0'
         
-        REM_MSG=$(python3 -c "
-        import json
-        try:
-            stats = json.loads('$REM_CATS') if '$REM_CATS' else {}
-            if stats:
-                parts = [f'{k}: {v}' for k, v in sorted(stats.items(), key=lambda x: x[1], reverse=True)]
-                print(', '.join(parts))
-            else:
-                print('0')
-        except:
-            print('0')
-        ")
+        def format_details(json_str):
+            try:
+                details = json.loads(json_str) if json_str else []
+                if not details:
+                    return ''
+                return '\n'.join(details)
+            except:
+                return ''
         
-        # Create commit message with category details
-        COMMIT_DATE=$(TZ='Asia/Kolkata' date '+%a %d %b %Y %H:%M IST' | tr '[:lower:]' '[:upper:]')
-        git commit -m "♻️ Rx Sync - $COMMIT_DATE
+        # Get IST time
+        ist = pytz.timezone('Asia/Kolkata')
+        now = datetime.now(ist)
+        date_str = now.strftime('%a %d %b %Y').upper()
+        time_str = now.strftime('%H:%M IST')
         
-        New: $NEW_MSG | Modified: $MOD_MSG | Removed: $REM_MSG | Total: ${{ steps.update.outputs.total_records }}"
+        new_cats = format_cats('$NEW_CATS')
+        mod_cats = format_cats('$MOD_CATS')
+        rem_cats = format_cats('$REM_CATS')
+        
+        new_details = format_details('$NEW_DETAILS')
+        mod_details = format_details('$MOD_DETAILS')
+        rem_details = format_details('$REM_DETAILS')
+        
+        # Build commit message
+        msg = f"♻️ Rx Sync\n{date_str} • {time_str}\n"
+        
+        if new_cats != '0':
+            msg += f"\n🆕 New Additions: {new_cats}"
+            if new_details:
+                msg += f"\n{new_details}"
+        
+        if mod_cats != '0':
+            msg += f"\n\n✏️ Modifications: {mod_cats}"
+            if mod_details:
+                msg += f"\n{mod_details}"
+        
+        if rem_cats != '0':
+            msg += f"\n\n🗑️ Removals: {rem_cats}"
+            if rem_details:
+                msg += f"\n{rem_details}"
+        
+        msg += f"\n\n📊 Total: ${{ steps.update.outputs.total_records }}"
+        
+        print(msg)
+        PYEOF
+        )
+        
+        git commit -m "$COMMIT_MSG"
         
         # Pull latest changes to avoid push rejection
         git pull --rebase origin main
