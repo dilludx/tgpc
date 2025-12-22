@@ -38,7 +38,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -e .
-        pip install supabase pytz
+        pip install supabase
     
     - name: Create data directory
       run: |
@@ -152,12 +152,10 @@ jobs:
         NEW_DETAILS='${{ steps.update.outputs.new_details }}'
         MOD_DETAILS='${{ steps.update.outputs.modified_details }}'
         REM_DETAILS='${{ steps.update.outputs.removed_details }}'
-        
         # Generate commit message using Python
         COMMIT_MSG=$(python3 << 'PYEOF'
         import json
-        from datetime import datetime
-        import pytz
+        from datetime import datetime, timezone, timedelta
         
         def format_cats(json_str):
             try:
@@ -178,8 +176,8 @@ jobs:
             except:
                 return ''
         
-        # Get IST time
-        ist = pytz.timezone('Asia/Kolkata')
+        # Get IST time (UTC+5:30) using built-in
+        ist = timezone(timedelta(hours=5, minutes=30))
         now = datetime.now(ist)
         date_str = now.strftime('%a %d %b %Y').upper()
         time_str = now.strftime('%H:%M IST')
