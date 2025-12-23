@@ -389,7 +389,7 @@ async function performSearch() {
     const resultsPanel = document.getElementById('resultsPanel');
 
     // Input validation
-    if (rawQuery.length < 2) {
+    if (rawQuery.length < 3) {
         resultsPanel.style.display = 'none';
         return;
     }
