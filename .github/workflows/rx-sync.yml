@@ -153,8 +153,9 @@ jobs:
         MOD_DETAILS='${{ steps.update.outputs.modified_details }}'
         REM_DETAILS='${{ steps.update.outputs.removed_details }}'
         # Generate commit message using Python
-        COMMIT_MSG=$(python3 << 'PYEOF'
+        COMMIT_MSG=$(python3 << PYEOF
         import json
+        import os
         from datetime import datetime, timezone, timedelta
         
         def format_cats(json_str):
@@ -182,13 +183,13 @@ jobs:
         date_str = now.strftime('%a %d %b %Y').upper()
         time_str = now.strftime('%H:%M IST')
         
-        new_cats = format_cats('$NEW_CATS')
-        mod_cats = format_cats('$MOD_CATS')
-        rem_cats = format_cats('$REM_CATS')
+        new_cats = format_cats('''${NEW_CATS}''')
+        mod_cats = format_cats('''${MOD_CATS}''')
+        rem_cats = format_cats('''${REM_CATS}''')
         
-        new_details = format_details('$NEW_DETAILS')
-        mod_details = format_details('$MOD_DETAILS')
-        rem_details = format_details('$REM_DETAILS')
+        new_details = format_details('''${NEW_DETAILS}''')
+        mod_details = format_details('''${MOD_DETAILS}''')
+        rem_details = format_details('''${REM_DETAILS}''')
         
         # Build commit message
         msg = f"♻️ Rx Sync\n{date_str} • {time_str}\n"
