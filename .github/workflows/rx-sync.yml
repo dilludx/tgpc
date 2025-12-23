@@ -191,23 +191,17 @@ jobs:
         mod_details = format_details('''${MOD_DETAILS}''')
         rem_details = format_details('''${REM_DETAILS}''')
         
-        # Build commit message - no blank lines
+        # Build commit message - category counts only, no individual records
         msg = f"♻️ Rx Sync • {date_str} • {time_str}"
         
         if new_cats != '0':
             msg += f"\n🆕 New Additions: {new_cats}"
-            if new_details:
-                msg += f"\n{new_details}"
         
         if mod_cats != '0':
             msg += f"\n✏️ Modifications: {mod_cats}"
-            if mod_details:
-                msg += f"\n{mod_details}"
         
         if rem_cats != '0':
             msg += f"\n🗑️ Removals: {rem_cats}"
-            if rem_details:
-                msg += f"\n{rem_details}"
         
         msg += f"\n📊 Total: ${{ steps.update.outputs.total_records }}"
         
