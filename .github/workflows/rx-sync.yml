@@ -192,7 +192,7 @@ jobs:
         rem_details = format_details('''${REM_DETAILS}''')
         
         # Build commit message - no blank lines
-        msg = f"♻️ Rx Sync\n{date_str} • {time_str}"
+        msg = f"♻️ Rx Sync • {date_str} • {time_str}"
         
         if new_cats != '0':
             msg += f"\n🆕 New Additions: {new_cats}"
