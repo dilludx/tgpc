@@ -584855,5 +584855,19 @@
     "father_name": "GUJJULA KRISHNA REDDY",
     "category": "PharmD",
     "serial_number": 83551
+  },
+  {
+    "registration_number": "TG077017",
+    "name": "Mohammad Anju",
+    "father_name": "Mohammad Akram khan",
+    "category": "BPharm",
+    "serial_number": 83552
+  },
+  {
+    "registration_number": "TG077018",
+    "name": "JADI DEVAYANI",
+    "father_name": "Jadi Chandrashekar",
+    "category": "BPharm",
+    "serial_number": 83553
   }
 ]
