@@ -234,8 +234,7 @@ jobs:
         REM_CATS='${{ steps.update.outputs.rem_cat_stats }}'
         MOD_CATS='${{ steps.update.outputs.mod_cat_stats }}'
         
-        echo "### ♻️ Rx Sync" >> $GITHUB_STEP_SUMMARY
-        echo "> **$(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]')** • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
+        echo "### ♻️ Rx Sync • $(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]') • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
         # Use python to parse JSON and output lists
