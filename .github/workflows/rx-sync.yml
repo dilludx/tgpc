@@ -191,8 +191,8 @@ jobs:
         mod_details = format_details('''${MOD_DETAILS}''')
         rem_details = format_details('''${REM_DETAILS}''')
         
-        # Build commit message
-        msg = f"♻️ Rx Sync\n{date_str} • {time_str}\n"
+        # Build commit message - no blank lines
+        msg = f"♻️ Rx Sync\n{date_str} • {time_str}"
         
         if new_cats != '0':
             msg += f"\n🆕 New Additions: {new_cats}"
@@ -200,16 +200,16 @@ jobs:
                 msg += f"\n{new_details}"
         
         if mod_cats != '0':
-            msg += f"\n\n✏️ Modifications: {mod_cats}"
+            msg += f"\n✏️ Modifications: {mod_cats}"
             if mod_details:
                 msg += f"\n{mod_details}"
         
         if rem_cats != '0':
-            msg += f"\n\n🗑️ Removals: {rem_cats}"
+            msg += f"\n🗑️ Removals: {rem_cats}"
             if rem_details:
                 msg += f"\n{rem_details}"
         
-        msg += f"\n\n📊 Total: ${{ steps.update.outputs.total_records }}"
+        msg += f"\n📊 Total: ${{ steps.update.outputs.total_records }}"
         
         print(msg)
         PYEOF
