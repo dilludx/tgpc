@@ -266,35 +266,31 @@ jobs:
             rem_cat_str = format_cats('$REM_CATS')
             mod_cat_str = format_cats('$MOD_CATS')
             
-            # New Additions - show category counts directly
-            if new_cat_str:
-                print(f'#### 🆕 New Additions: {new_cat_str}')
-            else:
-                print(f'#### 🆕 New Additions: 0')
-            if new_recs:
-                for r in new_recs:
-                    print(f'- {r}')
-            print('')
+            # Check if there are any changes at all
+            has_changes = new_cat_str or mod_cat_str or rem_cat_str
             
-            # Modifications - show category counts directly
-            if mod_cat_str:
-                print(f'#### ✏️ Modifications: {mod_cat_str}')
+            if not has_changes:
+                print('✅ No updates')
             else:
-                print(f'#### ✏️ Modifications: 0')
-            if mod_recs:
-                for r in mod_recs:
-                    print(f'- {r}')
-            print('')
+                # New Additions
+                if new_cat_str:
+                    print(f'#### 🆕 New Additions: {new_cat_str}')
+                    for r in new_recs:
+                        print(f'- {r}')
+                    print('')
                 
-            # Removals - show category counts directly
-            if rem_cat_str:
-                print(f'#### 🗑️ Removals: {rem_cat_str}')
-            else:
-                print(f'#### 🗑️ Removals: 0')
-            if rem_recs:
-                for r in rem_recs:
-                    print(f'- {r}')
-            print('')
+                # Modifications
+                if mod_cat_str:
+                    print(f'#### ✏️ Modifications: {mod_cat_str}')
+                    for r in mod_recs:
+                        print(f'- {r}')
+                    print('')
+                
+                # Removals
+                if rem_cat_str:
+                    print(f'#### 🗑️ Removals: {rem_cat_str}')
+                    for r in rem_recs:
+                        print(f'- {r}')
                 
         except Exception as e:
             print(f'Error parsing details: {e}')
