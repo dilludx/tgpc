@@ -175,19 +175,19 @@ jobs:
         mod_cats = format_cats('''${MOD_CATS}''')
         rem_cats = format_cats('''${REM_CATS}''')
         
-        # Build commit message - category counts only
+        # Build commit message - single line
         msg = f"♻️ Rx Sync • {date_str} • {time_str}"
         
         if new_cats != '0':
-            msg += f"\n🆕 New Additions: {new_cats}"
+            msg += f" • 🆕 New: {new_cats}"
         
         if mod_cats != '0':
-            msg += f"\n✏️ Modifications: {mod_cats}"
+            msg += f" • ✏️ Mod: {mod_cats}"
         
         if rem_cats != '0':
-            msg += f"\n🗑️ Removals: {rem_cats}"
+            msg += f" • 🗑️ Rem: {rem_cats}"
         
-        msg += f"\n📊 Total: ${{ steps.update.outputs.total_records }}"
+        msg += f" • 📊 Total: ${{ steps.update.outputs.total_records }}"
         
         print(msg)
         PYEOF
