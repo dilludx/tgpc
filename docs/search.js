@@ -456,28 +456,29 @@ function checkUrlQuery() {
     return;
 }
 
-// Sort results
+// Sort results by registration number (by prefix, then by number ascending)
 function sortResults() {
-    const sortValue = document.getElementById('sortSelect').value;
-    currentSort = sortValue;
-
     let sorted = [...currentResults];
+    sorted.sort((a, b) => {
+        // Extract prefix and number from registration number (e.g., "TS000001" or "TG061028")
+        const parseReg = (reg) => {
+            const match = reg.match(/^([A-Z]+)(\d+)$/);
+            if (match) {
+                return { prefix: match[1], num: parseInt(match[2], 10) };
+            }
+            return { prefix: reg, num: 0 };
+        };
 
-    switch (sortValue) {
-        case 'reg-desc':
-            sorted.sort((a, b) => b.registration_number.localeCompare(a.registration_number));
-            break;
-        case 'reg-asc':
-            sorted.sort((a, b) => a.registration_number.localeCompare(b.registration_number));
-            break;
-        case 'name-asc':
-            sorted.sort((a, b) => a.name.localeCompare(b.name));
-            break;
-        case 'name-desc':
-            sorted.sort((a, b) => b.name.localeCompare(a.name));
-            break;
-    }
+        const regA = parseReg(a.registration_number);
+        const regB = parseReg(b.registration_number);
 
+        // Sort by prefix first (alphabetically)
+        if (regA.prefix !== regB.prefix) {
+            return regA.prefix.localeCompare(regB.prefix);
+        }
+        // Then by number (ascending)
+        return regA.num - regB.num;
+    });
     currentPage = 1;
     displayResults(sorted);
 }
@@ -541,8 +542,7 @@ function resetSearch() {
     });
     currentFilters.category = 'all';
 
-    // Reset sort to default
-    document.getElementById('sortSelect').value = 'reg-desc';
+    // Reset sort
     currentSort = 'reg-desc';
 
     // Clear results
