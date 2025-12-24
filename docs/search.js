@@ -48,31 +48,49 @@ document.addEventListener('DOMContentLoaded', () => {
     setupRealtimeUpdates(); // Subscribe to database changes
 });
 
-// Realtime subscription for automatic updates
-let lastSyncTime = null;
+// Polling for updates (checks every 5 minutes)
+let lastKnownSync = null;
+const POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 function setupRealtimeUpdates() {
     if (!supabaseClient) {
-        console.warn('Realtime: Supabase client not available');
+        console.warn('Polling: Supabase client not available');
         return;
     }
 
-    console.log('Realtime: Setting up subscription...');
+    console.log('Polling: Setting up update checker...');
 
-    // Subscribe to metadata table changes
-    const channel = supabaseClient
-        .channel('rx-updates')
-        .on(
-            'postgres_changes',
-            { event: 'UPDATE', schema: 'public', table: 'metadata', filter: "key=eq.last_sync" },
-            (payload) => {
-                console.log('Realtime: Database updated!', payload);
-                handleRealtimeUpdate(payload);
-            }
-        )
-        .subscribe((status) => {
-            console.log('Realtime subscription status:', status);
-        });
+    // Get initial last_sync value
+    fetchLastSync().then(syncTime => {
+        lastKnownSync = syncTime;
+        console.log('Polling: Initial last_sync:', lastKnownSync);
+    });
+
+    // Check for updates every 5 minutes
+    setInterval(async () => {
+        const currentSync = await fetchLastSync();
+        if (currentSync && lastKnownSync && currentSync !== lastKnownSync) {
+            console.log('Polling: New update detected!', currentSync);
+            lastKnownSync = currentSync;
+            handleRealtimeUpdate();
+        }
+    }, POLL_INTERVAL);
+}
+
+async function fetchLastSync() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('metadata')
+            .select('value')
+            .eq('key', 'last_sync')
+            .single();
+
+        if (error) throw error;
+        return data?.value || null;
+    } catch (e) {
+        console.error('Polling: Error fetching last_sync:', e);
+        return null;
+    }
 }
 
 function handleRealtimeUpdate(payload) {
