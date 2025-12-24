@@ -1108,6 +1108,30 @@
                 display: none !important;
             }
         }
+
+        /* Realtime update notification */
+        .update-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+            z-index: 1000;
+            opacity: 0;
+            transform: translateX(100px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .update-notification.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
     </style>
 </head>
 

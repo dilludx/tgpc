@@ -45,7 +45,71 @@ document.addEventListener('DOMContentLoaded', () => {
     loadAnalytics();
     loadStatsUpdated();
     checkUrlQuery(); // Check if URL has a search query
+    setupRealtimeUpdates(); // Subscribe to database changes
 });
+
+// Realtime subscription for automatic updates
+let lastSyncTime = null;
+
+function setupRealtimeUpdates() {
+    if (!supabaseClient) {
+        console.warn('Realtime: Supabase client not available');
+        return;
+    }
+
+    console.log('Realtime: Setting up subscription...');
+
+    // Subscribe to metadata table changes
+    const channel = supabaseClient
+        .channel('rx-updates')
+        .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'metadata', filter: "key=eq.last_sync" },
+            (payload) => {
+                console.log('Realtime: Database updated!', payload);
+                handleRealtimeUpdate(payload);
+            }
+        )
+        .subscribe((status) => {
+            console.log('Realtime subscription status:', status);
+        });
+}
+
+function handleRealtimeUpdate(payload) {
+    // Show notification
+    showUpdateNotification();
+
+    // If user is actively searching, auto-refresh results
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput && searchInput.value.trim().length >= 3) {
+        console.log('Realtime: Auto-refreshing search results...');
+        performSearch();
+    }
+
+    // Refresh stats
+    loadStatsUpdated();
+    loadAnalytics();
+}
+
+function showUpdateNotification() {
+    // Create notification if it doesn't exist
+    let notification = document.getElementById('updateNotification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'updateNotification';
+        notification.className = 'update-notification';
+        notification.innerHTML = '🔄 Database updated! Results refreshed.';
+        document.body.appendChild(notification);
+    }
+
+    // Show notification
+    notification.classList.add('show');
+
+    // Hide after 3 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+}
 
 function setupEventListeners() {
     // Search input with debounce
