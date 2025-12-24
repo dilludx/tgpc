@@ -743,6 +743,9 @@
 
         .data-table thead {
             background: #f9fafb;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .data-table th {
@@ -754,6 +757,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             border-bottom: 1px solid #e4e4e7;
+            background: #f9fafb;
         }
 
         .data-table td {
@@ -1234,15 +1238,6 @@
             <div class="results-header">
                 <div class="results-info">
                     Showing <strong id="resultsCount">0</strong> results
-                </div>
-                <div class="sort-control">
-                    <span class="sort-label">Sort by</span>
-                    <select class="sort-select" id="sortSelect" onchange="sortResults()">
-                        <option value="reg-desc">Registration (Newest)</option>
-                        <option value="reg-asc">Registration (Oldest)</option>
-                        <option value="name-asc">Name (A-Z)</option>
-                        <option value="name-desc">Name (Z-A)</option>
-                    </select>
                 </div>
             </div>
 
