@@ -170,10 +170,10 @@ class Manager:
                 f.write(f"integrity_score=1.0\n")
                 f.write(f"success=True\n")
                 
-                # Output details as JSON strings (limit to top 50 to avoid overflow)
-                f.write(f"new_details={json.dumps(new_details[:50])}\n")
-                f.write(f"removed_details={json.dumps(removed_details[:50])}\n")
-                f.write(f"modified_details={json.dumps(modified_details[:50])}\n")
+                # Output details as JSON strings (no limit - GitHub allows 1MB)
+                f.write(f"new_details={json.dumps(new_details)}\n")
+                f.write(f"removed_details={json.dumps(removed_details)}\n")
+                f.write(f"modified_details={json.dumps(modified_details)}\n")
                 
                 # Output Category Stats
                 f.write(f"new_cat_stats={json.dumps(new_cat_stats)}\n")
