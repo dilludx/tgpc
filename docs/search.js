@@ -11,7 +11,6 @@ let displayedResults = [];
 let currentFilters = {
     category: 'all'
 };
-let currentSort = 'reg-desc';
 let searchTimeout;
 let currentPage = 1;
 const RESULTS_PER_PAGE = 100;
@@ -32,10 +31,8 @@ function escapeHtml(text) {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Supabase client here to ensure library is loaded
-    console.log('DOMContentLoaded: Initializing Supabase...');
     if (window.supabase && window.supabase.createClient) {
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('DOMContentLoaded: Supabase client created successfully');
     } else {
         console.error('DOMContentLoaded: window.supabase not available!');
     }
@@ -58,19 +55,16 @@ function setupRealtimeUpdates() {
         return;
     }
 
-    console.log('Polling: Setting up update checker...');
 
     // Get initial last_sync value
     fetchLastSync().then(syncTime => {
         lastKnownSync = syncTime;
-        console.log('Polling: Initial last_sync:', lastKnownSync);
     });
 
     // Check for updates every 5 minutes
     setInterval(async () => {
         const currentSync = await fetchLastSync();
         if (currentSync && lastKnownSync && currentSync !== lastKnownSync) {
-            console.log('Polling: New update detected!', currentSync);
             lastKnownSync = currentSync;
             handleRealtimeUpdate();
         }
@@ -100,7 +94,6 @@ function handleRealtimeUpdate(payload) {
     // If user is actively searching, auto-refresh results
     const searchInput = document.getElementById('searchInput');
     if (searchInput && searchInput.value.trim().length >= 3) {
-        console.log('Realtime: Auto-refreshing search results...');
         performSearch();
     }
 
@@ -273,22 +266,17 @@ async function loadStatsUpdated() {
     const CACHE_KEY = 'tgpc_last_sync';
     const syncTimestampEl = document.getElementById('syncTimestamp');
 
-    console.log('loadStatsUpdated: Starting...');
-    console.log('loadStatsUpdated: syncTimestampEl found:', !!syncTimestampEl);
 
     if (!syncTimestampEl) {
-        console.log('loadStatsUpdated: Element not found, returning');
         return;
     }
 
     function updateDisplay(dateStr) {
-        console.log('loadStatsUpdated: Updating display to:', dateStr);
         syncTimestampEl.textContent = dateStr;
     }
 
     // Try to load from cache first
     const cached = localStorage.getItem(CACHE_KEY);
-    console.log('loadStatsUpdated: Cached value:', cached);
     if (cached) {
         try {
             // Ensure timestamp is treated as UTC by appending Z if missing
@@ -296,21 +284,18 @@ async function loadStatsUpdated() {
             const cachedDate = new Date(utcValue);
             updateDisplay(formatUpdatedTimestamp(cachedDate));
         } catch (e) {
-            console.log('loadStatsUpdated: Cache parse error:', e);
             localStorage.removeItem(CACHE_KEY);
         }
     }
 
     try {
         // Fetch from Supabase metadata table
-        console.log('loadStatsUpdated: Fetching from Supabase...');
         const { data, error } = await supabaseClient
             .from('metadata')
             .select('value')
             .eq('key', 'last_sync')
             .single();
 
-        console.log('loadStatsUpdated: Supabase response - data:', data, 'error:', error);
 
         if (error) {
             console.error('loadStatsUpdated: Supabase error:', error);
@@ -322,9 +307,7 @@ async function loadStatsUpdated() {
             const syncDate = new Date(utcValue);
             updateDisplay(formatUpdatedTimestamp(syncDate));
             localStorage.setItem(CACHE_KEY, utcValue);
-            console.log('loadStatsUpdated: Successfully updated to:', data.value);
         } else {
-            console.log('loadStatsUpdated: No valid data received');
         }
     } catch (error) {
         console.error('loadStatsUpdated: Exception:', error);
@@ -371,11 +354,9 @@ async function loadAnalytics() {
 
         // If cached total matches live total, data hasn't changed - we're done
         if (cachedStats && cachedStats.total === stats.total) {
-            console.log('✓ Cache is fresh (total unchanged:', stats.total, ')');
             return;
         }
 
-        console.log('✓ Fresh analytics loaded via RPC:', stats);
 
         // Save to cache
         localStorage.setItem(CACHE_KEY, JSON.stringify(stats));
@@ -391,26 +372,21 @@ async function loadAnalytics() {
 
 // Display analytics on the page
 function displayAnalytics(stats) {
-    console.log('displayAnalytics called with:', stats);
 
     document.getElementById('totalRecords').textContent = stats.total.toLocaleString();
 
     if (stats.categories) {
-        console.log('All categories found:', Object.keys(stats.categories));
 
         // Update all categories
         Object.keys(stats.categories).forEach(cat => {
             const elementId = cat.toLowerCase() + 'Count';
             const element = document.getElementById(elementId);
-            console.log(`Looking for element: ${elementId}, found:`, element);
             if (element) {
                 element.textContent = stats.categories[cat].toLocaleString();
-                console.log(`Set ${cat} to ${stats.categories[cat]}`);
             } else {
             }
         });
 
-        console.log('Displayed categories:', Object.keys(stats.categories));
     }
 
     // Set last updated date with time
@@ -427,12 +403,9 @@ function displayAnalytics(stats) {
     const dateStr = `${dayNum} ${monthName} ${year}`;
     const timeStr = `${hours}:${minutes}`;
 
-    console.log('About to set lastUpdated element');
     const lastUpdatedEl = document.getElementById('lastUpdated');
-    console.log('lastUpdatedEl:', lastUpdatedEl);
     if (lastUpdatedEl) {
         lastUpdatedEl.textContent = `${dateStr} ${timeStr}`;
-        console.log('Successfully set date to:', `${dateStr} ${timeStr}`);
     } else {
         console.error('lastUpdated element not found');
     }
@@ -623,9 +596,6 @@ function resetSearch() {
         }
     });
     currentFilters.category = 'all';
-
-    // Reset sort
-    currentSort = 'reg-desc';
 
     // Clear results
     currentResults = [];
