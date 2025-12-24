@@ -406,8 +406,6 @@ function displayAnalytics(stats) {
     const lastUpdatedEl = document.getElementById('lastUpdated');
     if (lastUpdatedEl) {
         lastUpdatedEl.textContent = `${dateStr} ${timeStr}`;
-    } else {
-        console.error('lastUpdated element not found');
     }
 }
 
