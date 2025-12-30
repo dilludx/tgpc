@@ -123,27 +123,15 @@ function showUpdateNotification() {
 }
 
 function setupEventListeners() {
-    // Search input with debounce
+    // Search input - only hide results when cleared (no auto-search)
     document.getElementById('searchInput').addEventListener('input', (e) => {
-        // Clear URL immediately when user starts typing
-        // updateUrlQuery(''); // Removed: shareable links disabled
-
-        clearTimeout(searchTimeout);
-
         // If input is cleared, hide results
         if (e.target.value.trim().length === 0) {
             document.getElementById('resultsPanel').style.display = 'none';
             document.getElementById('error').innerHTML = '';
             currentResults = [];
             displayedResults = [];
-            return;
         }
-
-        searchTimeout = setTimeout(() => {
-            if (e.target.value.trim().length >= 2) {
-                performSearch();
-            }
-        }, 300);
     });
 
     // Enter key to search
@@ -166,17 +154,8 @@ function setupEventListeners() {
             });
             btn.classList.add('active');
 
-            // Update filter
+            // Update filter (no auto-search to reduce Supabase load)
             currentFilters[filterType] = filterValue;
-
-            // Debounced search to prevent rate limiting
-            clearTimeout(filterTimeout);
-            filterTimeout = setTimeout(() => {
-                const query = document.getElementById('searchInput').value.trim();
-                if (query.length >= 2) {
-                    performSearch();
-                }
-            }, 300);
         });
     });
 }
@@ -555,6 +534,7 @@ function displayResults(data) {
         return;
     }
 
+    // Desktop: Table view
     const tableHtml = `
         <table class="data-table">
             <thead>
@@ -578,7 +558,24 @@ function displayResults(data) {
         </table>
     `;
 
-    resultsDiv.innerHTML = tableHtml;
+    // Mobile: Card view
+    const cardsHtml = `
+        <div class="mobile-cards">
+            ${data.map(record => `
+                <div class="mobile-card">
+                    <div class="mobile-card-header">
+                        <span class="mobile-card-reg">${escapeHtml(record.registration_number)}</span>
+                        <span class="badge ${escapeHtml(record.category).toLowerCase()}">${escapeHtml(record.category)}</span>
+                    </div>
+                    <div class="mobile-card-name">${escapeHtml(record.name)}</div>
+                    ${record.father_name ? `<div class="mobile-card-father">${escapeHtml(record.father_name)}</div>` : ''}
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    // Render both - CSS shows/hides based on screen size
+    resultsDiv.innerHTML = tableHtml + cardsHtml;
 }
 
 // Reset search
