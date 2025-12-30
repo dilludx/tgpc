@@ -586325,5 +586325,26 @@
     "father_name": "SALLA SAMMAIAH",
     "category": "BPharm",
     "serial_number": 83761
+  },
+  {
+    "registration_number": "TG077222",
+    "name": "TYARLA MANIKANTA",
+    "father_name": "TYARLA VIRUPAKSHA",
+    "category": "DPharm",
+    "serial_number": 83762
+  },
+  {
+    "registration_number": "TG077223",
+    "name": "BANOTHU UDAYABHASKAR",
+    "father_name": "B LALU",
+    "category": "BPharm",
+    "serial_number": 83763
+  },
+  {
+    "registration_number": "TG077224",
+    "name": "KOTA LAVANYA",
+    "father_name": "KOTA VENKATESWARARAO",
+    "category": "BPharm",
+    "serial_number": 83764
   }
 ]
