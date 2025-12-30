@@ -1,5 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+<script>
+    // Auto-redirect mobile users
+    if (/Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        && !window.location.search.includes('desktop=true')) {
+        window.location.replace('mobile.html');
+    }
+</script>
 
 <head>
     <meta charset="UTF-8">
@@ -802,142 +809,292 @@
             font-size: 0.875rem;
         }
 
-        /* Responsive */
+        /* ===== RESPONSIVE - Same Design, Adapted Layout ===== */
+
+        /* Mobile cards - hidden by default, shown on mobile */
+        .mobile-cards {
+            display: none;
+        }
+
+        .mobile-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+
+        .mobile-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .mobile-card-reg {
+            font-weight: 600;
+            color: #2563eb;
+            font-size: 0.85rem;
+        }
+
+        .mobile-card-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 2px;
+        }
+
+        .mobile-card-father {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        .mobile-card-father::before {
+            content: "S/O ";
+            font-weight: 500;
+        }
+
+        /* Tablet and Mobile (< 768px) */
         @media (max-width: 768px) {
+            body {
+                height: auto;
+                overflow: auto;
+                padding-bottom: 60px;
+            }
+
+            /* Header stacks vertically */
             .header-content {
-                padding: 16px 20px;
+                flex-direction: column;
+                padding: 8px 12px;
+                gap: 8px;
+            }
+
+            .brand-text h1 {
+                font-size: 1.1rem;
+            }
+
+            .brand-text p {
+                font-size: 0.7rem;
+            }
+
+            .header-status {
+                font-size: 0.7rem;
+                padding: 4px 8px;
+            }
+
+            /* Stats grid: full width, 4 columns */
+            .header-content .stats-grid {
+                width: 100%;
+                padding: 6px;
+            }
+
+            .stats-row {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 4px;
+            }
+
+            .stat-card {
+                padding: 4px 2px;
+                text-align: center;
+                border-right: none;
+            }
+
+            .stat-content h3 {
+                font-size: 0.55rem;
+                margin-bottom: 2px;
+            }
+
+            .stat-value {
+                font-size: 0.95rem;
+            }
+
+            .stats-updated {
+                font-size: 0.5rem;
+                text-align: center;
+                flex-wrap: wrap;
+                justify-content: center;
+                margin-top: 4px;
+                padding-top: 4px;
+            }
+
+            .sync-badge .text {
+                font-size: 0.45rem;
+            }
+
+            /* Container */
+            .container {
+                padding: 8px;
+            }
+
+            /* Search section */
+            .search-section {
+                padding: 10px;
+                margin-bottom: 0;
+            }
+
+            .section-header {
+                margin-bottom: 6px;
+            }
+
+            .section-title {
+                font-size: 0.9rem;
+            }
+
+            /* Search bar: input full width, buttons in row */
+            .search-bar {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .search-input {
+                width: 100%;
+                font-size: 16px;
+                /* Prevents iOS zoom */
+                padding: 12px 14px;
+            }
+
+            .btn {
+                flex: 1;
+                justify-content: center;
+                min-height: 40px;
+                font-size: 0.75rem;
+                padding: 8px 12px;
+            }
+
+            /* Button row wrapper */
+            .search-bar {
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            .search-input {
+                flex: 1 1 100%;
+            }
+
+            .separator {
+                display: none;
+            }
+
+            /* Filters: horizontal scroll */
+            .filters {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                gap: 6px;
+                padding: 2px 0;
+                margin-top: 8px;
+                scrollbar-width: none;
+            }
+
+            .filters::-webkit-scrollbar {
+                display: none;
+            }
+
+            .filter-chip {
+                flex-shrink: 0;
+                font-size: 0.75rem;
+                padding: 6px 12px;
+                min-height: 32px;
+            }
+
+            /* Results */
+            .results-section {
+                padding: 10px;
+                max-height: none;
+            }
+
+            .results-header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .results-info {
+                font-size: 0.8rem;
+            }
+
+            /* Hide table, show cards on mobile */
+            .data-table {
+                display: none;
+            }
+
+            .mobile-cards {
+                display: block;
+            }
+
+            .badge {
+                font-size: 0.7rem;
+                padding: 4px 10px;
+            }
+
+            /* Footer */
+            .site-footer {
+                font-size: 0.55rem;
+                padding: 10px 12px;
+            }
+        }
+
+        /* Small phones (< 480px) */
+        @media (max-width: 480px) {
+            .header-content {
+                padding: 10px 12px;
             }
 
             .brand-text h1 {
                 font-size: 1rem;
             }
 
-            .brand-text p {
-                font-size: 0.75rem;
-            }
-
-
-
-            .header-status {
-                font-size: 0.75rem;
-                padding: 4px 8px;
-            }
-
-            .container {
-                padding: 16px;
-            }
-
-            .stats-grid {
+            /* Stats: 2 columns for small phones */
+            .stats-row {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
-            }
-
-            .stat-card {
-                padding: 16px;
-            }
-
-
-
-            .stat-content h3 {
-                font-size: 0.75rem;
-            }
-
-            .stat-value {
-                font-size: 1.5rem;
-            }
-
-            .search-section,
-            .results-section {
-                padding: 20px;
-            }
-
-            .section-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-            }
-
-            .section-title {
-                font-size: 0.9375rem;
-            }
-
-            .search-bar {
-                flex-direction: column;
-            }
-
-            .search-input {
-                font-size: 16px;
-                /* Prevents zoom on iOS */
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .filters {
                 gap: 6px;
             }
 
-            .filter-chip {
-                font-size: 0.8125rem;
-                padding: 6px 12px;
+            /* Hide less important stats */
+            .stat-card:nth-child(6),
+            .stat-card:nth-child(7) {
+                display: none;
             }
 
-            .results-header {
-                flex-direction: column;
-                gap: 12px;
-                align-items: flex-start;
-            }
-
-            /* Mobile-optimized table */
-            .table-container {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .data-table {
-                font-size: 0.8125rem;
-                min-width: 600px;
-                /* Allows horizontal scroll */
-            }
-
-            .data-table th,
-            .data-table td {
-                padding: 10px 8px;
-            }
-
-            .data-table th {
-                font-size: 0.75rem;
-            }
-
-            .badge {
-                font-size: 0.75rem;
-                padding: 3px 8px;
-            }
-
-            /* Better touch targets */
-            .btn {
-                min-height: 44px;
-            }
-
-            .filter-chip {
-                min-height: 36px;
-            }
-        }
-
-        /* Extra small devices */
-        @media (max-width: 480px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stat-card {
-                padding: 20px;
+            .stat-content h3 {
+                font-size: 0.5rem;
             }
 
             .stat-value {
-                font-size: 2rem;
+                font-size: 0.9rem;
+            }
+
+            .stats-updated {
+                display: none;
+            }
+
+            .search-section {
+                padding: 12px;
+            }
+
+            .btn {
+                font-size: 0.75rem;
+                padding: 10px 12px;
+            }
+
+            .filter-chip {
+                font-size: 0.75rem;
+                padding: 6px 12px;
+            }
+
+            .mobile-card {
+                padding: 12px 14px;
+            }
+
+            .mobile-card-name {
+                font-size: 0.95rem;
+            }
+
+            .site-footer {
+                font-size: 0.5rem;
+                padding: 8px 10px;
             }
         }
 
