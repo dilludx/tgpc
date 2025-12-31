@@ -47,7 +47,8 @@
 
         /* Header */
         header {
-            padding: 16px 20px;
+            padding: 16px 8px;
+            /* Reduced side padding to maximize width */
             border-bottom: 1px solid #f0f0f0;
             position: sticky;
             top: 0;
@@ -66,6 +67,8 @@
             font-weight: 600;
             letter-spacing: -0.5px;
             color: #00cc66;
+            margin: 0;
+            /* Ensure no default margin pushes it in */
         }
 
         /* Status pill */
@@ -128,7 +131,8 @@
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 8px;
-            padding: 16px 12px;
+            padding: 16px 8px;
+            /* Unified margin */
             border-bottom: 1px solid #f0f0f0;
         }
 
@@ -157,33 +161,70 @@
 
         /* Search */
         .search-wrap {
-            padding: 20px;
+            padding: 16px 8px;
+            /* Unified margin */
         }
 
         .search-box {
             display: flex;
             align-items: center;
             background: #f5f5f5;
-            border-radius: 12px;
-            padding: 0 16px;
+            border-radius: 100px;
+            padding: 4px;
+            gap: 8px;
+            height: 48px;
         }
 
-        .search-box svg {
-            color: #888;
-            flex-shrink: 0;
-        }
-
-        input {
+        .search-box input {
             flex: 1;
             border: none;
             background: none;
-            padding: 14px 12px;
+            padding: 14px 8px;
             font-size: 14px;
             outline: none;
+            min-width: 0;
         }
 
-        input::placeholder {
+        .search-box input::placeholder {
             color: #aaa;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: transform 0.15s, opacity 0.15s;
+        }
+
+        .icon-btn:active {
+            transform: scale(0.92);
+        }
+
+        .icon-btn.reset {
+            background: #fee2e2;
+            color: #dc2626;
+            margin: 0;
+        }
+
+        .icon-btn.reset:hover {
+            background: #fecaca;
+        }
+
+        .icon-btn.search {
+            background: #00cc66;
+            color: #fff;
+            margin: 0;
+            box-shadow: 0 2px 4px rgba(0, 204, 102, 0.2);
+        }
+
+        .icon-btn.search:hover {
+            background: #00b359;
         }
 
         /* Filters */
@@ -191,7 +232,8 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            padding: 0 20px 16px;
+            padding: 0 8px 16px;
+            /* Unified margin */
         }
 
         .chip {
@@ -212,7 +254,8 @@
 
         /* Results */
         .results {
-            padding: 0 20px 100px;
+            padding: 0 8px 40px;
+            /* Unified margin */
         }
 
         .results-info {
@@ -318,39 +361,13 @@
             }
         }
 
-        /* Footer */
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 16px 20px;
-            padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
-            background: #fff;
-            border-top: 1px solid #f0f0f0;
-            display: flex;
-            gap: 12px;
-        }
-
-        button {
-            flex: 1;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 14px;
+        /* Filter chips button style */
+        .filters button {
+            padding: 8px 14px;
+            border-radius: 100px;
+            font-size: 12px;
             font-weight: 500;
             cursor: pointer;
-            border: none;
-        }
-
-        .btn-reset {
-            background: #f5f5f5;
-            color: #444;
-            border: 1px solid #e0e0e0;
-        }
-
-        .btn-search {
-            background: #00cc66;
-            color: #fff;
         }
 
         /* Link */
@@ -367,6 +384,19 @@
 
         #resultsSection {
             display: none;
+        }
+
+        /* Footer */
+        .site-footer {
+            padding: 24px 8px;
+            /* Unified margin */
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+            line-height: 1.6;
+            background: #fafafa;
+            border-top: 1px solid #f0f0f0;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -404,11 +434,19 @@
 
     <div class="search-wrap">
         <div class="search-box">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-            </svg>
+            <button class="icon-btn reset" onclick="reset()" title="Reset">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+            </button>
             <input type="text" id="q" placeholder="Search name or registration..." autocomplete="off">
+            <button class="icon-btn search" onclick="search()" title="Search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m21 21-4.35-4.35" />
+                </svg>
+            </button>
         </div>
     </div>
 
@@ -432,10 +470,16 @@
         <div id="list"></div>
     </section>
 
-    <footer>
-        <button class="btn-reset" onclick="reset()">Reset</button>
-        <button class="btn-search" onclick="search()">Search</button>
+    <footer class="site-footer">
+        ⚠️ <strong>DISCLAIMER:</strong> This is an unofficial tool for educational and research purposes only, not
+        affiliated with or endorsed by TGPC or any government authority. All data is the intellectual property of their
+        respective owners.
+        <br><br>
+        🚫 No liability assumed for any damages or legal consequences. ⚖️ Fair Dealing, Section 52, Indian Copyright Act
+        1957. © 2025 TGPC Rx Registry
     </footer>
+
+
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
@@ -462,7 +506,8 @@
             const now = new Date();
             const h = now.getHours().toString().padStart(2, '0');
             const m = now.getMinutes().toString().padStart(2, '0');
-            return `${h}:${m}`;
+            const s = now.getSeconds().toString().padStart(2, '0');
+            return `${h}:${m}:${s}`;
         }
 
         function startClock() {
