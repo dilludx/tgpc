@@ -256,8 +256,8 @@
 
         /* Results */
         .results {
-            padding: 0 8px 40px;
-            /* Unified margin */
+            padding: 0 8px 100px;
+            /* Extra bottom padding for fixed footer */
         }
 
         .results-info {
@@ -388,18 +388,22 @@
             display: none;
         }
 
-        /* Footer */
+        /* Footer - Fixed at bottom */
         .site-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             padding: 12px 8px;
-            /* Reduced vertical padding */
+            padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+            /* Safe area for notched phones */
             text-align: center;
             font-size: 10px;
             color: #999;
             line-height: 1.35;
-            /* Tighter lines */
             background: #fafafa;
             border-top: 1px solid #f0f0f0;
-            margin-top: auto;
+            z-index: 100;
         }
     </style>
 </head>
