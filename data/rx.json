@@ -586353,5 +586353,40 @@
     "father_name": "J VENKAT REDDY",
     "category": "BPharm",
     "serial_number": 83765
+  },
+  {
+    "registration_number": "TG077226",
+    "name": "K NIKLESH SAGAR",
+    "father_name": "K PARAMESHWAR",
+    "category": "BPharm",
+    "serial_number": 83766
+  },
+  {
+    "registration_number": "TG077227",
+    "name": "N VENKATESH",
+    "father_name": "N LAXMANNA",
+    "category": "DPharm",
+    "serial_number": 83767
+  },
+  {
+    "registration_number": "TG077228",
+    "name": "VIKRAM G",
+    "father_name": "MURALI",
+    "category": "BPharm",
+    "serial_number": 83768
+  },
+  {
+    "registration_number": "TG077229",
+    "name": "BATHULA DAYANAND REDDY",
+    "father_name": "KRISHNA REDDY",
+    "category": "DPharm",
+    "serial_number": 83769
+  },
+  {
+    "registration_number": "TG077230",
+    "name": "H NAGARAJU",
+    "father_name": "H RANGAPPA",
+    "category": "DPharm",
+    "serial_number": 83770
   }
 ]
