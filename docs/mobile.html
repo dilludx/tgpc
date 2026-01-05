@@ -479,9 +479,8 @@
     <footer class="site-footer">
         ⚠️ <strong>DISCLAIMER:</strong> This is an unofficial tool for educational and research purposes only, not
         affiliated with or endorsed by TGPC or any government authority. All data is the intellectual property of their
-        respective owners.
-        <div style="height: 4px"></div> <!-- Tiny gap instead of double break -->
-        🚫 No liability assumed for any damages or legal consequences. ⚖️ Fair Dealing, Section 52, Indian Copyright Act
+        respective owners. 🚫 No liability assumed for any damages or legal consequences. ⚖️ Fair Dealing, Section 52,
+        Indian Copyright Act
         1957. © 2025 TGPC Rx Registry
     </footer>
 
@@ -583,7 +582,21 @@
                 if (cat !== 'all') query = query.eq('category', cat);
 
                 const { data } = await query.limit(100000);
-                render(data || []);
+
+                // Sort by registration number: prefix alphabetically (TG before TS), then number ascending
+                const sorted = (data || []).sort((a, b) => {
+                    const parseReg = (reg) => {
+                        const match = reg.match(/^([A-Z]+)(\d+)$/);
+                        if (match) return { prefix: match[1], num: parseInt(match[2], 10) };
+                        return { prefix: reg, num: 0 };
+                    };
+                    const regA = parseReg(a.registration_number);
+                    const regB = parseReg(b.registration_number);
+                    if (regA.prefix !== regB.prefix) return regA.prefix.localeCompare(regB.prefix);
+                    return regA.num - regB.num;
+                });
+
+                render(sorted);
             } catch (e) {
                 document.getElementById('list').innerHTML = '<div class="empty">Error searching</div>';
             }
@@ -608,7 +621,7 @@
                         <span class="tag ${esc(r.category).toLowerCase()}">${esc(r.category)}</span>
                     </div>
                     <div class="name">${esc(r.name)}</div>
-                    ${r.father_name ? `<div class="father">S/O ${esc(r.father_name)}</div>` : ''}
+                    ${r.father_name ? `<div class="father">FATHER NAME: ${esc(r.father_name)}</div>` : ''}
                 </div>
             `).join('');
         }
