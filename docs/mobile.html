@@ -604,11 +604,19 @@
 
             document.querySelectorAll('.chip').forEach(c => {
                 c.onclick = () => {
-                    document.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
-                    c.classList.add('active');
-                    moveSlider(c);
+                    const hasSearch = document.getElementById('q').value.length >= 2;
+
+                    // Store selection internally
                     cat = c.dataset.v;
-                    if (document.getElementById('q').value.length >= 2) search();
+
+                    if (hasSearch) {
+                        // Update visual state and slider only when searching
+                        document.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+                        c.classList.add('active');
+                        moveSlider(c);
+                        search();
+                    }
+                    // If no search, don't change visual state - stay on All
                 };
             });
 
@@ -686,7 +694,15 @@
             document.getElementById('q').value = '';
             hide();
             document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-            document.querySelector('.chip[data-v="all"]').classList.add('active');
+            const allChip = document.querySelector('.chip[data-v="all"]');
+            allChip.classList.add('active');
+            // Reset slider to All position
+            const slider = document.getElementById('filterSlider');
+            const filters = document.querySelector('.filters');
+            const chipRect = allChip.getBoundingClientRect();
+            const filtersRect = filters.getBoundingClientRect();
+            slider.style.left = (chipRect.left - filtersRect.left) + 'px';
+            slider.style.width = chipRect.width + 'px';
             cat = 'all';
         }
     </script>
