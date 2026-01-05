@@ -49,7 +49,7 @@
 
         /* Header */
         header {
-            padding: 12px 8px;
+            padding: 6px 8px;
             border-bottom: 1px solid #f0f0f0;
             position: sticky;
             top: 0;
@@ -131,12 +131,12 @@
         .stats {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            padding: 10px 8px 4px;
-            /* Less bottom padding */
+            gap: 6px;
+            padding: 6px 8px;
             border-bottom: 1px solid #f0f0f0;
             position: fixed;
-            top: 44px;
+            top: 36px;
+            /* Header height */
             left: 0;
             right: 0;
             background: #fff;
@@ -168,10 +168,10 @@
 
         /* Search - Fixed below stats */
         .search-wrap {
-            padding: 8px;
+            padding: 6px 8px;
             position: fixed;
-            top: 102px;
-            /* 2px white gap below stats */
+            top: 92px;
+            /* Header(36px) + Stats(56px) */
             left: 0;
             right: 0;
             background: #fff;
@@ -243,33 +243,54 @@
         /* Filters - inside search module */
         .filters {
             display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            padding: 8px 0 0 0;
+            flex-wrap: nowrap;
+            gap: 0;
+            padding: 6px 0 6px 0;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .filter-slider {
+            position: absolute;
+            bottom: 0;
+            height: 2px;
+            background: #00cc66;
+            border-radius: 1px;
+            transition: left 0.25s ease, width 0.25s ease;
         }
 
         .chip {
-            padding: 5px 8px;
-            border: 1px solid #e0e0e0;
-            border-radius: 100px;
-            font-size: 10px;
-            background: #fff;
-            color: #444;
+            padding: 4px 4px;
+            border: none;
+            background: transparent;
+            font-size: 12px;
+            line-height: 1;
+            color: #888;
             white-space: nowrap;
-            flex-shrink: 0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
         }
 
         .chip.active {
-            background: #00cc66;
-            color: #fff;
-            border-color: #00cc66;
+            color: #00cc66;
+            font-weight: 700;
+        }
+
+        .filters .sep {
+            color: #ccc;
+            font-size: 12px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
         }
 
         /* Results */
         .results {
             padding: 0 8px 100px;
-            margin-top: 200px;
-            /* Clear fixed header+stats+search+filters */
+            margin-top: 185px;
+            /* Clear fixed sections */
         }
 
         .results-info {
@@ -467,13 +488,20 @@
             </button>
         </div>
         <div class="filters">
-            <button class="chip active" data-v="all">All</button>
-            <button class="chip" data-v="BPharm">BPharm</button>
-            <button class="chip" data-v="DPharm">DPharm</button>
-            <button class="chip" data-v="MPharm">MPharm</button>
-            <button class="chip" data-v="PharmD">PharmD</button>
-            <button class="chip" data-v="QC">QC</button>
-            <button class="chip" data-v="QP">QP</button>
+            <span class="chip active" data-v="all">All</span>
+            <span class="sep">/</span>
+            <span class="chip" data-v="BPharm">BPharm</span>
+            <span class="sep">/</span>
+            <span class="chip" data-v="DPharm">DPharm</span>
+            <span class="sep">/</span>
+            <span class="chip" data-v="MPharm">MPharm</span>
+            <span class="sep">/</span>
+            <span class="chip" data-v="PharmD">PharmD</span>
+            <span class="sep">/</span>
+            <span class="chip" data-v="QC">QC</span>
+            <span class="sep">/</span>
+            <span class="chip" data-v="QP">QP</span>
+            <div class="filter-slider" id="filterSlider"></div>
         </div>
     </div>
 
@@ -564,14 +592,31 @@
                 if (e.key === 'Enter') search();
             });
 
+            // Slider animation function
+            function moveSlider(chip) {
+                const slider = document.getElementById('filterSlider');
+                const filters = document.querySelector('.filters');
+                const chipRect = chip.getBoundingClientRect();
+                const filtersRect = filters.getBoundingClientRect();
+                slider.style.left = (chipRect.left - filtersRect.left) + 'px';
+                slider.style.width = chipRect.width + 'px';
+            }
+
             document.querySelectorAll('.chip').forEach(c => {
                 c.onclick = () => {
                     document.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
                     c.classList.add('active');
+                    moveSlider(c);
                     cat = c.dataset.v;
                     if (document.getElementById('q').value.length >= 2) search();
                 };
             });
+
+            // Initialize slider position
+            setTimeout(() => {
+                const activeChip = document.querySelector('.chip.active');
+                if (activeChip) moveSlider(activeChip);
+            }, 100);
         })();
 
         function fmt(n) { return n?.toLocaleString() || '—'; }
