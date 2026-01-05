@@ -132,7 +132,8 @@
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 8px;
-            padding: 10px 8px;
+            padding: 10px 8px 4px;
+            /* Less bottom padding */
             border-bottom: 1px solid #f0f0f0;
             position: fixed;
             top: 44px;
@@ -169,8 +170,8 @@
         .search-wrap {
             padding: 8px;
             position: fixed;
-            top: 100px;
-            /* Below header (44px) + stats (~56px) */
+            top: 102px;
+            /* 2px white gap below stats */
             left: 0;
             right: 0;
             background: #fff;
@@ -242,18 +243,18 @@
         /* Filters */
         .filters {
             display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
+            flex-wrap: nowrap;
+            gap: 4px;
             padding: 8px;
             margin-top: 165px;
-            /* Clear fixed header + stats + search */
+            justify-content: space-between;
         }
 
         .chip {
-            padding: 8px 14px;
+            padding: 6px 10px;
             border: 1px solid #e0e0e0;
             border-radius: 100px;
-            font-size: 12px;
+            font-size: 11px;
             background: #fff;
             color: #444;
             white-space: nowrap;
