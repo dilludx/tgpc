@@ -240,24 +240,23 @@
             background: #00b359;
         }
 
-        /* Filters */
+        /* Filters - inside search module */
         .filters {
             display: flex;
-            flex-wrap: nowrap;
-            gap: 4px;
-            padding: 8px;
-            margin-top: 165px;
-            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 8px 0 0 0;
         }
 
         .chip {
-            padding: 6px 10px;
+            padding: 5px 8px;
             border: 1px solid #e0e0e0;
             border-radius: 100px;
-            font-size: 11px;
+            font-size: 10px;
             background: #fff;
             color: #444;
             white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .chip.active {
@@ -269,7 +268,8 @@
         /* Results */
         .results {
             padding: 0 8px 100px;
-            /* Extra bottom padding for fixed footer */
+            margin-top: 200px;
+            /* Clear fixed header+stats+search+filters */
         }
 
         .results-info {
@@ -466,16 +466,15 @@
                 </svg>
             </button>
         </div>
-    </div>
-
-    <div class="filters">
-        <button class="chip active" data-v="all">All</button>
-        <button class="chip" data-v="BPharm">BPharm</button>
-        <button class="chip" data-v="DPharm">DPharm</button>
-        <button class="chip" data-v="MPharm">MPharm</button>
-        <button class="chip" data-v="PharmD">PharmD</button>
-        <button class="chip" data-v="QC">QC</button>
-        <button class="chip" data-v="QP">QP</button>
+        <div class="filters">
+            <button class="chip active" data-v="all">All</button>
+            <button class="chip" data-v="BPharm">BPharm</button>
+            <button class="chip" data-v="DPharm">DPharm</button>
+            <button class="chip" data-v="MPharm">MPharm</button>
+            <button class="chip" data-v="PharmD">PharmD</button>
+            <button class="chip" data-v="QC">QC</button>
+            <button class="chip" data-v="QP">QP</button>
+        </div>
     </div>
 
     <div id="loading" class="loading" style="display:none">
