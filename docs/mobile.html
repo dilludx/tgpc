@@ -49,8 +49,7 @@
 
         /* Header */
         header {
-            padding: 16px 8px;
-            /* Reduced side padding to maximize width */
+            padding: 12px 8px;
             border-bottom: 1px solid #f0f0f0;
             position: sticky;
             top: 0;
@@ -66,7 +65,7 @@
 
         h1 {
             font-size: 20px;
-            font-weight: 600;
+            font-weight: 700;
             letter-spacing: -0.5px;
             color: #00cc66;
             margin: 0;
@@ -128,14 +127,19 @@
             }
         }
 
-        /* Stats */
+        /* Stats - Fixed below header */
         .stats {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 8px;
-            padding: 16px 8px;
-            /* Unified margin */
+            padding: 10px 8px;
             border-bottom: 1px solid #f0f0f0;
+            position: fixed;
+            top: 44px;
+            left: 0;
+            right: 0;
+            background: #fff;
+            z-index: 90;
         }
 
         .stat {
@@ -145,7 +149,7 @@
         .stat-num {
             display: inline-block;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
             color: #1a1a1a;
             padding: 6px 8px;
             border-radius: 6px;
@@ -161,10 +165,16 @@
             margin-top: 4px;
         }
 
-        /* Search */
+        /* Search - Fixed below stats */
         .search-wrap {
-            padding: 16px 8px;
-            /* Unified margin */
+            padding: 8px;
+            position: fixed;
+            top: 100px;
+            /* Below header (44px) + stats (~56px) */
+            left: 0;
+            right: 0;
+            background: #fff;
+            z-index: 85;
         }
 
         .search-box {
@@ -173,15 +183,15 @@
             background: #f5f5f5;
             border-radius: 100px;
             padding: 4px;
-            gap: 8px;
-            height: 48px;
+            gap: 6px;
+            height: 40px;
         }
 
         .search-box input {
             flex: 1;
             border: none;
             background: none;
-            padding: 14px 8px;
+            padding: 10px 8px;
             font-size: 14px;
             outline: none;
             min-width: 0;
@@ -192,8 +202,8 @@
         }
 
         .icon-btn {
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             border: none;
             display: flex;
@@ -234,8 +244,9 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            padding: 0 8px 16px;
-            /* Unified margin */
+            padding: 8px;
+            margin-top: 165px;
+            /* Clear fixed header + stats + search */
         }
 
         .chip {
@@ -284,14 +295,13 @@
 
         .reg {
             font-size: 15px;
-            font-weight: 600;
-            color: #2563eb;
-            font-family: 'SF Mono', monospace;
+            font-weight: 700;
+            color: #ef4444;
         }
 
         .tag {
             font-size: 10px;
-            font-weight: 600;
+            font-weight: 700;
             padding: 4px 8px;
             border-radius: 4px;
             background: #f0f0f0;
@@ -330,7 +340,8 @@
 
         .name {
             font-size: 15px;
-            font-weight: 600;
+            font-weight: 700;
+            color: #00cc66;
             margin-bottom: 2px;
         }
 
