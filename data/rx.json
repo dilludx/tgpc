@@ -586402,5 +586402,19 @@
     "father_name": "KANUGU SHANKARAIAH",
     "category": "BPharm",
     "serial_number": 83772
+  },
+  {
+    "registration_number": "TG077234",
+    "name": "JUVERIA FIRDOUS",
+    "father_name": "GULAM ISHAQ",
+    "category": "DPharm",
+    "serial_number": 83773
+  },
+  {
+    "registration_number": "TG077235",
+    "name": "MD Younus",
+    "father_name": "MD Yousuf",
+    "category": "BPharm",
+    "serial_number": 83774
   }
 ]
