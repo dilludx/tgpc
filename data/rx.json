@@ -586416,5 +586416,40 @@
     "father_name": "MD Yousuf",
     "category": "BPharm",
     "serial_number": 83774
+  },
+  {
+    "registration_number": "TG077236",
+    "name": "SWAPNA ADEPU",
+    "father_name": "RAMESH",
+    "category": "DPharm",
+    "serial_number": 83775
+  },
+  {
+    "registration_number": "TG077237",
+    "name": "P SHARATHCHANDRA",
+    "father_name": "P BHASKAR",
+    "category": "DPharm",
+    "serial_number": 83776
+  },
+  {
+    "registration_number": "TG077238",
+    "name": "D SAI CHARAN",
+    "father_name": "D CHANDRA SHEKAR",
+    "category": "BPharm",
+    "serial_number": 83777
+  },
+  {
+    "registration_number": "TG077239",
+    "name": "Kasmur Shaik Shehnaz Begum",
+    "father_name": "K S Noor Elahi",
+    "category": "BPharm",
+    "serial_number": 83778
+  },
+  {
+    "registration_number": "TG077240",
+    "name": "RAMAVATH PREM",
+    "father_name": "RAMAVATH REDYA",
+    "category": "DPharm",
+    "serial_number": 83779
   }
 ]
