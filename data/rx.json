@@ -586717,5 +586717,103 @@
     "father_name": "MOHAMMED ABDUL ALEEM",
     "category": "DPharm",
     "serial_number": 83817
+  },
+  {
+    "registration_number": "TGDR006545",
+    "name": "ALIYA SULTANA",
+    "father_name": "MD MOIN UDDIN",
+    "category": "PharmD",
+    "serial_number": 83818
+  },
+  {
+    "registration_number": "TG077217",
+    "name": "Puja tulsiani",
+    "father_name": "Durga Das tulsiani",
+    "category": "BPharm",
+    "serial_number": 83819
+  },
+  {
+    "registration_number": "TG077219",
+    "name": "ELIZABETH MARY",
+    "father_name": "ABEL ALIAS ABRAHAM",
+    "category": "BPharm",
+    "serial_number": 83820
+  },
+  {
+    "registration_number": "TG077233",
+    "name": "ERUGU SHIRISHA",
+    "father_name": "ERUGU KISHTAIAH",
+    "category": "BPharm",
+    "serial_number": 83821
+  },
+  {
+    "registration_number": "TG077242",
+    "name": "MADHAVA REDDY S",
+    "father_name": "S SAMBA SIVA REDDY",
+    "category": "BPharm",
+    "serial_number": 83822
+  },
+  {
+    "registration_number": "TG077244",
+    "name": "KIRAN CHOLE",
+    "father_name": "C TULSI RAM",
+    "category": "BPharm",
+    "serial_number": 83823
+  },
+  {
+    "registration_number": "TG077251",
+    "name": "GIRISH KUMAR K",
+    "father_name": "RAM NARAYANA K",
+    "category": "BPharm",
+    "serial_number": 83824
+  },
+  {
+    "registration_number": "TG077272",
+    "name": "SUCHITRA REDDY DEVA",
+    "father_name": "KISHAN  REDDY",
+    "category": "BPharm",
+    "serial_number": 83825
+  },
+  {
+    "registration_number": "TG077246",
+    "name": "Kothapalli sumana",
+    "father_name": "Kothapalli buchanna",
+    "category": "MPharm",
+    "serial_number": 83826
+  },
+  {
+    "registration_number": "TG077281",
+    "name": "GHAZALA BEGUM",
+    "father_name": "shaik shakeel",
+    "category": "MPharm",
+    "serial_number": 83827
+  },
+  {
+    "registration_number": "TG077220",
+    "name": "PANASA SHWETHA",
+    "father_name": "PANASA RAMESH",
+    "category": "DPharm",
+    "serial_number": 83828
+  },
+  {
+    "registration_number": "TG077221",
+    "name": "MD RIYASAT ALI",
+    "father_name": "MD TAJAMUL ALI",
+    "category": "DPharm",
+    "serial_number": 83829
+  },
+  {
+    "registration_number": "TG077260",
+    "name": "MOHD ASIF",
+    "father_name": "MOHD ABDUL RAHMAN",
+    "category": "DPharm",
+    "serial_number": 83830
+  },
+  {
+    "registration_number": "TG077265",
+    "name": "Shaik Abdus Samad",
+    "father_name": "Abdul Qayyum",
+    "category": "DPharm",
+    "serial_number": 83831
   }
 ]
