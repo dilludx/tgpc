@@ -586815,5 +586815,26 @@
     "father_name": "Abdul Qayyum",
     "category": "DPharm",
     "serial_number": 83831
+  },
+  {
+    "registration_number": "TG077287",
+    "name": "J SINDHU",
+    "father_name": "J NARSIMHA RAO",
+    "category": "BPharm",
+    "serial_number": 83832
+  },
+  {
+    "registration_number": "TG077290",
+    "name": "KAITHA VEENA",
+    "father_name": "KAITHA SATYANARAYANA REDDY",
+    "category": "BPharm",
+    "serial_number": 83833
+  },
+  {
+    "registration_number": "TG077293",
+    "name": "RAITHATHA SURABHI",
+    "father_name": "RAITHATHA DEEPAKKUMAR",
+    "category": "BPharm",
+    "serial_number": 83834
   }
 ]
