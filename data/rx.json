@@ -586836,5 +586836,82 @@
     "father_name": "RAITHATHA DEEPAKKUMAR",
     "category": "BPharm",
     "serial_number": 83834
+  },
+  {
+    "registration_number": "TG077295",
+    "name": "MARTHA BHEEMESH",
+    "father_name": "MARTHA RAJAIAH",
+    "category": "BPharm",
+    "serial_number": 83835
+  },
+  {
+    "registration_number": "TG077296",
+    "name": "PULLURI SHRAVANI",
+    "father_name": "P SURESH",
+    "category": "BPharm",
+    "serial_number": 83836
+  },
+  {
+    "registration_number": "TG077298",
+    "name": "MK RAYEESUDDIN",
+    "father_name": "MK RAFIUDDIN",
+    "category": "DPharm",
+    "serial_number": 83837
+  },
+  {
+    "registration_number": "TG077299",
+    "name": "SANDHYA MADIKONDA",
+    "father_name": "POCHAIAH MADIKONDA",
+    "category": "DPharm",
+    "serial_number": 83838
+  },
+  {
+    "registration_number": "TG077300",
+    "name": "TAHA FATIMA",
+    "father_name": "M K ZAHEER UDDIN KHAN",
+    "category": "BPharm",
+    "serial_number": 83839
+  },
+  {
+    "registration_number": "TG077301",
+    "name": "V VENKATESHWER",
+    "father_name": "RAMAKRISHNA",
+    "category": "DPharm",
+    "serial_number": 83840
+  },
+  {
+    "registration_number": "TG077302",
+    "name": "R ARAVIND",
+    "father_name": "R VENKATESWARLU",
+    "category": "DPharm",
+    "serial_number": 83841
+  },
+  {
+    "registration_number": "TG077306",
+    "name": "V KISHAN",
+    "father_name": "V CHINNA KOTYA",
+    "category": "BPharm",
+    "serial_number": 83842
+  },
+  {
+    "registration_number": "TG077307",
+    "name": "YASMEEN BEGUM",
+    "father_name": "MOHAMMAD SHAREEF",
+    "category": "BPharm",
+    "serial_number": 83843
+  },
+  {
+    "registration_number": "TG077308",
+    "name": "ADI JAGADEESHWARI",
+    "father_name": "ADI VENKANNA",
+    "category": "BPharm",
+    "serial_number": 83844
+  },
+  {
+    "registration_number": "TG077309",
+    "name": "PULLAMCHETTY BHAVYA",
+    "father_name": "P C VENKATARAMANI",
+    "category": "BPharm",
+    "serial_number": 83845
   }
 ]
