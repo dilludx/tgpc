@@ -591827,5 +591827,26 @@
     "father_name": "Lashetty Shankar",
     "category": "BPharm",
     "serial_number": 84547
+  },
+  {
+    "registration_number": "TG077978",
+    "name": "Thota Manasa",
+    "father_name": "Thota Chakrapani",
+    "category": "BPharm",
+    "serial_number": 84548
+  },
+  {
+    "registration_number": "TG077979",
+    "name": "SAYYAD SAMADH HUSSAIN",
+    "father_name": "SAYYAD VALI",
+    "category": "BPharm",
+    "serial_number": 84549
+  },
+  {
+    "registration_number": "TG077980",
+    "name": "VEERAM REDDY HEMANTH KUMAR",
+    "father_name": "VEERAM REDDY CHANDRA SEKHAR REDDY",
+    "category": "BPharm",
+    "serial_number": 84550
   }
 ]
