@@ -591813,5 +591813,19 @@
     "father_name": "MADDIMADUGU IDDAIAH",
     "category": "BPharm",
     "serial_number": 84545
+  },
+  {
+    "registration_number": "TG077976",
+    "name": "MD ASIF",
+    "father_name": "MD AHMED",
+    "category": "BPharm",
+    "serial_number": 84546
+  },
+  {
+    "registration_number": "TG077977",
+    "name": "Lashetty Bharath",
+    "father_name": "Lashetty Shankar",
+    "category": "BPharm",
+    "serial_number": 84547
   }
 ]
