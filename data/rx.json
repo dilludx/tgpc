@@ -354187,7 +354187,7 @@
   },
   {
     "registration_number": "TS047066",
-    "name": "MARIAM BINT MOHAMMED BIN BADER BIN HABSA AL JABRI",
+    "name": "MARIAM BINTMOHAMMEDBINBADERBINHABSAAL JABRI",
     "father_name": "MOHAMMED BIN BADER BIN HABSA AL JABRI",
     "category": "BPharm",
     "serial_number": 50599
@@ -591862,5 +591862,12 @@
     "father_name": "DIDDI VENKANNA",
     "category": "BPharm",
     "serial_number": 84552
+  },
+  {
+    "registration_number": "TG077983",
+    "name": "VALLABHADASU YASHWANTH KUMAR",
+    "father_name": "RAM KUMAR",
+    "category": "BPharm",
+    "serial_number": 84553
   }
 ]
