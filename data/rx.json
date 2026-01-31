@@ -186019,8 +186019,8 @@
   },
   {
     "registration_number": "TS024567",
-    "name": "AMATULKAREEM",
-    "father_name": "KASIMPASHA",
+    "name": "AMATUL KAREEM",
+    "father_name": "KASIM PASHA",
     "category": "BPharm",
     "serial_number": 26575
   },
@@ -591869,5 +591869,12 @@
     "father_name": "RAM KUMAR",
     "category": "BPharm",
     "serial_number": 84553
+  },
+  {
+    "registration_number": "TG077985",
+    "name": "NEELI BHARATH KUMAR",
+    "father_name": "NEELI ANANDAM",
+    "category": "BPharm",
+    "serial_number": 84554
   }
 ]
