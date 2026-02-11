@@ -589710,7 +589710,7 @@
   {
     "registration_number": "TG077735",
     "name": "GHOUSIYA BEGUM",
-    "father_name": "MOHAMMED AMEEN KHALEDI",
+    "father_name": "MOHAMMED AMEEN ALi KHALEDI",
     "category": "BPharm",
     "serial_number": 84245
   },
@@ -593087,5 +593087,12 @@
     "father_name": "K KOTESWARA RAO",
     "category": "BPharm",
     "serial_number": 84727
+  },
+  {
+    "registration_number": "TG078140",
+    "name": "KANDUKURI Abhishiktha varma",
+    "father_name": "Kandukuri Devavaram",
+    "category": "BPharm",
+    "serial_number": 84728
   }
 ]
