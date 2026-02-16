@@ -593836,5 +593836,26 @@
     "father_name": "S BABU",
     "category": "BPharm",
     "serial_number": 84834
+  },
+  {
+    "registration_number": "TG078253",
+    "name": "UMA JAGNNADHA RAO Y",
+    "father_name": "TRIVIKRAMA RAO YENIGALLA",
+    "category": "BPharm",
+    "serial_number": 84835
+  },
+  {
+    "registration_number": "TG078254",
+    "name": "PALTHYA RAMSINGH",
+    "father_name": "P PULYA NAIK",
+    "category": "BPharm",
+    "serial_number": 84836
+  },
+  {
+    "registration_number": "TG078255",
+    "name": "BHASHAMAINA MITHRA",
+    "father_name": "BHASHAMAINA BALAIAH",
+    "category": "BPharm",
+    "serial_number": 84837
   }
 ]
