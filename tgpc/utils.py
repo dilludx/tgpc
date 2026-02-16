@@ -25,7 +25,7 @@ class Config:
     
     # API Settings
     base_url: str = "https://www.pharmacycouncil.telangana.gov.in"
-    timeout: int = 30
+    timeout: int = 60
     max_retries: int = 3
     
     # Rate Limiting
