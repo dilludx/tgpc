@@ -591824,7 +591824,7 @@
   {
     "registration_number": "TG077977",
     "name": "Lashetty Bharath",
-    "father_name": "Lashetty Shankar",
+    "father_name": "Shankar",
     "category": "BPharm",
     "serial_number": 84547
   },
@@ -593864,5 +593864,12 @@
     "father_name": "CHEDAPANGU VENKATESHWARLU",
     "category": "BPharm",
     "serial_number": 84838
+  },
+  {
+    "registration_number": "TG078259",
+    "name": "BOLLA MADHU",
+    "father_name": "BOLLA SAMBAIAH",
+    "category": "DPharm",
+    "serial_number": 84839
   }
 ]
