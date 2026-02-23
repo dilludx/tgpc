@@ -595215,5 +595215,33 @@
     "father_name": "BURRA VISHNU",
     "category": "BPharm",
     "serial_number": 85031
+  },
+  {
+    "registration_number": "TG078407",
+    "name": "THAPA DHEERAJ",
+    "father_name": "THAPA SARJAN",
+    "category": "BPharm",
+    "serial_number": 85032
+  },
+  {
+    "registration_number": "TG078408",
+    "name": "KUMMARI NAVEEN",
+    "father_name": "KUMMRI KUMAR",
+    "category": "BPharm",
+    "serial_number": 85033
+  },
+  {
+    "registration_number": "TG078409",
+    "name": "MALYALA SRIVIDYA",
+    "father_name": "BHASKAR",
+    "category": "BPharm",
+    "serial_number": 85034
+  },
+  {
+    "registration_number": "TG078411",
+    "name": "MANCHIKANTI VENKATA SAI KUMAR",
+    "father_name": "M V NARAYANA",
+    "category": "BPharm",
+    "serial_number": 85035
   }
 ]
