@@ -274,6 +274,51 @@ jobs:
             print(f'Error parsing details: {e}')
         " >> $GITHUB_STEP_SUMMARY
     
+    - name: Send email notification
+      if: steps.changes.outputs.changes == 'true'
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp-mail.outlook.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "🆕 TGPC: New Pharmacy Records Available"
+        to: ${{ secrets.NOTIFICATION_EMAIL }}
+        from: "TGPC Bot <${{ secrets.EMAIL_USERNAME }}>"
+        html_body: |
+          <h2>🆕 New TGPC Pharmacy Records</h2>
+          <p>The automated TGPC data sync has detected new pharmacy records.</p>
+          
+          <h3>📊 Summary</h3>
+          <ul>
+            <li><strong>Total Records:</strong> ${{ steps.update.outputs.total_records }}</li>
+            <li><strong>New Records:</strong> ${{ steps.update.outputs.new_count || '0' }}</li>
+            <li><strong>Sync Time:</strong> $(TZ='Asia/Kolkata' date '+%d %b %Y %H:%M IST')</li>
+          </ul>
+          
+          <h3>📋 New Records by Category</h3>
+          <p><strong>${{ steps.update.outputs.new_cat_stats || 'No new records' }}</strong></p>
+          
+          <h3>👤 Recent New Records</h3>
+          <pre><code>$(cat /tmp/new_records.json | python3 -c "
+import json, sys
+try:
+    records = json.load(sys.stdin)
+    if records:
+        for i, record in enumerate(records[:10], 1):  # Show max 10 records
+            print(f'{i}. {record.get(\"registration_number\", \"N/A\")} - {record.get(\"name\", \"N/A\")} ({record.get(\"category\", \"N/A\")})')
+        if len(records) > 10:
+            print(f'... and {len(records) - 10} more records')
+    else:
+        print('No new records to display')
+except:
+    print('Error displaying records')
+")</code></pre>
+          
+          <hr>
+          <p><small>This is an automated notification from the TGPC Rx Registry system.</small></p>
+          <p><small>View the full data: <a href="https://github.com/dilludx/tgpc">GitHub Repository</a></small></p>
+
     - name: Notify on failure
       if: failure()
       run: |
