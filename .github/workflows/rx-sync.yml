@@ -16,6 +16,12 @@ on:
         required: false
         type: boolean
         default: false
+  push:
+    branches: [ exp ]
+    paths:
+      - '.github/workflows/rx-sync.yml'
+      - 'tgpc/**'
+      - 'scripts/**'
 
 jobs:
   rx-sync:
