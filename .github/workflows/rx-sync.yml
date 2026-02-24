@@ -282,24 +282,24 @@ jobs:
         server_port: 587
         username: ${{ secrets.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: "🆕 TGPC: New Pharmacy Records Available"
+        subject: "♻️ Data Sync - TGPC Rx Registry - $(TZ='Asia/Kolkata' date '+%d%b%Y %^a %H:%M IST')"
         to: ${{ secrets.NOTIFICATION_EMAIL }}
         from: "TGPC Bot <${{ secrets.EMAIL_USERNAME }}>"
         html_body: |
-          <h2>🆕 New TGPC Pharmacy Records</h2>
+          <h2>New TGPC Pharmacy Records</h2>
           <p>The automated TGPC data sync has detected new pharmacy records.</p>
           
-          <h3>📊 Summary</h3>
+          <h3>Summary</h3>
           <ul>
             <li><strong>Total Records:</strong> ${{ steps.update.outputs.total_records }}</li>
             <li><strong>New Records:</strong> ${{ steps.update.outputs.new_count || '0' }}</li>
             <li><strong>Sync Time:</strong> $(TZ='Asia/Kolkata' date '+%d %b %Y %H:%M IST')</li>
           </ul>
           
-          <h3>📋 New Records by Category</h3>
+          <h3>New Records by Category</h3>
           <p><strong>${{ steps.update.outputs.new_cat_stats || 'No new records' }}</strong></p>
           
-          <h3>👤 Recent New Records</h3>
+          <h3>Recent New Records</h3>
           <pre><code>$(cat /tmp/new_records.json | python3 -c "
 import json, sys
 try:
