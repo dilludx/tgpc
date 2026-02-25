@@ -595243,5 +595243,19 @@
     "father_name": "M V NARAYANA",
     "category": "BPharm",
     "serial_number": 85035
+  },
+  {
+    "registration_number": "TG078414",
+    "name": "BORUGALA KRANTHI KUMAR",
+    "father_name": "BORUGALA KOMURAIAH",
+    "category": "BPharm",
+    "serial_number": 85036
+  },
+  {
+    "registration_number": "TG078415",
+    "name": "MOHAMMED SAHIL UDDIN",
+    "father_name": "MOHAMMED SALEEM UDDIN",
+    "category": "BPharm",
+    "serial_number": 85037
   }
 ]
