@@ -539,7 +539,7 @@ jobs:
         
         # Create message
         msg = MIMEMultipart()
-        msg['From'] = f"Rx Data Sync <{sender_email}>"
+        msg['From'] = f"Rx Data ♻ <{sender_email}>"
         msg['To'] = recipient_email
         msg['Subject'] = f"♻️ Data Sync - TGPC Rx Registry - {subject_time}"
         msg.attach(MIMEText(html_body, 'html'))
