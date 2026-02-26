@@ -284,13 +284,14 @@ jobs:
       if: steps.changes.outputs.changes == 'true'
       uses: dawidd6/action-send-mail@v3
       with:
-        server_address: smtp-mail.outlook.com
+        server_address: smtp.office365.com
         server_port: 587
         username: ${{ secrets.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
         subject: "♻️ Data Sync - TGPC Rx Registry - $(TZ='Asia/Kolkata' date '+%d%b%Y %^a %H:%M IST')"
         to: ${{ secrets.NOTIFICATION_EMAIL }}
         from: "TGPC Bot <${{ secrets.EMAIL_USERNAME }}>"
+        content_type: text/html
         html_body: |
           <h3>New Records by Category</h3>
           <p><strong>${{ steps.update.outputs.new_cat_stats || 'No new records' }}</strong></p>
