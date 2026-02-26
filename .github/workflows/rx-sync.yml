@@ -284,14 +284,14 @@ jobs:
       if: always()
       uses: dawidd6/action-send-mail@v3
       with:
-        server_address: smtp-mail.outlook.com
+        server_address: smtp.gmail.com
         server_port: 587
         secure: false
-        username: ${{ secrets.EMAIL_USERNAME }}
-        password: ${{ secrets.EMAIL_PASSWORD }}
+        username: ${{ secrets.GMAIL_USERNAME }}
+        password: ${{ secrets.GMAIL_APP_PASSWORD }}
         subject: "♻️ Data Sync - TGPC Rx Registry - $(TZ='Asia/Kolkata' date '+%d%b%Y %^a %H:%M IST')"
         to: ${{ secrets.NOTIFICATION_EMAIL }}
-        from: "TGPC Bot <${{ secrets.EMAIL_USERNAME }}>"
+        from: "TGPC Bot <${{ secrets.GMAIL_USERNAME }}>"
         html_body: |
           <h2>🔄 TGPC Rx Registry Sync Report</h2>
           <p><strong>Sync Time:</strong> $(TZ='Asia/Kolkata' date '+%d %B %Y, %H:%M IST')</p>
