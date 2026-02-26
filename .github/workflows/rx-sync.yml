@@ -283,32 +283,80 @@ jobs:
     - name: Send email notification
       if: always()
       run: |
-        # Generate email body with proper variable substitution
-        EMAIL_BODY=$(cat << 'EOF'
+        python3 << 'EOF'
+        import smtplib
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        import os
+        
+        # Email configuration
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+        sender_email = "${{ secrets.GMAIL_USERNAME }}"
+        app_password = "${{ secrets.GMAIL_APP_PASSWORD }}"
+        recipient_email = "${{ secrets.NOTIFICATION_EMAIL }}"
+        
+        # Generate email body
+        import subprocess
+        from datetime import datetime, timezone, timedelta
+        
+        # Get IST time
+        ist = timezone(timedelta(hours=5, minutes=30))
+        now = datetime.now(ist)
+        sync_time = now.strftime('%d %B %Y, %H:%M IST')
+        subject_time = now.strftime('%d%b%Y %a %H:%M IST')
+        
+        # Get new records
+        try:
+            with open('/tmp/new_records.json', 'r') as f:
+                new_records_content = f.read()
+            formatted_records = subprocess.run(
+                ['python3', 'scripts/format_new_records.py'], 
+                input=new_records_content, 
+                text=True, 
+                capture_output=True
+            ).stdout.strip()
+        except:
+            formatted_records = 'No new records to display'
+        
+        # Create HTML email
+        new_cat_stats = os.environ.get('NEW_CAT_STATS', 'No new records')
+        total_records = os.environ.get('TOTAL_RECORDS', 'Unknown')
+        
+        html_body = f"""
         <h2>🔄 TGPC Rx Registry Sync Report</h2>
-        <p><strong>Sync Time:</strong> $(TZ='Asia/Kolkata' date '+%d %B %Y, %H:%M IST')</p>
+        <p><strong>Sync Time:</strong> {sync_time}</p>
         
         <h3>📊 Summary</h3>
-        <p><strong>New Records by Category:</strong> ${{ steps.update.outputs.new_cat_stats || 'No new records' }}</p>
-        <p><strong>Total Records:</strong> ${{ steps.update.outputs.total_records || 'Unknown' }}</p>
+        <p><strong>New Records by Category:</strong> {new_cat_stats}</p>
+        <p><strong>Total Records:</strong> {total_records}</p>
         
         <h3>🆕 New Records</h3>
-        <pre><code>$(cat /tmp/new_records.json | python3 scripts/format_new_records.py 2>/dev/null || echo 'No new records to display')</code></pre>
+        <pre><code>{formatted_records}</code></pre>
         
         <hr>
         <p><small>This is an automated notification from the TGPC Rx Registry system.</small></p>
-        EOF
-        )
+        """
         
-        # Send email using curl with Gmail SMTP
-        curl --url 'smtps://smtp.gmail.com:587' --ssl-reqd \
-          --mail-from '${{ secrets.GMAIL_USERNAME }}' \
-          --mail-rcpt '${{ secrets.NOTIFICATION_EMAIL }}' \
-          --user '${{ secrets.GMAIL_USERNAME }}:${{ secrets.GMAIL_APP_PASSWORD }}' \
-          --header "Subject: ♻️ Data Sync - TGPC Rx Registry - $(TZ='Asia/Kolkata' date '+%d%b%Y %^a %H:%M IST')" \
-          --header "From: TGPC Bot <${{ secrets.GMAIL_USERNAME }}>" \
-          --header "Content-Type: text/html; charset=UTF-8" \
-          --data "$EMAIL_BODY"
+        # Create message
+        msg = MIMEMultipart()
+        msg['From'] = f"TGPC Bot <{sender_email}>"
+        msg['To'] = recipient_email
+        msg['Subject'] = f"♻️ Data Sync - TGPC Rx Registry - {subject_time}"
+        msg.attach(MIMEText(html_body, 'html'))
+        
+        # Send email
+        try:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(sender_email, app_password)
+            server.send_message(msg)
+            server.quit()
+            print("✅ Email sent successfully")
+        except Exception as e:
+            print(f"❌ Failed to send email: {e}")
+            print(f"Error details: {str(e)}")
+        EOF
 
     - name: Notify on failure
       if: failure()
