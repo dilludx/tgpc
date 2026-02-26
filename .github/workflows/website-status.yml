@@ -11,31 +11,27 @@ jobs:
     name: Website Status
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for website to be ready
-        run: |
-          echo "⏳ Waiting for website to be ready..."
-          for i in {1..12}; do  # Check for up to 2 minutes
-            if curl -f -s https://tgpc.pages.dev/ > /dev/null; then
-              echo "✅ Website is ready after ${i} attempts"
-              break
-            fi
-            echo "Attempt $i/12 - waiting 10 seconds..."
-            sleep 10
-          done
-
       - name: Check Website Availability
         run: |
           echo "Checking website status..."
-          STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" https://tgpc.pages.dev/)
           
-          echo "### 🛜 Website Status • $(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]') • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          if [ "$STATUS" -eq 200 ]; then
-            echo "✅ Website is UP (Status: $STATUS)"
-            echo "✅ Online ($STATUS) • https://tgpc.pages.dev/" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Website is DOWN (Status: $STATUS)"
-            echo "❌ Offline ($STATUS) • https://tgpc.pages.dev/" >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
+          # Exponential backoff - optimal for variable deployment times
+          for i in {1..6}; do
+            STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" https://tgpc.pages.dev/ --max-time 5)
+            if [ "$STATUS" -eq 200 ]; then
+              echo "✅ Website is UP (Status: $STATUS) - Attempt $i"
+              echo "### 🛜 Website Status • $(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]') • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "✅ Online ($STATUS) • https://tgpc.pages.dev/" >> $GITHUB_STEP_SUMMARY
+              exit 0
+            elif [ $i -eq 6 ]; then
+              echo "❌ Website is DOWN (Status: $STATUS) after 6 attempts"
+              echo "### 🛜 Website Status • $(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]') • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "❌ Offline ($STATUS) • https://tgpc.pages.dev/" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            else
+              echo "Attempt $i/6 - Status: $STATUS - waiting $((2**i)) seconds..."
+              sleep $((2**i))
+            fi
+          done
