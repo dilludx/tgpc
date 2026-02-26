@@ -281,7 +281,7 @@ jobs:
         " >> $GITHUB_STEP_SUMMARY
     
     - name: Send email notification
-      if: steps.changes.outputs.changes == 'true'
+      if: always()
       uses: dawidd6/action-send-mail@v3
       with:
         server_address: smtp.office365.com
@@ -292,11 +292,15 @@ jobs:
         to: ${{ secrets.NOTIFICATION_EMAIL }}
         from: "TGPC Bot <${{ secrets.EMAIL_USERNAME }}>"
         html_body: |
-          <h3>New Records by Category</h3>
-          <p><strong>${{ steps.update.outputs.new_cat_stats || 'No new records' }}</strong></p>
+          <h2>🔄 TGPC Rx Registry Sync Report</h2>
+          <p><strong>Sync Time:</strong> $(TZ='Asia/Kolkata' date '+%d %B %Y, %H:%M IST')</p>
           
-          <h3>All New Records</h3>
-          <pre><code>$(cat /tmp/new_records.json | python3 scripts/format_new_records.py)</code></pre>
+          <h3>📊 Summary</h3>
+          <p><strong>New Records by Category:</strong> ${{ steps.update.outputs.new_cat_stats || 'No new records' }}</p>
+          <p><strong>Total Records:</strong> ${{ steps.update.outputs.total_records || 'Unknown' }}</p>
+          
+          <h3>🆕 New Records</h3>
+          <pre><code>$(cat /tmp/new_records.json | python3 scripts/format_new_records.py 2>/dev/null || echo 'No new records to display')</code></pre>
           
           <hr>
           <p><small>This is an automated notification from the TGPC Rx Registry system.</small></p>
