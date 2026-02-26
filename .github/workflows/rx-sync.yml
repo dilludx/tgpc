@@ -282,29 +282,33 @@ jobs:
     
     - name: Send email notification
       if: always()
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 587
-        secure: false
-        username: ${{ secrets.GMAIL_USERNAME }}
-        password: ${{ secrets.GMAIL_APP_PASSWORD }}
-        subject: "♻️ Data Sync - TGPC Rx Registry - $(TZ='Asia/Kolkata' date '+%d%b%Y %^a %H:%M IST')"
-        to: ${{ secrets.NOTIFICATION_EMAIL }}
-        from: "TGPC Bot <${{ secrets.GMAIL_USERNAME }}>"
-        html_body: |
-          <h2>🔄 TGPC Rx Registry Sync Report</h2>
-          <p><strong>Sync Time:</strong> $(TZ='Asia/Kolkata' date '+%d %B %Y, %H:%M IST')</p>
-          
-          <h3>📊 Summary</h3>
-          <p><strong>New Records by Category:</strong> ${{ steps.update.outputs.new_cat_stats || 'No new records' }}</p>
-          <p><strong>Total Records:</strong> ${{ steps.update.outputs.total_records || 'Unknown' }}</p>
-          
-          <h3>🆕 New Records</h3>
-          <pre><code>$(cat /tmp/new_records.json | python3 scripts/format_new_records.py 2>/dev/null || echo 'No new records to display')</code></pre>
-          
-          <hr>
-          <p><small>This is an automated notification from the TGPC Rx Registry system.</small></p>
+      run: |
+        # Generate email body with proper variable substitution
+        EMAIL_BODY=$(cat << 'EOF'
+        <h2>🔄 TGPC Rx Registry Sync Report</h2>
+        <p><strong>Sync Time:</strong> $(TZ='Asia/Kolkata' date '+%d %B %Y, %H:%M IST')</p>
+        
+        <h3>📊 Summary</h3>
+        <p><strong>New Records by Category:</strong> ${{ steps.update.outputs.new_cat_stats || 'No new records' }}</p>
+        <p><strong>Total Records:</strong> ${{ steps.update.outputs.total_records || 'Unknown' }}</p>
+        
+        <h3>🆕 New Records</h3>
+        <pre><code>$(cat /tmp/new_records.json | python3 scripts/format_new_records.py 2>/dev/null || echo 'No new records to display')</code></pre>
+        
+        <hr>
+        <p><small>This is an automated notification from the TGPC Rx Registry system.</small></p>
+        EOF
+        )
+        
+        # Send email using curl with Gmail SMTP
+        curl --url 'smtps://smtp.gmail.com:587' --ssl-reqd \
+          --mail-from '${{ secrets.GMAIL_USERNAME }}' \
+          --mail-rcpt '${{ secrets.NOTIFICATION_EMAIL }}' \
+          --user '${{ secrets.GMAIL_USERNAME }}:${{ secrets.GMAIL_APP_PASSWORD }}' \
+          --header "Subject: ♻️ Data Sync - TGPC Rx Registry - $(TZ='Asia/Kolkata' date '+%d%b%Y %^a %H:%M IST')" \
+          --header "From: TGPC Bot <${{ secrets.GMAIL_USERNAME }}>" \
+          --header "Content-Type: text/html; charset=UTF-8" \
+          --data "$EMAIL_BODY"
 
     - name: Notify on failure
       if: failure()
