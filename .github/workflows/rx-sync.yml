@@ -294,7 +294,7 @@ jobs:
         smtp_port = 587
         sender_email = "${{ secrets.GMAIL_USERNAME }}"
         app_password = "${{ secrets.GMAIL_APP_PASSWORD }}"
-        recipient_email = "${{ secrets.NOTIFICATION_EMAIL }}"
+        recipient_email = "dinesh.io@outlook.com"
         
         # Generate email body
         import subprocess
@@ -539,7 +539,7 @@ jobs:
         
         # Create message
         msg = MIMEMultipart()
-        msg['From'] = f"Rx Data Sync <{sender_email}>"
+        msg['From'] = f"Rx Data ♻️ <{sender_email}>"
         msg['To'] = recipient_email
         msg['Subject'] = f"♻️ Data Sync - TGPC Rx Registry - {subject_time}"
         msg.attach(MIMEText(html_body, 'html'))
