@@ -11,10 +11,17 @@ jobs:
     name: Website Status
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for changes to propagate
+      - name: Wait for website to be ready
         run: |
-          echo "⏳ Waiting 5 minutes for any changes to propagate..."
-          sleep 300
+          echo "⏳ Waiting for website to be ready..."
+          for i in {1..12}; do  # Check for up to 2 minutes
+            if curl -f -s https://tgpc.pages.dev/ > /dev/null; then
+              echo "✅ Website is ready after ${i} attempts"
+              break
+            fi
+            echo "Attempt $i/12 - waiting 10 seconds..."
+            sleep 10
+          done
 
       - name: Check Website Availability
         run: |
