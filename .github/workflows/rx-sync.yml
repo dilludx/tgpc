@@ -201,8 +201,8 @@ jobs:
         
         git commit -m "$COMMIT_MSG"
         
-        # Pull latest changes to avoid push rejection
-        git pull --rebase origin main
+        # Pull latest changes and merge safely
+        git pull origin main --no-rebase
         
         git push
     
@@ -291,7 +291,6 @@ jobs:
         subject: "♻️ Data Sync - TGPC Rx Registry - $(TZ='Asia/Kolkata' date '+%d%b%Y %^a %H:%M IST')"
         to: ${{ secrets.NOTIFICATION_EMAIL }}
         from: "TGPC Bot <${{ secrets.EMAIL_USERNAME }}>"
-        content_type: text/html
         html_body: |
           <h3>New Records by Category</h3>
           <p><strong>${{ steps.update.outputs.new_cat_stats || 'No new records' }}</strong></p>
