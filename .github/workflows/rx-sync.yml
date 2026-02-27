@@ -289,6 +289,29 @@ jobs:
         new_cat_stats = "${{ steps.update.outputs.new_cat_stats || 'No new records' }}"
         total_records = "${{ steps.update.outputs.total_records || 'Unknown' }}"
         
+        # Generate email body
+        import subprocess
+        from datetime import datetime, timezone, timedelta
+        
+        # Get IST time
+        ist = timezone(timedelta(hours=5, minutes=30))
+        now = datetime.now(ist)
+        sync_time = now.strftime('%d %B %Y, %H:%M IST')
+        subject_time = now.strftime('%d%b%Y %^a %H:%M IST').upper()
+        
+        # Get new records
+        try:
+            with open('/tmp/new_records.json', 'r') as f:
+                new_records_content = f.read()
+            formatted_records = subprocess.run(
+                ['python3', 'scripts/format_new_records.py'], 
+                input=new_records_content, 
+                text=True, 
+                capture_output=True
+            ).stdout.strip()
+        except:
+            formatted_records = 'No new records to display'
+        
         html_body = f"""
         <!DOCTYPE html>
         <html>
