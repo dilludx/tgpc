@@ -41,6 +41,7 @@ debug_*.html
 .idea/
 .vscode/
 .kiro/
+.continue/
 *.swp
 *.swo
 *~
