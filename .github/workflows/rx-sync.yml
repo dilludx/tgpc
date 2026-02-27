@@ -17,7 +17,7 @@ on:
         type: boolean
         default: false
   push:
-    branches: [ exp ]
+    branches: [ main, exp ]
     paths:
       - '.github/workflows/rx-sync.yml'
       - 'tgpc/**'
@@ -34,9 +34,10 @@ jobs:
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 2
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     
@@ -64,6 +65,8 @@ jobs:
     - name: Check for changes and save new records
       id: changes
       run: |
+        rm -f /tmp/new_records.json
+
         if git diff --quiet data/rx.json; then
           echo "changes=false" >> $GITHUB_OUTPUT
           echo "No changes detected in rx.json"
@@ -74,37 +77,42 @@ jobs:
           echo "🆕 New Records Added:"
           echo "===================="
           
-          # Save new records to a file for later use
-          python -c "
+          # Save only truly new registration numbers (JSON-aware, not line-diff based)
+          python3 << 'PYEOF'
         import json
         import subprocess
-        
-        # Get the diff and extract added lines
-        diff_output = subprocess.run(['git', 'diff', 'data/rx.json'], capture_output=True, text=True).stdout
-        
-        # Parse added records from diff
-        new_records = []
-        for line in diff_output.split('\n'):
-            if line.startswith('+') and not line.startswith('+++') and '{' in line:
-                try:
-                    # Extract JSON object from the line
-                    json_str = line[1:].strip().rstrip(',')
-                    record = json.loads(json_str)
-                    new_records.append(record)
-                except:
-                    pass
-        
-        # Save to file for later use
-        with open('/tmp/new_records.json', 'w') as f:
-            json.dump(new_records, f)
-        
-        # Display new records
+        from pathlib import Path
+
+        current_path = Path("data/rx.json")
+        current_records = json.loads(current_path.read_text(encoding="utf-8"))
+
+        base_records = []
+        show = subprocess.run(
+            ["git", "show", "HEAD:data/rx.json"],
+            capture_output=True,
+            text=True
+        )
+        if show.returncode == 0 and show.stdout.strip():
+            base_records = json.loads(show.stdout)
+
+        base_ids = {r.get("registration_number") for r in base_records}
+        new_records = [
+            r for r in current_records
+            if r.get("registration_number") and r.get("registration_number") not in base_ids
+        ]
+
+        with open("/tmp/new_records.json", "w", encoding="utf-8") as f:
+            json.dump(new_records, f, ensure_ascii=False)
+
         if new_records:
             for i, record in enumerate(new_records, 1):
-                print(f'{i}. {record.get(\"registration_number\", \"N/A\")} - {record.get(\"name\", \"N/A\")} ({record.get(\"category\", \"N/A\")})')
+                print(
+                    f"{i}. {record.get('registration_number', 'N/A')} - "
+                    f"{record.get('name', 'N/A')} ({record.get('category', 'N/A')})"
+                )
         else:
-            print('No new records could be parsed from diff')
-          "
+            print("No new records detected")
+        PYEOF
         fi
     
     - name: Sync to Supabase
@@ -115,32 +123,6 @@ jobs:
       run: |
         echo "♻️ Syncing data to Supabase cloud database..."
         python -m tgpc sync
-    
-    - name: Update last_sync timestamp
-      env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-      run: |
-        echo "🕐 Updating last_sync timestamp in Supabase..."
-        python3 << 'EOF'
-        import os
-        from datetime import datetime
-        from supabase import create_client
-
-        url = os.environ.get("SUPABASE_URL")
-        key = os.environ.get("SUPABASE_SERVICE_KEY")
-        
-        if url and key:
-            supabase = create_client(url, key)
-            sync_time = datetime.now().isoformat()
-            supabase.table('metadata').upsert({
-                'key': 'last_sync',
-                'value': sync_time
-            }, on_conflict='key').execute()
-            print(f"✅ Updated last_sync: {sync_time}")
-        else:
-            print("⚠️ Missing Supabase credentials")
-        EOF
     
     - name: Commit and push changes
       if: steps.changes.outputs.changes == 'true'
@@ -199,12 +181,17 @@ jobs:
         PYEOF
         )
         
+        if git diff --cached --quiet; then
+          echo "No staged changes to commit."
+          exit 0
+        fi
+
         git commit -m "$COMMIT_MSG"
         
         # Pull latest changes and merge safely
-        git pull origin main --no-rebase
+        git pull origin "${{ github.ref_name }}" --no-rebase
         
-        git push
+        git push origin HEAD:"${{ github.ref_name }}"
     
     - name: Create update summary
       if: always()
