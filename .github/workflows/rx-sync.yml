@@ -335,8 +335,8 @@ jobs:
             <title>TGPC Rx Registry Sync Report</title>
             <style>
                 body {{
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                    background-color: #f8f9fa;
                     margin: 0;
                     padding: 20px;
                     color: #333;
@@ -345,148 +345,95 @@ jobs:
                     max-width: 600px;
                     margin: 0 auto;
                     background: white;
-                    border-radius: 16px;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-                    overflow: hidden;
+                    border: 1px solid #e9ecef;
+                    border-radius: 4px;
                 }}
                 .header {{
-                    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-                    color: white;
-                    padding: 40px 30px;
-                    text-align: center;
-                    position: relative;
-                }}
-                .header::before {{
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="50" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="30" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+                    background: #ffffff;
+                    border-bottom: 1px solid #e9ecef;
+                    padding: 24px;
                 }}
                 .header h1 {{
                     margin: 0;
-                    font-size: 32px;
-                    font-weight: 700;
-                    position: relative;
-                    z-index: 1;
+                    font-size: 20px;
+                    font-weight: 600;
+                    color: #2c3e50;
                 }}
                 .header .subtitle {{
-                    margin: 10px 0 0 0;
-                    opacity: 0.9;
-                    font-size: 16px;
-                    position: relative;
-                    z-index: 1;
+                    margin: 4px 0 0 0;
+                    font-size: 14px;
+                    color: #6c757d;
                 }}
                 .content {{
-                    padding: 40px 30px;
+                    padding: 24px;
                 }}
-                .sync-time {{
-                    background: #f8fafc;
-                    border-left: 4px solid #4f46e5;
-                    padding: 15px 20px;
-                    border-radius: 8px;
-                    margin-bottom: 30px;
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                }}
-                .sync-time-icon {{
-                    width: 40px;
-                    height: 40px;
-                    background: #4f46e5;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    font-size: 18px;
-                }}
-                .stats-grid {{
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 20px;
-                    margin-bottom: 30px;
-                }}
-                .stat-card {{
-                    background: #f8fafc;
-                    border-radius: 12px;
-                    padding: 25px;
-                    text-align: center;
-                    border: 1px solid #e2e8f0;
-                    transition: transform 0.2s ease, box-shadow 0.2s ease;
-                }}
-                .stat-card:hover {{
-                    transform: translateY(-2px);
-                    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-                }}
-                .stat-number {{
-                    font-size: 28px;
-                    font-weight: 700;
-                    color: #4f46e5;
-                    margin-bottom: 8px;
-                }}
-                .stat-label {{
-                    color: #64748b;
-                    font-size: 14px;
-                    font-weight: 500;
-                }}
-                .records-section {{
-                    background: #f8fafc;
-                    border-radius: 12px;
-                    padding: 30px;
-                    border: 1px solid #e2e8f0;
+                .section {{
+                    margin-bottom: 24px;
                 }}
                 .section-title {{
-                    font-size: 18px;
+                    font-size: 16px;
                     font-weight: 600;
-                    color: #1e293b;
-                    margin-bottom: 20px;
+                    color: #2c3e50;
+                    margin-bottom: 12px;
+                    border-bottom: 1px solid #e9ecef;
+                    padding-bottom: 8px;
+                }}
+                .stats {{
+                    background: #f8f9fa;
+                    border: 1px solid #e9ecef;
+                    border-radius: 4px;
+                    padding: 16px;
+                }}
+                .stat-row {{
                     display: flex;
-                    align-items: center;
-                    gap: 10px;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                }}
+                .stat-row:last-child {{
+                    margin-bottom: 0;
+                }}
+                .stat-label {{
+                    font-weight: 500;
+                    color: #495057;
+                }}
+                .stat-value {{
+                    font-weight: 600;
+                    color: #2c3e50;
                 }}
                 .records-content {{
-                    background: white;
-                    border-radius: 8px;
-                    padding: 20px;
-                    border: 1px solid #e2e8f0;
-                    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-                    font-size: 13px;
-                    line-height: 1.6;
-                    color: #374151;
+                    background: #ffffff;
+                    border: 1px solid #e9ecef;
+                    border-radius: 4px;
+                    padding: 16px;
+                    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+                    font-size: 12px;
+                    line-height: 1.5;
+                    color: #495057;
+                    white-space: pre-wrap;
                     max-height: 300px;
                     overflow-y: auto;
                 }}
                 .footer {{
-                    background: #f8fafc;
-                    padding: 30px;
+                    background: #f8f9fa;
+                    border-top: 1px solid #e9ecef;
+                    padding: 16px 24px;
+                    font-size: 12px;
+                    color: #6c757d;
                     text-align: center;
-                    border-top: 1px solid #e2e8f0;
-                    color: #64748b;
-                    font-size: 14px;
                 }}
                 .footer .brand {{
                     font-weight: 600;
-                    color: #4f46e5;
-                }}
-                .emoji {{
-                    font-size: 20px;
+                    color: #2c3e50;
                 }}
                 @media (max-width: 600px) {{
-                    .stats-grid {{
-                        grid-template-columns: 1fr;
+                    body {{
+                        padding: 10px;
                     }}
                     .container {{
-                        margin: 10px;
-                        border-radius: 12px;
+                        margin: 0;
                     }}
-                    .header {{
-                        padding: 30px 20px;
-                    }}
-                    .content {{
-                        padding: 30px 20px;
+                    .header, .content, .footer {{
+                        padding: 16px;
                     }}
                 }}
             </style>
@@ -494,34 +441,27 @@ jobs:
         <body>
             <div class="container">
                 <div class="header">
-                    <h1><span class="emoji">🔄</span> TGPC Rx Registry</h1>
-                    <div class="subtitle">Sync Report • {sync_time}</div>
+                    <h1>TGPC Rx Registry Sync Report</h1>
+                    <div class="subtitle">{sync_time}</div>
                 </div>
                 
                 <div class="content">
-                    <div class="sync-time">
-                        <div class="sync-time-icon">⏰</div>
-                        <div>
-                            <strong>Last Sync Completed</strong><br>
-                            <span style="color: #64748b; font-size: 14px;">{sync_time}</span>
+                    <div class="section">
+                        <div class="section-title">Sync Summary</div>
+                        <div class="stats">
+                            <div class="stat-row">
+                                <span class="stat-label">New Records:</span>
+                                <span class="stat-value">{new_cat_stats}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">Total Records:</span>
+                                <span class="stat-value">{total_records}</span>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-number">{new_cat_stats}</div>
-                            <div class="stat-label">🆕 New Records</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number">{total_records}</div>
-                            <div class="stat-label">📊 Total Records</div>
-                        </div>
-                    </div>
-                    
-                    <div class="records-section">
-                        <div class="section-title">
-                            <span class="emoji">📋</span> New Records Details
-                        </div>
+                    <div class="section">
+                        <div class="section-title">New Records Details</div>
                         <div class="records-content">
                             {formatted_records}
                         </div>
@@ -530,10 +470,7 @@ jobs:
                 
                 <div class="footer">
                     <div class="brand">TGPC Rx Registry</div>
-                    <div>Automated sync notification system</div>
-                    <div style="margin-top: 10px; font-size: 12px; opacity: 0.7;">
-                        This is an automated message • Do not reply
-                    </div>
+                    <div>Automated data synchronization system</div>
                 </div>
             </div>
         </body>
