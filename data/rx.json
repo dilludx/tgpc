@@ -50899,7 +50899,7 @@
   {
     "registration_number": "TS006566",
     "name": "NYATHA RAKESH",
-    "father_name": "NYATHA KANAKAIAH",
+    "father_name": "NYATHA KANAKAIaH",
     "category": "BPharm",
     "serial_number": 7272
   },
@@ -596055,5 +596055,740 @@
     "father_name": "CHILAKALA VENKATESWARLU",
     "category": "BPharm",
     "serial_number": 85151
+  },
+  {
+    "registration_number": "TG078533",
+    "name": "LINGAMPALLY GANESH",
+    "father_name": "LINGAMPALLY VEERESHAM",
+    "category": "BPharm",
+    "serial_number": 85152
+  },
+  {
+    "registration_number": "TG078534",
+    "name": "MOHD YOUSUF MUNAWAR",
+    "father_name": "MOHD MUNAWAR YOUSUF",
+    "category": "BPharm",
+    "serial_number": 85153
+  },
+  {
+    "registration_number": "TG078535",
+    "name": "Shiva Sai Sri Ramoju",
+    "father_name": "BhaskaraChary Sri Ramoju",
+    "category": "BPharm",
+    "serial_number": 85154
+  },
+  {
+    "registration_number": "TG078536",
+    "name": "GUNDALA INDUJA",
+    "father_name": "GUNDALA VENKATAIAH",
+    "category": "BPharm",
+    "serial_number": 85155
+  },
+  {
+    "registration_number": "TG078537",
+    "name": "DAARA UMESH",
+    "father_name": "DAARA PRASAD",
+    "category": "BPharm",
+    "serial_number": 85156
+  },
+  {
+    "registration_number": "TG078538",
+    "name": "DASARI GAYATHRI",
+    "father_name": "DASARI RAJESHWAR RAO",
+    "category": "BPharm",
+    "serial_number": 85157
+  },
+  {
+    "registration_number": "TG078539",
+    "name": "MAISAGONI SOUUMYA",
+    "father_name": "MAISAGONI VENKATEESH",
+    "category": "BPharm",
+    "serial_number": 85158
+  },
+  {
+    "registration_number": "TG078540",
+    "name": "PALAIAH LAVANYA",
+    "father_name": "PALAIAH JOHN KENNADI",
+    "category": "BPharm",
+    "serial_number": 85159
+  },
+  {
+    "registration_number": "TG078541",
+    "name": "GADILA ANUSHA",
+    "father_name": "GADILA SAILU",
+    "category": "BPharm",
+    "serial_number": 85160
+  },
+  {
+    "registration_number": "TG078542",
+    "name": "BORA SUNITHA",
+    "father_name": "BORA SATYAM",
+    "category": "BPharm",
+    "serial_number": 85161
+  },
+  {
+    "registration_number": "TG078543",
+    "name": "SHAIK RESHMA",
+    "father_name": "SHAIK MADARHUSSAIN",
+    "category": "BPharm",
+    "serial_number": 85162
+  },
+  {
+    "registration_number": "TG078544",
+    "name": "G AKHIL YADAV",
+    "father_name": "G NARSIMHA",
+    "category": "BPharm",
+    "serial_number": 85163
+  },
+  {
+    "registration_number": "TG078545",
+    "name": "MUPPARAPU RAMADEVI",
+    "father_name": "MUPPARAPU SRINIVASULU",
+    "category": "BPharm",
+    "serial_number": 85164
+  },
+  {
+    "registration_number": "TG078546",
+    "name": "CHEVVA LOKESH BABU",
+    "father_name": "CHEVVA PENTAIAH",
+    "category": "BPharm",
+    "serial_number": 85165
+  },
+  {
+    "registration_number": "TG078547",
+    "name": "JUPALLY SRIJA",
+    "father_name": "JUPALLY SAILU",
+    "category": "BPharm",
+    "serial_number": 85166
+  },
+  {
+    "registration_number": "TG078548",
+    "name": "Kompelly Mounika",
+    "father_name": "Kompelly krishnaiah",
+    "category": "BPharm",
+    "serial_number": 85167
+  },
+  {
+    "registration_number": "TG078550",
+    "name": "KONALA NIKITHA",
+    "father_name": "KONALA MADHU",
+    "category": "BPharm",
+    "serial_number": 85168
+  },
+  {
+    "registration_number": "TG078551",
+    "name": "AYESHA MARIYAM",
+    "father_name": "MOHD ABDUL SAJID",
+    "category": "BPharm",
+    "serial_number": 85169
+  },
+  {
+    "registration_number": "TG078552",
+    "name": "SIDDIQUI MOHD ARQAM MOHD RAFAT ALI",
+    "father_name": "RAFAT ALI",
+    "category": "BPharm",
+    "serial_number": 85170
+  },
+  {
+    "registration_number": "TG078553",
+    "name": "KATAGOUNI ROHITH KUMAR GOUD",
+    "father_name": "K SRINIVASULU GOUD",
+    "category": "BPharm",
+    "serial_number": 85171
+  },
+  {
+    "registration_number": "TG078554",
+    "name": "NEELAKANTI ADARSH LOKA",
+    "father_name": "NEELAKANTI SRINIVAS LOKA",
+    "category": "BPharm",
+    "serial_number": 85172
+  },
+  {
+    "registration_number": "TG078555",
+    "name": "Sangam Shambhavi",
+    "father_name": "Sangam Vivekanand",
+    "category": "BPharm",
+    "serial_number": 85173
+  },
+  {
+    "registration_number": "TG078556",
+    "name": "DEVSOTH JYOTHI",
+    "father_name": "DEVSOTH VITTAL",
+    "category": "BPharm",
+    "serial_number": 85174
+  },
+  {
+    "registration_number": "TG078557",
+    "name": "CHALLURI MAMATHA",
+    "father_name": "CHALLURI VEERASWAMY",
+    "category": "BPharm",
+    "serial_number": 85175
+  },
+  {
+    "registration_number": "TG078558",
+    "name": "Mohammed faisal",
+    "father_name": "Mohammed aslam",
+    "category": "BPharm",
+    "serial_number": 85176
+  },
+  {
+    "registration_number": "TG078559",
+    "name": "MOHAMMED MUZAMMIL",
+    "father_name": "SHAIK NAYEEM",
+    "category": "BPharm",
+    "serial_number": 85177
+  },
+  {
+    "registration_number": "TG078560",
+    "name": "Mohd muzammil",
+    "father_name": "Mohd yaseen",
+    "category": "BPharm",
+    "serial_number": 85178
+  },
+  {
+    "registration_number": "TG078561",
+    "name": "MARAMONI SHRUTHI",
+    "father_name": "BHASKAR",
+    "category": "BPharm",
+    "serial_number": 85179
+  },
+  {
+    "registration_number": "TG078562",
+    "name": "MOHAMMED JASAR AHMED",
+    "father_name": "MOHAMMED JALEEL AHMED",
+    "category": "BPharm",
+    "serial_number": 85180
+  },
+  {
+    "registration_number": "TG078563",
+    "name": "KERY KIRAN SANGRAM",
+    "father_name": "KERY SANGRAM KANTAPPA",
+    "category": "BPharm",
+    "serial_number": 85181
+  },
+  {
+    "registration_number": "TG078564",
+    "name": "MANDATI RISHI KUMAR",
+    "father_name": "MANDATI HANUMAPPA",
+    "category": "BPharm",
+    "serial_number": 85182
+  },
+  {
+    "registration_number": "TG078565",
+    "name": "S ARUN KUMAR",
+    "father_name": "S MASAIAH",
+    "category": "BPharm",
+    "serial_number": 85183
+  },
+  {
+    "registration_number": "TG078566",
+    "name": "SHIVRAM UDAY",
+    "father_name": "SHIVRAM GNYANESHWAR",
+    "category": "BPharm",
+    "serial_number": 85184
+  },
+  {
+    "registration_number": "TG078567",
+    "name": "TEDDU SHRUTHIKA",
+    "father_name": "TEDDU DEVARAJU",
+    "category": "BPharm",
+    "serial_number": 85185
+  },
+  {
+    "registration_number": "TG078568",
+    "name": "KORBA BHANUSRI",
+    "father_name": "KORBA SAILU",
+    "category": "BPharm",
+    "serial_number": 85186
+  },
+  {
+    "registration_number": "TG078569",
+    "name": "FIRDHOS SULTANA",
+    "father_name": "ABDUL SALEEMKHAN",
+    "category": "BPharm",
+    "serial_number": 85187
+  },
+  {
+    "registration_number": "TG078570",
+    "name": "SAMUDRALA BRAHMI HARINI PRIYA",
+    "father_name": "SAMUDRALA  VENKATESWARLU",
+    "category": "BPharm",
+    "serial_number": 85188
+  },
+  {
+    "registration_number": "TG078571",
+    "name": "PASUNUTI ABHINESH",
+    "father_name": "PASUNUTI KEDARI",
+    "category": "BPharm",
+    "serial_number": 85189
+  },
+  {
+    "registration_number": "TG078572",
+    "name": "MEDARI BHARGAVI",
+    "father_name": "MEDARI RAVIKUMAR",
+    "category": "BPharm",
+    "serial_number": 85190
+  },
+  {
+    "registration_number": "TG078573",
+    "name": "ADEPU ARCHANA",
+    "father_name": "Adepu Srinivas",
+    "category": "BPharm",
+    "serial_number": 85191
+  },
+  {
+    "registration_number": "TG078574",
+    "name": "GODUGU KONDAL",
+    "father_name": "GODUGU SALAIAH",
+    "category": "BPharm",
+    "serial_number": 85192
+  },
+  {
+    "registration_number": "TG078575",
+    "name": "KETHAVATH VINITHA",
+    "father_name": "KETHAVATH RAVI",
+    "category": "BPharm",
+    "serial_number": 85193
+  },
+  {
+    "registration_number": "TG078577",
+    "name": "Sunnam SArojini",
+    "father_name": "sunnam krishna",
+    "category": "BPharm",
+    "serial_number": 85194
+  },
+  {
+    "registration_number": "TG078578",
+    "name": "GOLLA SREEVANI",
+    "father_name": "GOLLA NARSIMULU",
+    "category": "BPharm",
+    "serial_number": 85195
+  },
+  {
+    "registration_number": "TG078579",
+    "name": "Dungroth Vineeth",
+    "father_name": "Dungroth Srinivas",
+    "category": "BPharm",
+    "serial_number": 85196
+  },
+  {
+    "registration_number": "TG078580",
+    "name": "PANUGANTI PRANAVI",
+    "father_name": "PANUGANTI GANGADHAR",
+    "category": "BPharm",
+    "serial_number": 85197
+  },
+  {
+    "registration_number": "TG078581",
+    "name": "BOPPENA NANDHINI",
+    "father_name": "BOPPENA NARSAIAH",
+    "category": "BPharm",
+    "serial_number": 85198
+  },
+  {
+    "registration_number": "TG078582",
+    "name": "P Angel Sharon",
+    "father_name": "P Joseph karunakar",
+    "category": "BPharm",
+    "serial_number": 85199
+  },
+  {
+    "registration_number": "TG078583",
+    "name": "A PRAJEETH BABU",
+    "father_name": "A VENKATESHWARLU",
+    "category": "BPharm",
+    "serial_number": 85200
+  },
+  {
+    "registration_number": "TG078584",
+    "name": "THALLA NAVYA",
+    "father_name": "THALLA BOJANNA",
+    "category": "BPharm",
+    "serial_number": 85201
+  },
+  {
+    "registration_number": "TG078585",
+    "name": "Athram Bheem Rao",
+    "father_name": "Athram Muttha",
+    "category": "BPharm",
+    "serial_number": 85202
+  },
+  {
+    "registration_number": "TG078586",
+    "name": "R MALLESH GOUD",
+    "father_name": "R NARSIMULU GOUD",
+    "category": "BPharm",
+    "serial_number": 85203
+  },
+  {
+    "registration_number": "TG078587",
+    "name": "VARKALA MANASA",
+    "father_name": "VARKALA SRIRAMULU",
+    "category": "BPharm",
+    "serial_number": 85204
+  },
+  {
+    "registration_number": "TG078588",
+    "name": "VINODA RAO VENKATESH",
+    "father_name": "VINODA RAO APPA RAO",
+    "category": "BPharm",
+    "serial_number": 85205
+  },
+  {
+    "registration_number": "TG078589",
+    "name": "Thotakuri Venkat Krishna",
+    "father_name": "Thotakuri Apparao",
+    "category": "BPharm",
+    "serial_number": 85206
+  },
+  {
+    "registration_number": "TG078590",
+    "name": "Julakanti Akhila",
+    "father_name": "Julakanti Gopi Reddy",
+    "category": "BPharm",
+    "serial_number": 85207
+  },
+  {
+    "registration_number": "TG078591",
+    "name": "MARIYA SIDDIQUI",
+    "father_name": "MD MUSHARAF HUSSAIN SIDDIQUI",
+    "category": "BPharm",
+    "serial_number": 85208
+  },
+  {
+    "registration_number": "TG078592",
+    "name": "SHETTY TEJASWINI",
+    "father_name": "SHETTY VENKATESH GOUD",
+    "category": "BPharm",
+    "serial_number": 85209
+  },
+  {
+    "registration_number": "TG078593",
+    "name": "CHIMALAPATI BHARATH",
+    "father_name": "CHIMALAPATI SHEKAR",
+    "category": "BPharm",
+    "serial_number": 85210
+  },
+  {
+    "registration_number": "TG078594",
+    "name": "MADASU INDHUSHARANYA",
+    "father_name": "MADASU MURALIKRISHNA",
+    "category": "BPharm",
+    "serial_number": 85211
+  },
+  {
+    "registration_number": "TG078595",
+    "name": "Potaraju Georgemullar",
+    "father_name": "Potaraju Baswaiah",
+    "category": "BPharm",
+    "serial_number": 85212
+  },
+  {
+    "registration_number": "TG078596",
+    "name": "DOMALA KALYAN",
+    "father_name": "DOMALA NAGARAJU",
+    "category": "BPharm",
+    "serial_number": 85213
+  },
+  {
+    "registration_number": "TG078597",
+    "name": "MORUGU SAHITHI",
+    "father_name": "MORUGU RAVINDER",
+    "category": "BPharm",
+    "serial_number": 85214
+  },
+  {
+    "registration_number": "TG078598",
+    "name": "CHENNAPANENI TEJASHWINI",
+    "father_name": "CHENNAPANENI PAVAN KUMAR",
+    "category": "BPharm",
+    "serial_number": 85215
+  },
+  {
+    "registration_number": "TG078599",
+    "name": "DODLA SUSHMA",
+    "father_name": "DODLA GOVARDHAN",
+    "category": "BPharm",
+    "serial_number": 85216
+  },
+  {
+    "registration_number": "TG078600",
+    "name": "KADKAY SNEHA",
+    "father_name": "KADKAY ESHWAR",
+    "category": "BPharm",
+    "serial_number": 85217
+  },
+  {
+    "registration_number": "TG078601",
+    "name": "POLAMONI SWETHA",
+    "father_name": "POLAMONI PAKEERA",
+    "category": "BPharm",
+    "serial_number": 85218
+  },
+  {
+    "registration_number": "TG078602",
+    "name": "MOHAMMED SUFIYAN",
+    "father_name": "MOHAMMED MOIN",
+    "category": "BPharm",
+    "serial_number": 85219
+  },
+  {
+    "registration_number": "TG078603",
+    "name": "Katukojwala Sathwika",
+    "father_name": "Katukojwala Chandramouli",
+    "category": "BPharm",
+    "serial_number": 85220
+  },
+  {
+    "registration_number": "TG078604",
+    "name": "THEEGALA SHIVANI",
+    "father_name": "THEEGALA VENKANNA",
+    "category": "BPharm",
+    "serial_number": 85221
+  },
+  {
+    "registration_number": "TG078605",
+    "name": "MOHD ATIF QURESHI",
+    "father_name": "MOHD UMAR QURESHI",
+    "category": "BPharm",
+    "serial_number": 85222
+  },
+  {
+    "registration_number": "TG078606",
+    "name": "Bodige Udayteja",
+    "father_name": "Bodige Ravinder",
+    "category": "BPharm",
+    "serial_number": 85223
+  },
+  {
+    "registration_number": "TG078607",
+    "name": "SARDARNI SUKHVINDAR KOUR",
+    "father_name": "SARDAR HARJEETH SINGH",
+    "category": "BPharm",
+    "serial_number": 85224
+  },
+  {
+    "registration_number": "TG078608",
+    "name": "EDLA AKHILESH",
+    "father_name": "EDLA VEERAIAH",
+    "category": "BPharm",
+    "serial_number": 85225
+  },
+  {
+    "registration_number": "TG078609",
+    "name": "MADHARAM RUTHIKA REDDY",
+    "father_name": "MADHARAM JANARDHAN REDDY",
+    "category": "BPharm",
+    "serial_number": 85226
+  },
+  {
+    "registration_number": "TG078610",
+    "name": "PAILLA NEHA REDDY",
+    "father_name": "PAILLA KONDAL REDDY",
+    "category": "BPharm",
+    "serial_number": 85227
+  },
+  {
+    "registration_number": "TG078611",
+    "name": "Macha Manasa",
+    "father_name": "Macha yadagiri",
+    "category": "BPharm",
+    "serial_number": 85228
+  },
+  {
+    "registration_number": "TG078612",
+    "name": "RITVIK RAJ SINGH THAKUR",
+    "father_name": "DINNESH SINGH THAKUR",
+    "category": "BPharm",
+    "serial_number": 85229
+  },
+  {
+    "registration_number": "TG078613",
+    "name": "MOHAMMED ABDUL AMAN",
+    "father_name": "RIYAZ UDDIN",
+    "category": "BPharm",
+    "serial_number": 85230
+  },
+  {
+    "registration_number": "TG078614",
+    "name": "MAGGIDI VIJAY KUMAR",
+    "father_name": "SAI BABA",
+    "category": "BPharm",
+    "serial_number": 85231
+  },
+  {
+    "registration_number": "TG078615",
+    "name": "AYESHA NABEELA",
+    "father_name": "ABDUL ALEEM",
+    "category": "BPharm",
+    "serial_number": 85232
+  },
+  {
+    "registration_number": "TG078616",
+    "name": "ANJU V MATTA",
+    "father_name": "ANJANIE PRASAD MATTA",
+    "category": "BPharm",
+    "serial_number": 85233
+  },
+  {
+    "registration_number": "TG078617",
+    "name": "Nenavath Meghanath",
+    "father_name": "Nenavath Chandya",
+    "category": "BPharm",
+    "serial_number": 85234
+  },
+  {
+    "registration_number": "TG078618",
+    "name": "JONGONI SOUJANYA",
+    "father_name": "J SADAIAH",
+    "category": "BPharm",
+    "serial_number": 85235
+  },
+  {
+    "registration_number": "TG078619",
+    "name": "AMARAWAJI SUSHMA",
+    "father_name": "AMARAWAJI KISHAN",
+    "category": "BPharm",
+    "serial_number": 85236
+  },
+  {
+    "registration_number": "TG078620",
+    "name": "Mrs Ishrath fathima",
+    "father_name": "B Akthar Ahemad",
+    "category": "BPharm",
+    "serial_number": 85237
+  },
+  {
+    "registration_number": "TG078621",
+    "name": "NOUSHEEN",
+    "father_name": "GULAM RABBANI",
+    "category": "BPharm",
+    "serial_number": 85238
+  },
+  {
+    "registration_number": "TG078622",
+    "name": "ANDOJU SRAVAN KUMAR",
+    "father_name": "ANDOJU SATHYANARAYANA CHARY",
+    "category": "BPharm",
+    "serial_number": 85239
+  },
+  {
+    "registration_number": "TG078623",
+    "name": "KONDA SUMA",
+    "father_name": "KONDA SAMPATH KUMAR",
+    "category": "BPharm",
+    "serial_number": 85240
+  },
+  {
+    "registration_number": "TG078624",
+    "name": "RANGOLLA KAVERI",
+    "father_name": "RANGOLLA SUDHAKAR",
+    "category": "BPharm",
+    "serial_number": 85241
+  },
+  {
+    "registration_number": "TG078625",
+    "name": "ANKAM PRIYANKA",
+    "father_name": "ANKAM RAJAMALLU",
+    "category": "BPharm",
+    "serial_number": 85242
+  },
+  {
+    "registration_number": "TG078626",
+    "name": "MEDE DIVYA",
+    "father_name": "MEDE RAMESH",
+    "category": "BPharm",
+    "serial_number": 85243
+  },
+  {
+    "registration_number": "TG078627",
+    "name": "GANAGANI  SHIRISHA",
+    "father_name": "GANAGANI  RAMCHANDAR",
+    "category": "BPharm",
+    "serial_number": 85244
+  },
+  {
+    "registration_number": "TG078628",
+    "name": "MD WASEEMUDDIN",
+    "father_name": "MD AZEEMUDDIN",
+    "category": "BPharm",
+    "serial_number": 85245
+  },
+  {
+    "registration_number": "TG078629",
+    "name": "M SANJEEVA KUMAR",
+    "father_name": "M SATHYAIAH",
+    "category": "BPharm",
+    "serial_number": 85246
+  },
+  {
+    "registration_number": "TG078630",
+    "name": "MASAIPET VAISHNAVI",
+    "father_name": "MASAIPET SHEKHAR GOUD",
+    "category": "BPharm",
+    "serial_number": 85247
+  },
+  {
+    "registration_number": "TG078631",
+    "name": "CH RAKESH KUMAR",
+    "father_name": "CH ASHOK KUMAR",
+    "category": "BPharm",
+    "serial_number": 85248
+  },
+  {
+    "registration_number": "TG078632",
+    "name": "KONCHADI ROJA",
+    "father_name": "SIMHACHALAM",
+    "category": "BPharm",
+    "serial_number": 85249
+  },
+  {
+    "registration_number": "TG078633",
+    "name": "ABRABOINA BHAVANI",
+    "father_name": "ABRABOINA JANGALU",
+    "category": "BPharm",
+    "serial_number": 85250
+  },
+  {
+    "registration_number": "TG078634",
+    "name": "NETHULA KIRAN",
+    "father_name": "NETHULA KRISHNAIAH",
+    "category": "BPharm",
+    "serial_number": 85251
+  },
+  {
+    "registration_number": "TG078635",
+    "name": "Pantham Deeksha",
+    "father_name": "Pantham Laxman",
+    "category": "BPharm",
+    "serial_number": 85252
+  },
+  {
+    "registration_number": "TG078636",
+    "name": "G SATTAIAH",
+    "father_name": "G NARAYANA",
+    "category": "BPharm",
+    "serial_number": 85253
+  },
+  {
+    "registration_number": "TG078637",
+    "name": "NALLA MANIDEEP",
+    "father_name": "N VEERESH GOUD",
+    "category": "BPharm",
+    "serial_number": 85254
+  },
+  {
+    "registration_number": "TG078638",
+    "name": "MOHAMMAD UMERODDIN",
+    "father_name": "MOHAMMAD NAYEEMODDIN",
+    "category": "BPharm",
+    "serial_number": 85255
+  },
+  {
+    "registration_number": "TG078639",
+    "name": "PILLY RENUKA",
+    "father_name": "PILLY NAGAIAH",
+    "category": "BPharm",
+    "serial_number": 85256
   }
 ]
