@@ -271,9 +271,6 @@ jobs:
     
     - name: Send email notification
       if: always()
-      env:
-        NEW_CAT_STATS: ${{ steps.update.outputs.new_cat_stats || 'No new records' }}
-        TOTAL_RECORDS: ${{ steps.update.outputs.total_records || 'Unknown' }}
       run: |
         python3 << 'EOF'
         import smtplib
@@ -288,32 +285,9 @@ jobs:
         app_password = "${{ secrets.GMAIL_APP_PASSWORD }}"
         recipient_email = "${{ secrets.NOTIFICATION_EMAIL }}"
         
-        # Generate email body
-        import subprocess
-        from datetime import datetime, timezone, timedelta
-        
-        # Get IST time
-        ist = timezone(timedelta(hours=5, minutes=30))
-        now = datetime.now(ist)
-        sync_time = now.strftime('%d %B %Y, %H:%M IST')
-        subject_time = now.strftime('%d%b%Y %^a %H:%M IST').upper()
-        
-        # Get new records
-        try:
-            with open('/tmp/new_records.json', 'r') as f:
-                new_records_content = f.read()
-            formatted_records = subprocess.run(
-                ['python3', 'scripts/format_new_records.py'], 
-                input=new_records_content, 
-                text=True, 
-                capture_output=True
-            ).stdout.strip()
-        except:
-            formatted_records = 'No new records to display'
-        
-        # Create HTML email
-        new_cat_stats = os.environ.get('NEW_CAT_STATS', 'No new records')
-        total_records = os.environ.get('TOTAL_RECORDS', 'Unknown')
+        # Get variables from GitHub Actions
+        new_cat_stats = "${{ steps.update.outputs.new_cat_stats || 'No new records' }}"
+        total_records = "${{ steps.update.outputs.total_records || 'Unknown' }}"
         
         html_body = f"""
         <!DOCTYPE html>
