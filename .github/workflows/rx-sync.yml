@@ -282,6 +282,9 @@ jobs:
     
     - name: Send email notification
       if: always()
+      env:
+        NEW_CAT_STATS: ${{ steps.update.outputs.new_cat_stats || 'No new records' }}
+        TOTAL_RECORDS: ${{ steps.update.outputs.total_records || 'Unknown' }}
       run: |
         python3 << 'EOF'
         import smtplib
