@@ -50,7 +50,8 @@ debug_*.html
 Thumbs.db
 *.DS_Store
 
-# Testing and linting# Cache
+# Testing and linting
+# Cache
 .cache/
 .pytest_cache/
 .ruff_cache/
