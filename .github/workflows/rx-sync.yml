@@ -435,7 +435,11 @@ jobs:
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>TGPC Rx Registry Sync Report</h1>
+                    <h1>
+                        <span class="brand-tgpc">TGPC</span> 
+                        <span class="brand-rx">Rx</span> 
+                        <span class="brand-registry">Registry</span> Sync Report
+                    </h1>
                     <div class="subtitle">{sync_time}</div>
                 </div>
                 
