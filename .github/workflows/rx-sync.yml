@@ -59,7 +59,7 @@ jobs:
         # Run the update via CLI (outputs stats to GITHUB_OUTPUT automatically)
         python -m tgpc update
         
-        echo "success=True" >> $GITHUB_OUTPUT
+        echo "success=True" >> "$GITHUB_OUTPUT"
 
     
     - name: Check for changes and save new records
@@ -68,10 +68,10 @@ jobs:
         rm -f /tmp/new_records.json
 
         if git diff --quiet data/rx.json; then
-          echo "changes=false" >> $GITHUB_OUTPUT
+          echo "changes=false" >> "$GITHUB_OUTPUT"
           echo "No changes detected in rx.json"
         else
-          echo "changes=true" >> $GITHUB_OUTPUT
+          echo "changes=true" >> "$GITHUB_OUTPUT"
           echo "Changes detected in rx.json"
           echo ""
           echo "🆕 New Records Added:"
@@ -205,8 +205,10 @@ jobs:
         REM_CATS='${{ steps.update.outputs.rem_cat_stats }}'
         MOD_CATS='${{ steps.update.outputs.mod_cat_stats }}'
         
-        echo "### ♻️ Rx Sync • $(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]') • $(TZ='Asia/Kolkata' date '+%H:%M IST')" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
+        {
+          echo "### ♻️ Rx Sync • $(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]') • $(TZ='Asia/Kolkata' date '+%H:%M IST')"
+          echo ""
+        } >> "$GITHUB_STEP_SUMMARY"
         
         # Use python to parse JSON and output lists
         python -c "
@@ -265,7 +267,7 @@ jobs:
                 
         except Exception as e:
             print(f'Error parsing details: {e}')
-        " >> $GITHUB_STEP_SUMMARY
+        " >> "$GITHUB_STEP_SUMMARY"
     
     - name: Send email notification
       if: always()
