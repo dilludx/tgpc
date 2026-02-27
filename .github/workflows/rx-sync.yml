@@ -409,7 +409,15 @@ jobs:
                 }}
                 .footer .brand {{
                     font-weight: 600;
-                    color: #2c3e50;
+                }}
+                .brand-tgpc {{
+                    color: #28a745; /* Green */
+                }}
+                .brand-rx {{
+                    color: #dc3545; /* Red */
+                }}
+                .brand-registry {{
+                    color: #6c757d; /* Grey */
                 }}
                 @media (max-width: 600px) {{
                     body {{
@@ -455,7 +463,11 @@ jobs:
                 </div>
                 
                 <div class="footer">
-                    <div class="brand">TGPC Rx Registry</div>
+                    <div class="brand">
+                        <span class="brand-tgpc">TGPC</span> 
+                        <span class="brand-rx">Rx</span> 
+                        <span class="brand-registry">Registry</span>
+                    </div>
                     <div>Automated Data Synchronization System</div>
                 </div>
             </div>
