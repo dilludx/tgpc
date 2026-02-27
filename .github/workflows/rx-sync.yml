@@ -416,13 +416,13 @@ jobs:
                     font-weight: 600;
                 }}
                 .brand-tgpc {{
-                    color: #28a745; /* Green */
+                    color: #00cc66; /* Green */
                 }}
                 .brand-rx {{
-                    color: #dc3545; /* Red */
+                    color: #ef4444; /* Red */
                 }}
                 .brand-registry {{
-                    color: #6c757d; /* Grey */
+                    color: #808080; /* Grey */
                 }}
                 @media (max-width: 600px) {{
                     body {{
