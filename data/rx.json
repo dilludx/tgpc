@@ -596944,5 +596944,54 @@
     "father_name": "KOPPELA RAJESH REDDY",
     "category": "BPharm",
     "serial_number": 85278
+  },
+  {
+    "registration_number": "TG078663",
+    "name": "M A SAMI",
+    "father_name": "M A QUDDUS",
+    "category": "BPharm",
+    "serial_number": 85279
+  },
+  {
+    "registration_number": "TG078665",
+    "name": "UMA SATHYA G",
+    "father_name": "GANDI RAMA KRISHNA",
+    "category": "BPharm",
+    "serial_number": 85280
+  },
+  {
+    "registration_number": "TG078667",
+    "name": "SADIYA GHOURI",
+    "father_name": "MOHAMMED GHOURI",
+    "category": "DPharm",
+    "serial_number": 85281
+  },
+  {
+    "registration_number": "TG078668",
+    "name": "SURE SUPRAJA",
+    "father_name": "S SUBBA RAO",
+    "category": "DPharm",
+    "serial_number": 85282
+  },
+  {
+    "registration_number": "TG078669",
+    "name": "NADELLA  SRIDEVI",
+    "father_name": "NADELLA RAMACHANDRAM",
+    "category": "BPharm",
+    "serial_number": 85283
+  },
+  {
+    "registration_number": "TG078670",
+    "name": "PEDDINTI VENKATA RATANAM",
+    "father_name": "PEDDINTI SIMHACHALAM",
+    "category": "BPharm",
+    "serial_number": 85284
+  },
+  {
+    "registration_number": "TG078671",
+    "name": "PAVITRA NEELA",
+    "father_name": "RAMA RAO",
+    "category": "DPharm",
+    "serial_number": 85285
   }
 ]
