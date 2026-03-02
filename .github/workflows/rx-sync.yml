@@ -315,10 +315,10 @@ jobs:
         # Plain text email body
         text_body = (
             "TGPC Rx Registry Sync Report\n" + sync_time + "\n\n" +
-            "Sync Summary\n------------\n" +
+            "Sync Summary\n" +
             "New Records: " + new_cat_stats + "\n" +
             "Total Records: " + total_records + "\n\n" +
-            "New Records Details\n------------------\n" +
+            "New Records Details\n" +
             formatted_records + "\n\n" +
             "---\nTGPC Rx Registry\nAutomated Data Synchronization System"
         )
