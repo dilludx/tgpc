@@ -323,7 +323,7 @@ jobs:
             "TGPC Rx Registry\nAutomated Data Synchronization System"
         )
         
-        # Minimal HTML email with brand colors (uniform spacing)
+        # Minimal HTML email with brand colors (uniform spacing, single font)
         html_body = (
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>TGPC Rx Registry Sync Report</title></head>" +
             "<body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.6;\">" +
@@ -338,7 +338,7 @@ jobs:
             "<div style=\"margin-bottom: 4px;\">New Records: " + new_cat_stats + "</div>" +
             "<div>Total Records: " + total_records + "</div></div></div>" +
             "<div style=\"margin-bottom: 16px;\"><div style=\"font-weight: 600; margin-bottom: 8px;\">New Records Details</div>" +
-            "<div style=\"font-family: monospace; font-size: 12px; margin-bottom: 8px;\">" +
+            "<div style=\"font-size: 12px; margin-bottom: 8px;\">" +
             formatted_records + "</div></div>" +
             "<div style=\"margin-top: 16px; font-size: 12px; color: #666;\">" +
             "<div style=\"font-weight: 600; margin-bottom: 4px;\">" +
