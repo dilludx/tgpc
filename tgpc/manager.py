@@ -268,18 +268,43 @@ class Manager:
                 # Convert to dictionary for storage
                 data = details.to_detailed_dict()
 
-                # Save Photo Locally
+                # Save Photo Locally with WebP conversion
                 if details.photo_base64:
                     try:
                         file_data = base64.b64decode(details.photo_base64)
-                        file_path = photos_dir / f"{reg_no}.jpg"
                         
-                        with open(file_path, "wb") as f:
-                            f.write(file_data)
+                        # Convert to WebP for better compression
+                        try:
+                            from PIL import Image
+                            import io
                             
-                        # Store relative path
-                        data['photo_path'] = f"photos/{reg_no}.jpg"
-                        
+                            # Open image from bytes
+                            img = Image.open(io.BytesIO(file_data))
+                            
+                            # Convert to RGB if necessary (for PNG with transparency)
+                            if img.mode in ('RGBA', 'LA', 'P'):
+                                rgb_img = Image.new('RGB', img.size, (255, 255, 255))
+                                rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                                img = rgb_img
+                            
+                            # Save as WebP with good quality/compression balance
+                            webp_path = photos_dir / f"{reg_no}.webp"
+                            img.save(webp_path, 'WebP', quality=85, method=6)
+                            
+                            # Store relative path for WebP
+                            data['photo_path'] = f"photos/{reg_no}.webp"
+                            data['photo_format'] = 'webp'
+                            
+                        except ImportError:
+                            # Fallback to JPEG if Pillow not available
+                            file_path = photos_dir / f"{reg_no}.jpg"
+                            with open(file_path, "wb") as f:
+                                f.write(file_data)
+                            
+                            # Store relative path for JPEG
+                            data['photo_path'] = f"photos/{reg_no}.jpg"
+                            data['photo_format'] = 'jpeg'
+                            
                     except Exception as e:
                         logger.error(f"Photo save failed for {reg_no}: {e}")
                 
