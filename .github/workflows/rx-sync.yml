@@ -320,7 +320,7 @@ jobs:
             "Total Records: " + total_records + "\n\n" +
             "New Records Details\n" +
             formatted_records + "\n\n" +
-            "---\nTGPC Rx Registry\nAutomated Data Synchronization System"
+            "TGPC Rx Registry\nAutomated Data Synchronization System"
         )
         
         # Minimal HTML email with brand colors
