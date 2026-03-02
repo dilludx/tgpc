@@ -18,8 +18,12 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'failure' || github.event.inputs.force_run == 'true' }}
     
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: ⚠️ DISABLED - Dangerous Auto-Fix
+        run: |
+          echo "⚠️ Auto-Fix workflow has been disabled due to safety concerns"
+          echo "🔧 The regex-based fixes can corrupt valid code"
+          echo "📝 Please fix issues manually or with proper tooling"
+          exit 0
 
       - name: Set up Python
         uses: actions/setup-python@v5

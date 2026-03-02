@@ -12,8 +12,6 @@ let currentFilters = {
     category: 'all'
 };
 let searchTimeout;
-let currentPage = 1;
-const RESULTS_PER_PAGE = 100;
 
 // Date/Time constants (shared across functions)
 const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -255,7 +253,13 @@ async function loadStatsUpdated() {
     }
 
     // Try to load from cache first
-    const cached = localStorage.getItem(CACHE_KEY);
+    let cached = null;
+    try {
+        cached = localStorage.getItem(CACHE_KEY);
+    } catch (e) {
+        console.warn('localStorage not available:', e);
+    }
+    
     if (cached) {
         try {
             // Ensure timestamp is treated as UTC by appending Z if missing
@@ -263,7 +267,11 @@ async function loadStatsUpdated() {
             const cachedDate = new Date(utcValue);
             updateDisplay(formatUpdatedTimestamp(cachedDate));
         } catch (e) {
-            localStorage.removeItem(CACHE_KEY);
+            try {
+                localStorage.removeItem(CACHE_KEY);
+            } catch (e2) {
+                console.warn('localStorage.removeItem failed:', e2);
+            }
         }
     }
 
@@ -285,7 +293,11 @@ async function loadStatsUpdated() {
             const utcValue = data.value.endsWith('Z') ? data.value : data.value + 'Z';
             const syncDate = new Date(utcValue);
             updateDisplay(formatUpdatedTimestamp(syncDate));
-            localStorage.setItem(CACHE_KEY, utcValue);
+            try {
+                localStorage.setItem(CACHE_KEY, utcValue);
+            } catch (e) {
+                console.warn('localStorage.setItem failed:', e);
+            }
         } else {
         }
     } catch (error) {
@@ -299,7 +311,7 @@ async function loadAnalytics() {
 
     // Fallback stats (shown instantly)
     const fallbackStats = {
-        total: 83103,
+        total: 85323,
         categories: {
             'BPharm': 57955,
             'DPharm': 16141,
@@ -311,7 +323,13 @@ async function loadAnalytics() {
     };
 
     // Try to load from cache first
-    const cached = localStorage.getItem(CACHE_KEY);
+    let cached = null;
+    try {
+        cached = localStorage.getItem(CACHE_KEY);
+    } catch (e) {
+        console.warn('localStorage not available:', e);
+    }
+    
     let cachedStats = null;
 
     if (cached) {
@@ -319,7 +337,11 @@ async function loadAnalytics() {
             cachedStats = JSON.parse(cached);
             displayAnalytics(cachedStats);
         } catch (e) {
-            localStorage.removeItem(CACHE_KEY);
+            try {
+                localStorage.removeItem(CACHE_KEY);
+            } catch (e2) {
+                console.warn('localStorage.removeItem failed:', e2);
+            }
         }
     } else {
         displayAnalytics(fallbackStats);
@@ -338,7 +360,11 @@ async function loadAnalytics() {
 
 
         // Save to cache
-        localStorage.setItem(CACHE_KEY, JSON.stringify(stats));
+        try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(stats));
+        } catch (e) {
+            console.warn('localStorage.setItem failed:', e);
+        }
 
         // Display fresh data
         displayAnalytics(stats);
@@ -466,7 +492,6 @@ async function performSearch() {
         if (error) throw error;
 
         currentResults = data;
-        currentPage = 1;
         loadingDiv.style.display = 'none';
         resultsPanel.style.display = 'block';
 
@@ -511,15 +536,9 @@ function sortResults() {
         // Then by number (ascending)
         return regA.num - regB.num;
     });
-    currentPage = 1;
     displayResults(sorted);
 }
 
-// Load more results
-function loadMore() {
-    currentPage++;
-    displayResults(displayedResults, true);
-}
 
 // Display all results (no pagination)
 function displayResults(data) {
@@ -595,7 +614,6 @@ function resetSearch() {
     // Clear results
     currentResults = [];
     displayedResults = [];
-    currentPage = 1;
 
     // Hide results panel
     document.getElementById('resultsPanel').style.display = 'none';
