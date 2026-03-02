@@ -53,6 +53,7 @@ jobs:
     
     - name: Run data update
       id: update
+      if: false  # DISABLED - Skip data update for email testing
       run: |
         echo "♻️ Starting TGPC data update..."
         
@@ -64,6 +65,7 @@ jobs:
     
     - name: Check for changes and save new records
       id: changes
+      if: false  # DISABLED - Skip changes check for email testing
       run: |
         rm -f /tmp/new_records.json
 
@@ -116,7 +118,7 @@ jobs:
         fi
     
     - name: Sync to Supabase
-      if: steps.changes.outputs.changes == 'true' || github.event.inputs.force_sync == 'true'
+      if: false  # DISABLED - Skip Supabase sync for email testing
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -125,7 +127,7 @@ jobs:
         python -m tgpc sync
     
     - name: Commit and push changes
-      if: steps.changes.outputs.changes == 'true'
+      if: false  # DISABLED - Skip commit for email testing
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
@@ -194,7 +196,7 @@ jobs:
         git push origin HEAD:"${{ github.ref_name }}"
     
     - name: Create update summary
-      if: always()
+      if: false  # DISABLED - Skip summary for email testing
       run: |
         # Parse details JSON
         NEW_DETAILS='${{ steps.update.outputs.new_details }}'
@@ -285,211 +287,54 @@ jobs:
         app_password = "${{ secrets.GMAIL_APP_PASSWORD }}"
         recipient_email = "${{ secrets.NOTIFICATION_EMAIL }}"
         
-        # Get variables from GitHub Actions
-        new_cat_stats = "${{ steps.update.outputs.new_cat_stats || 'No new records' }}"
-        total_records = "${{ steps.update.outputs.total_records || 'Unknown' }}"
+        # Get variables from GitHub Actions (using mock data for testing)
+        new_cat_stats = "{}"  # Mock data for testing
+        total_records = "85323"  # Mock data for testing
         
-        # Generate email body
+        # Generate plain text email body
         import subprocess
         from datetime import datetime, timezone, timedelta
         
-        # Get IST time
+        # Get sync time in IST
         ist = timezone(timedelta(hours=5, minutes=30))
-        now = datetime.now(ist)
-        sync_time = now.strftime('%d %B %Y, %H:%M IST')
-        subject_time = now.strftime('%d%b%Y %^a %H:%M IST').upper()
+        sync_time = datetime.now(ist).strftime("%d %B %Y, %H:%M IST")
+        subject_time = datetime.now(ist).strftime("%d %B %Y, %H:%M")
         
-        # Get new records
+        # Get new records details
         try:
-            with open('/tmp/new_records.json', 'r') as f:
-                new_records_content = f.read()
-            formatted_records = subprocess.run(
-                ['python3', 'scripts/format_new_records.py'], 
-                input=new_records_content, 
-                text=True, 
-                capture_output=True
-            ).stdout.strip()
+            with open("/tmp/new_records.json", "r") as f:
+                import json
+                new_records = json.load(f)
+                
+            if new_records:
+                formatted_records = "\n".join([
+                    f"• {r.get('registration_number', 'N/A')} - {r.get('name', 'N/A')} ({r.get('category', 'N/A')})"
+                    for r in new_records[:10]  # Limit to first 10 for email
+                ])
+                if len(new_records) > 10:
+                    formatted_records += f"\n... and {len(new_records) - 10} more"
+            else:
+                formatted_records = 'No new records to display'
         except:
             formatted_records = 'No new records to display'
         
-        html_body = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>TGPC Rx Registry Sync Report</title>
-            <style>
-                body {{
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-                    background-color: #ffffff;
-                    margin: 0;
-                    padding: 20px;
-                    color: #333;
-                }}
-                .container {{
-                    max-width: 600px;
-                    margin: 0 auto;
-                    background: white;
-                    border: 1px solid #e9ecef;
-                    border-radius: 4px;
-                    overflow: hidden;
-                }}
-                .header {{
-                    background: #ffffff;
-                    border-bottom: 1px solid #e9ecef;
-                    padding: 24px;
-                    border-top-left-radius: 4px;
-                    border-top-right-radius: 4px;
-                }}
-                .header h1 {{
-                    margin: 0;
-                    font-size: 20px;
-                    font-weight: 600;
-                    color: #2c3e50;
-                }}
-                .header .subtitle {{
-                    margin: 4px 0 0 0;
-                    font-size: 14px;
-                    color: #6c757d;
-                }}
-                .content {{
-                    padding: 24px;
-                }}
-                .section {{
-                    margin-bottom: 24px;
-                }}
-                .section-title {{
-                    font-size: 16px;
-                    font-weight: 600;
-                    color: #2c3e50;
-                    margin-bottom: 12px;
-                    border-bottom: 1px solid #e9ecef;
-                    padding-bottom: 8px;
-                }}
-                .stats {{
-                    background: #ffffff;
-                    border: 1px solid #e9ecef;
-                    border-radius: 4px;
-                    padding: 16px;
-                }}
-                .stat-row {{
-                    display: flex;
-                    justify-content: space-between;
-                    margin-bottom: 8px;
-                }}
-                .stat-row:last-child {{
-                    margin-bottom: 0;
-                }}
-                .stat-label {{
-                    font-weight: 500;
-                    color: #495057;
-                }}
-                .stat-value {{
-                    font-weight: 600;
-                    color: #2c3e50;
-                }}
-                .records-content {{
-                    background: #ffffff;
-                    border: 1px solid #e9ecef;
-                    border-radius: 4px;
-                    padding: 16px;
-                    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-                    font-size: 12px;
-                    line-height: 1.5;
-                    color: #495057;
-                    white-space: pre-wrap;
-                    max-height: 300px;
-                    overflow-y: auto;
-                }}
-                .footer {{
-                    background: #ffffff;
-                    border-top: 1px solid #e9ecef;
-                    padding: 16px 24px;
-                    font-size: 12px;
-                    color: #6c757d;
-                    text-align: center;
-                    border-bottom-left-radius: 4px;
-                    border-bottom-right-radius: 4px;
-                }}
-                .footer .brand {{
-                    font-weight: 600;
-                }}
-                .brand-tgpc {{
-                    color: #00cc66; /* Green */
-                }}
-                .brand-rx {{
-                    color: #ef4444; /* Red */
-                }}
-                .brand-registry {{
-                    color: #808080; /* Grey */
-                }}
-                @media (max-width: 600px) {{
-                    body {{
-                        padding: 10px;
-                    }}
-                    .container {{
-                        margin: 0;
-                    }}
-                    .header, .content, .footer {{
-                        padding: 16px;
-                    }}
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="container">
-                <div class="header">
-                    <h1>
-                        <span class="brand-tgpc">TGPC</span> 
-                        <span class="brand-rx">Rx</span> 
-                        <span class="brand-registry">Registry</span> Sync Report
-                    </h1>
-                    <div class="subtitle">{sync_time}</div>
-                </div>
-                
-                <div class="content">
-                    <div class="section">
-                        <div class="section-title">Sync Summary</div>
-                        <div class="stats">
-                            <div class="stat-row">
-                                <span class="stat-label">New Records:</span>
-                                <span class="stat-value">{new_cat_stats}</span>
-                            </div>
-                            <div class="stat-row">
-                                <span class="stat-label">Total Records:</span>
-                                <span class="stat-value">{total_records}</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="section">
-                        <div class="section-title">New Records Details</div>
-                        <div class="records-content">
-                            {formatted_records}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="footer">
-                    <div class="brand">
-                        <span class="brand-tgpc">TGPC</span> 
-                        <span class="brand-rx">Rx</span> 
-                        <span class="brand-registry">Registry</span>
-                    </div>
-                    <div>Automated Data Synchronization System</div>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
+        # Plain text email body
+        text_body = (
+            "TGPC Rx Registry Sync Report\n" + sync_time + "\n\n" +
+            "Sync Summary\n------------\n" +
+            "New Records: " + new_cat_stats + "\n" +
+            "Total Records: " + total_records + "\n\n" +
+            "New Records Details\n------------------\n" +
+            formatted_records + "\n\n" +
+            "---\nTGPC Rx Registry\nAutomated Data Synchronization System"
+        )
         
         # Create message
         msg = MIMEMultipart()
         msg['From'] = f"Rx Data ♻ <{sender_email}>"
         msg['To'] = recipient_email
         msg['Subject'] = f"♻️ Data Sync - TGPC Rx Registry - {subject_time}"
-        msg.attach(MIMEText(html_body, 'html'))
+        msg.attach(MIMEText(text_body, 'plain'))
         
         # Send email
         try:
