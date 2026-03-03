@@ -315,9 +315,6 @@ jobs:
         # Plain text email body
         text_body = (
             "TGPC Rx Registry Sync Report • " + sync_time + "\n\n" +
-            "📊 Sync Overview\n" +
-            "• Status: ✅ Completed Successfully\n" +
-            "• Duration: ~2 minutes\n" +
             "• New Records: " + new_cat_stats + "\n" +
             "• Total Database: " + total_records + " records\n\n" +
             "---\nTGPC Rx Registry\nAutomated Data Synchronization System"
@@ -333,19 +330,16 @@ jobs:
             "<span style=\"color: #ef4444;\">Rx</span> " +
             "<span style=\"color: #808080;\">Registry</span> Sync Report <span style=\"font-weight: normal; color: #666; font-size: 14px;\">• " + sync_time + "</span></h2>" +
             
-            "<div style=\"margin-bottom: 16px;\"><div style=\"font-weight: 600; margin-bottom: 8px; border-bottom: 1px solid #e5e5e5; padding-bottom: 4px;\">📊 Sync Overview</div>" +
-            "<div style=\"margin-bottom: 8px;\">" +
-            "<div style=\"margin-bottom: 4px;\">• Status: <span style=\"color: #22c55e;\">✅ Completed Successfully</span></div>" +
-            "<div style=\"margin-bottom: 4px;\">• Duration: ~2 minutes</div>" +
+            "<div style=\"margin-bottom: 16px;\">" +
             "<div style=\"margin-bottom: 4px;\">• New Records: " + new_cat_stats + "</div>" +
-            "<div>Total Database: " + total_records + " records</div></div></div>" +
+            "<div>• Total Database: " + total_records + " records</div></div>" +
             
             "<div style=\"margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e5e5; font-size: 12px; color: #666;\">" +
             "<div style=\"font-weight: 600; margin-bottom: 2px;\">" +
             "<span style=\"color: #00cc66;\">TGPC</span> " +
             "<span style=\"color: #ef4444;\">Rx</span> " +
             "<span style=\"color: #808080;\">Registry</span></div>" +
-            "<div style=\"font-weight: normal; color: #999;\">Automated Data Synchronization System</div></div></div></body></html>"
+            "<div style=\"font-weight: normal; color: #999; font-size: 10px;\">Automated Data Synchronization System</div></div></div></body></html>"
         )
         
         # Create message
