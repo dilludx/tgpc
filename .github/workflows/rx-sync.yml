@@ -314,7 +314,7 @@ jobs:
         
         # Plain text email body
         text_body = (
-            "TGPC Rx Registry Sync Report • " + sync_time + "\n\n" +
+            "TGPC Rx Registry Sync Report\n" + sync_time + "\n\n" +
             "• New Records: " + new_cat_stats + "\n" +
             "• Total Database: " + total_records + " records\n\n" +
             "---\nTGPC Rx Registry\nAutomated Data Synchronization System"
@@ -325,10 +325,11 @@ jobs:
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>TGPC Rx Registry Sync Report</title></head>" +
             "<body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.6;\">" +
             "<div style=\"padding: 20px 0;\">" +
-            "<h2 style=\"margin: 0 0 16px 0; font-size: 18px;\">" +
+            "<h2 style=\"margin: 0 0 4px 0; font-size: 18px;\">" +
             "<span style=\"color: #00cc66;\">TGPC</span> " +
             "<span style=\"color: #ef4444;\">Rx</span> " +
-            "<span style=\"color: #808080;\">Registry</span> Sync Report <span style=\"font-weight: normal; color: #666; font-size: 14px;\">• " + sync_time + "</span></h2>" +
+            "<span style=\"color: #808080;\">Registry</span> Sync Report</h2>" +
+            "<div style=\"color: #666; font-size: 14px; margin-bottom: 16px;\">" + sync_time + "</div>" +
             
             "<div style=\"margin-bottom: 16px;\">" +
             "<div style=\"margin-bottom: 4px;\">• New Records: " + new_cat_stats + "</div>" +
