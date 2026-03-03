@@ -323,8 +323,8 @@ jobs:
         # Minimal HTML email with brand colors (practical content)
         html_body = (
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>TGPC Rx Registry Sync Report</title></head>" +
-            "<body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.6;\">" +
-            "<div style=\"padding: 20px 0;\">" +
+            "<body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.6; margin: 0; padding: 0;\">" +
+            "<div style=\"padding: 0 0 20px 0;\">" +
             "<h2 style=\"margin: 0 0 4px 0; font-size: 18px;\">" +
             "<span style=\"color: #00cc66;\">TGPC</span> " +
             "<span style=\"color: #ef4444;\">Rx</span> " +
