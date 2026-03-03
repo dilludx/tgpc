@@ -291,8 +291,8 @@ jobs:
         
         # Get sync time in IST
         ist = timezone(timedelta(hours=5, minutes=30))
-        sync_time = datetime.now(ist).strftime("%d %B %Y, %H:%M IST")
-        subject_time = datetime.now(ist).strftime("%d %B %Y, %H:%M")
+        sync_time = datetime.now(ist).strftime("%d %B %Y, %A, %H:%M IST")
+        subject_time = datetime.now(ist).strftime("%d %B %Y, %A, %H:%M")
         
         # Get new records details
         try:
