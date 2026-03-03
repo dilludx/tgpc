@@ -346,7 +346,7 @@ jobs:
         # Create message
         from email.utils import formataddr
         msg = MIMEMultipart('alternative')
-        msg['From'] = formataddr(("Rx Data ♻", sender_email))
+        msg['From'] = formataddr(("Rx Data Sync", sender_email))
         msg['To'] = recipient_email
         msg['Subject'] = f"♻️ Data Sync - TGPC Rx Registry - {subject_time}"
         
