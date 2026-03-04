@@ -597259,5 +597259,19 @@
     "father_name": "G SURYUDU",
     "category": "BPharm",
     "serial_number": 85323
+  },
+  {
+    "registration_number": "TG078720",
+    "name": "PURMA REDDY ARCHANA",
+    "father_name": "PURMA REDDY RAJI REDDY",
+    "category": "BPharm",
+    "serial_number": 85324
+  },
+  {
+    "registration_number": "TG078721",
+    "name": "Punem Praveen Prakash",
+    "father_name": "Punem Rambabu",
+    "category": "BPharm",
+    "serial_number": 85325
   }
 ]
