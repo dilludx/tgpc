@@ -292,16 +292,21 @@ jobs:
         if not new_details and not mod_details and not rem_details:
             new_details = ["99999 - PRASHANTH (BPHARM)", "88888 - ANITHA (MPHARM)", "77777 - RAHUL (BPHARM)"]
             mod_details = ["66666 - SANDHYA (PHARMD)"]
+            rem_details = ["55555 - VIJAY (BPHARM)"]
         
-        def sort_by_category(items):
-            def get_category(s):
-                match = re.search(r'\((.*?)\)', s)
-                return match.group(1).upper() if match else "ZZZ"
-            return sorted(items, key=get_category)
+        def sort_records(items):
+            def get_sort_key(s):
+                # Extract category and reg_no
+                cat_match = re.search(r'\((.*?)\)', s)
+                reg_match = re.search(r'^(\d+)', s)
+                cat = cat_match.group(1).upper() if cat_match else "ZZZ"
+                reg = int(reg_match.group(1)) if reg_match else 0
+                return (cat, reg)
+            return sorted(items, key=get_sort_key)
 
         def format_html_list(title, items, color):
             if not items: return ""
-            sorted_items = sort_by_category(items)
+            sorted_items = sort_records(items)
             html = f'<div style="margin-bottom: 20px;">'
             html += f'<h4 style="margin: 0 0 8px 0; color: {color}; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">{title}</h4>'
             html += '<ul style="margin: 0; padding-left: 18px; list-style-type: disc; color: #444;">'
@@ -310,17 +315,17 @@ jobs:
             html += '</ul></div>'
             return html
 
-        added_html = format_html_list("#### 🆕 New Additions", new_details, "#00cc66")
-        mod_html = format_html_list("#### ✏️ Modifications", mod_details, "#3b82f6")
-        rem_html = format_html_list("#### 🗑️ Removals", rem_details, "#ef4444")
+        added_html = format_html_list("🆕 New Additions", new_details, "#00cc66")
+        mod_html = format_html_list("✏️ Modifications", mod_details, "#3b82f6")
+        rem_html = format_html_list("🗑️ Removals", rem_details, "#ef4444")
         
         text_body = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
         if new_details:
-            text_body += "NEW ADDITIONS:\n" + "\n".join(sort_by_category(new_details)) + "\n\n"
+            text_body += "NEW ADDITIONS:\n" + "\n".join(sort_records(new_details)) + "\n\n"
         if mod_details:
-            text_body += "MODIFICATIONS:\n" + "\n".join(sort_by_category(mod_details)) + "\n\n"
+            text_body += "MODIFICATIONS:\n" + "\n".join(sort_records(mod_details)) + "\n\n"
         if rem_details:
-            text_body += "REMOVALS:\n" + "\n".join(sort_by_category(rem_details)) + "\n\n"
+            text_body += "REMOVALS:\n" + "\n".join(sort_records(rem_details)) + "\n\n"
         text_body += "---\nTGPC Rx Registry\nAutomated Data Synchronization System"
         
         html_body = (
