@@ -266,6 +266,7 @@ jobs:
         python3 << 'EOF'
         import smtplib
         import json
+        import re
         from email.mime.text import MIMEText
         from email.mime.multipart import MIMEMultipart
         from email.utils import formataddr
@@ -286,27 +287,36 @@ jobs:
         # Parse details
         new_details = json.loads('${{ steps.update.outputs.new_details }}' or '[]')
         mod_details = json.loads('${{ steps.update.outputs.modified_details }}' or '[]')
+        rem_details = json.loads('${{ steps.update.outputs.removed_details }}' or '[]')
         
+        def sort_by_category(items):
+            def get_category(s):
+                match = re.search(r'\((.*?)\)', s)
+                return match.group(1).upper() if match else "ZZZ"
+            return sorted(items, key=get_category)
+
         def format_html_list(title, items, color):
             if not items: return ""
+            sorted_items = sort_by_category(items)
             html = f'<div style="margin-bottom: 20px;">'
             html += f'<h4 style="margin: 0 0 8px 0; color: {color}; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">{title}</h4>'
             html += '<ul style="margin: 0; padding-left: 18px; list-style-type: disc; color: #444;">'
-            for item in items[:15]:  # Limit to 15
+            for item in sorted_items:
                 html += f'<li style="margin-bottom: 4px;">{item}</li>'
-            if len(items) > 15:
-                html += f'<li style="color: #888; list-style-type: none; margin-left: -18px;">... and {len(items) - 15} more</li>'
             html += '</ul></div>'
             return html
 
-        added_html = format_html_list("🆕 Newly Added", new_details, "#00cc66")
-        mod_html = format_html_list("✏️ Recently Modified", mod_details, "#3b82f6")
+        added_html = format_html_list("#### 🆕 New Additions", new_details, "#00cc66")
+        mod_html = format_html_list("#### ✏️ Modifications", mod_details, "#3b82f6")
+        rem_html = format_html_list("#### 🗑️ Removals", rem_details, "#ef4444")
         
         text_body = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
         if new_details:
-            text_body += "ADDED:\n" + "\n".join(new_details[:10]) + "\n\n"
+            text_body += "NEW ADDITIONS:\n" + "\n".join(sort_by_category(new_details)) + "\n\n"
         if mod_details:
-            text_body += "MODIFIED:\n" + "\n".join(mod_details[:10]) + "\n\n"
+            text_body += "MODIFICATIONS:\n" + "\n".join(sort_by_category(mod_details)) + "\n\n"
+        if rem_details:
+            text_body += "REMOVALS:\n" + "\n".join(sort_by_category(rem_details)) + "\n\n"
         text_body += "---\nTGPC Rx Registry\nAutomated Data Synchronization System"
         
         html_body = (
@@ -319,7 +329,7 @@ jobs:
             "<span style=\"color: #808080;\">Registry</span> Sync Report</h2>" +
             "<div style=\"color: #666; font-size: 13px; margin-bottom: 20px;\">" + sync_time + "</div>" +
             
-            added_html + mod_html +
+            added_html + mod_html + rem_html +
             
             "<div style=\"margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; font-size: 12px; color: #666; line-height: 1.2;\">" +
             "<div style=\"font-weight: 600; margin-bottom: 0;\">" +
@@ -328,6 +338,25 @@ jobs:
             "<span style=\"color: #808080;\">Registry</span></div>" +
             "<div style=\"font-weight: normal; color: #999; font-size: 10px;\">Automated Data Synchronization System</div></div></div></body></html>"
         )
+        
+        msg = MIMEMultipart('alternative')
+        msg['From'] = formataddr(("Rx Data Sync", sender_email))
+        msg['To'] = recipient_email
+        msg['Subject'] = f"♻️ Data Sync - {len(new_details)} New • {len(mod_details)} Mod - {subject_time}"
+        
+        msg.attach(MIMEText(text_body, 'plain'))
+        msg.attach(MIMEText(html_body, 'html'))
+        
+        try:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(sender_email, app_password)
+            server.send_message(msg)
+            server.quit()
+            print("✅ Email sent successfully")
+        except Exception as e:
+            print(f"❌ Failed to send email: {e}")
+        EOF
         
         msg = MIMEMultipart('alternative')
         msg['From'] = formataddr(("Rx Data Sync", sender_email))
