@@ -48,7 +48,7 @@ jobs:
     - name: Run data update
       id: update
       run: |
-        echo "♻️ Starting TGPC data update..."
+        echo "♻️ STARTING TGPC DATA UPDATE..."
         
         # Run the update via CLI (outputs stats to GITHUB_OUTPUT automatically)
         python -m tgpc update
@@ -63,10 +63,10 @@ jobs:
 
         if git diff --quiet data/rx.json; then
           echo "changes=false" >> "$GITHUB_OUTPUT"
-          echo "No changes detected in rx.json"
+          echo "NO CHANGES DETECTED IN RX.JSON"
         else
           echo "changes=true" >> "$GITHUB_OUTPUT"
-          echo "Changes detected in rx.json"
+          echo "CHANGES DETECTED IN RX.JSON"
           echo ""
           echo "🌱 RECORDS ADDED:"
           echo "===================="
@@ -114,7 +114,7 @@ jobs:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
       run: |
-        echo "♻️ Syncing data to Supabase cloud database..."
+        echo "♻️ SYNCING DATA TO SUPABASE CLOUD DATABASE..."
         python -m tgpc sync
     
     - name: Commit and push changes
