@@ -261,6 +261,7 @@ jobs:
         " >> "$GITHUB_STEP_SUMMARY"
     
     - name: Send email notification
+      if: steps.changes.outputs.changes == 'true'
       run: |
         python3 << 'EOF'
         import smtplib
@@ -290,12 +291,6 @@ jobs:
         new_details = json.loads('${{ steps.update.outputs.new_details }}' or '[]')
         mod_details = json.loads('${{ steps.update.outputs.modified_details }}' or '[]')
         rem_details = json.loads('${{ steps.update.outputs.removed_details }}' or '[]')
-        
-        # MOCK DATA FOR TEST EMAIL
-        if not new_details and not mod_details and not rem_details:
-            new_details = ["11111 - TEST NEW (BPHARM)"]
-            mod_details = ["22222 - TEST CHANGE (MPHARM)"]
-            # Intentionally leaving rem_details empty to test dynamic subject filtering
         
         def get_reg_no(s):
             match = re.search(r'^(\d+)', s)
@@ -366,14 +361,13 @@ jobs:
             "<div style=\"font-weight: normal; color: #999; font-size: 10px;\">Automated Data Synchronization System</div></div></div></body></html>"
         )
         
-        # Build dynamic subject: ♻️ Sync • 🌱 3 • 🌀 1 | 05MAR2026 THU 09:53 IST
-        subject_parts = ["♻️ Sync"]
+        # Build dynamic subject: 🌱 3 | 🌀 1 | 05MAR2026 THU 09:53 IST
+        subject_parts = []
         if new_details: subject_parts.append(f"🌱 {len(new_details)}")
         if mod_details: subject_parts.append(f"🌀 {len(mod_details)}")
         if rem_details: subject_parts.append(f"❌ {len(rem_details)}")
         
-        stats_str = " • ".join(subject_parts)
-        subject = f"{stats_str} | {subject_time}"
+        subject = " | ".join(subject_parts + [subject_time])
         
         msg = MIMEMultipart('alternative')
         msg['From'] = formataddr(("Rx Data Sync", sender_email))
