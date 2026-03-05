@@ -312,7 +312,7 @@ jobs:
                 categories[cat].append(item)
             
             html = f'<div style="margin-bottom: 25px;">'
-            html += f'<h4 style="margin: 0 0 12px 0; color: {color}; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee; padding-bottom: 4px;">{title} ({len(items)})</h4>'
+            html += f'<h4 style="margin: 0 0 12px 0; color: {color}; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 0;">{title} ({len(items)})</h4>'
             
             for cat in sorted(categories.keys()):
                 cat_items = sorted(categories[cat], key=get_reg_no)
@@ -353,7 +353,7 @@ jobs:
             
             added_html + mod_html + rem_html +
             
-            "<div style=\"margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; font-size: 12px; color: #666; line-height: 1.2;\">" +
+            "<div style=\"margin-top: 25px; padding-top: 5px; font-size: 12px; color: #666; line-height: 1.2;\">" +
             "<div style=\"font-weight: 600; margin-bottom: 0;\">" +
             "<span style=\"color: #00cc66;\">TGPC</span> " +
             "<span style=\"color: #ef4444;\">Rx</span> " +
