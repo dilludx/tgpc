@@ -290,42 +290,63 @@ jobs:
         
         # MOCK DATA FOR PREVIEW (only if real data is empty)
         if not new_details and not mod_details and not rem_details:
-            new_details = ["99999 - PRASHANTH (BPHARM)", "88888 - ANITHA (MPHARM)", "77777 - RAHUL (BPHARM)"]
+            new_details = [
+                "99999 - PRASHANTH (BPHARM)", 
+                "88888 - ANITHA (MPHARM)", 
+                "77777 - RAHUL (BPHARM)",
+                "11111 - SUNIL (BPHARM)",
+                "22222 - KAVYA (PHARMD)"
+            ]
             mod_details = ["66666 - SANDHYA (PHARMD)"]
             rem_details = ["55555 - VIJAY (BPHARM)"]
         
-        def sort_records(items):
-            def get_sort_key(s):
-                # Extract category and reg_no
-                cat_match = re.search(r'\((.*?)\)', s)
-                reg_match = re.search(r'^(\d+)', s)
-                cat = cat_match.group(1).upper() if cat_match else "ZZZ"
-                reg = int(reg_match.group(1)) if reg_match else 0
-                return (cat, reg)
-            return sorted(items, key=get_sort_key)
+        def get_reg_no(s):
+            match = re.search(r'^(\d+)', s)
+            return int(match.group(1)) if match else 0
+
+        def get_category(s):
+            match = re.search(r'\((.*?)\)', s)
+            return match.group(1).upper() if match else "OTHER"
 
         def format_html_list(title, items, color):
             if not items: return ""
-            sorted_items = sort_records(items)
-            html = f'<div style="margin-bottom: 20px;">'
-            html += f'<h4 style="margin: 0 0 8px 0; color: {color}; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">{title}</h4>'
-            html += '<ul style="margin: 0; padding-left: 18px; list-style-type: disc; color: #444;">'
-            for item in sorted_items:
-                html += f'<li style="margin-bottom: 4px;">{item}</li>'
-            html += '</ul></div>'
+            
+            # Group by category
+            categories = {}
+            for item in items:
+                cat = get_category(item)
+                if cat not in categories:
+                    categories[cat] = []
+                categories[cat].append(item)
+            
+            html = f'<div style="margin-bottom: 25px;">'
+            html += f'<h4 style="margin: 0 0 12px 0; color: {color}; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #eee; padding-bottom: 4px;">{title} ({len(items)})</h4>'
+            
+            for cat in sorted(categories.keys()):
+                cat_items = sorted(categories[cat], key=get_reg_no)
+                html += f'<div style="margin: 10px 0 5px 0; font-weight: 700; font-size: 13px; color: #666; text-decoration: underline;">{cat} ({len(cat_items)})</div>'
+                html += '<ul style="margin: 0 0 15px 0; padding-left: 20px; list-style-type: disc; color: #444; font-size: 13px;">'
+                for item in cat_items:
+                    # Remove redundant category from display string
+                    clean_item = re.sub(r'\s*\(.*?\)', '', item)
+                    html += f'<li style="margin-bottom: 4px;">{clean_item}</li>'
+                html += '</ul>'
+            
+            html += '</div>'
             return html
 
         added_html = format_html_list("🆕 New Additions", new_details, "#00cc66")
         mod_html = format_html_list("✏️ Modifications", mod_details, "#3b82f6")
         rem_html = format_html_list("🗑️ Removals", rem_details, "#ef4444")
         
+        # Text body generation (kept simple)
         text_body = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
-        if new_details:
-            text_body += "NEW ADDITIONS:\n" + "\n".join(sort_records(new_details)) + "\n\n"
-        if mod_details:
-            text_body += "MODIFICATIONS:\n" + "\n".join(sort_records(mod_details)) + "\n\n"
-        if rem_details:
-            text_body += "REMOVALS:\n" + "\n".join(sort_records(rem_details)) + "\n\n"
+        sections = [("NEW ADDITIONS", new_details), ("MODIFICATIONS", mod_details), ("REMOVALS", rem_details)]
+        for label, items in sections:
+            if items:
+                text_body += f"{label} ({len(items)}):\n"
+                sorted_items = sorted(items, key=lambda x: (get_category(x), get_reg_no(x)))
+                text_body += "\n".join(sorted_items) + "\n\n"
         text_body += "---\nTGPC Rx Registry\nAutomated Data Synchronization System"
         
         html_body = (
