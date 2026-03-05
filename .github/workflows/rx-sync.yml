@@ -261,6 +261,7 @@ jobs:
         " >> "$GITHUB_STEP_SUMMARY"
     
     - name: Send email notification
+      if: steps.changes.outputs.changes == 'true'
       run: |
         python3 << 'EOF'
         import smtplib
@@ -287,12 +288,6 @@ jobs:
         new_details = json.loads('${{ steps.update.outputs.new_details }}' or '[]')
         mod_details = json.loads('${{ steps.update.outputs.modified_details }}' or '[]')
         rem_details = json.loads('${{ steps.update.outputs.removed_details }}' or '[]')
-        
-        # MOCK DATA FOR PREVIEW (only if real data is empty)
-        if not new_details and not mod_details and not rem_details:
-            new_details = ["99999 - PRASHANTH (BPHARM)", "88888 - ANITHA (MPHARM)", "77777 - RAHUL (BPHARM)"]
-            mod_details = ["66666 - SANDHYA (PHARMD)"]
-            rem_details = ["55555 - VIJAY (BPHARM)"]
         
         def get_reg_no(s):
             match = re.search(r'^(\d+)', s)
