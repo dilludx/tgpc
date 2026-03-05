@@ -126,7 +126,7 @@ jobs:
               if result.returncode == 0:
                   print("✅ Syntax check passed!")
               else:
-                  print(f"❌ Syntax issues remain: {result.stderr}")
+                  print(f"🛑 Syntax issues remain: {result.stderr}")
           else:
               print("ℹ️ No auto-fixes needed")
           EOF

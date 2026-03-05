@@ -68,7 +68,7 @@ jobs:
           echo "changes=true" >> "$GITHUB_OUTPUT"
           echo "Changes detected in rx.json"
           echo ""
-          echo "🆕 New Records Added:"
+          echo "✨ Records Added:"
           echo "===================="
           
           # Save only truly new registration numbers (JSON-aware, not line-diff based)
@@ -159,13 +159,13 @@ jobs:
         msg = f"♻️ Rx Sync • {date_str} • {time_str}"
         
         if new_cats != '0':
-            msg += f" • 🆕 New: {new_cats}"
+            msg += f" • ✨ Add: {new_cats}"
         
         if mod_cats != '0':
-            msg += f" • ✏️ Mod: {mod_cats}"
+            msg += f" • 🌀 Mod: {mod_cats}"
         
         if rem_cats != '0':
-            msg += f" • 🗑️ Rem: {rem_cats}"
+            msg += f" • ❌ Rem: {rem_cats}"
         
         msg += f" • 📊 Total: ${{ steps.update.outputs.total_records }}"
         
@@ -236,23 +236,23 @@ jobs:
             if not has_changes:
                 print('✅ No updates')
             else:
-                # New Additions
+                # Additions
                 if new_cat_str:
-                    print(f'#### 🆕 New Additions: {new_cat_str}')
+                    print(f'#### ✨ Additions: {new_cat_str}')
                     for r in new_recs:
                         print(f'- {r}')
                     print('')
                 
                 # Modifications
                 if mod_cat_str:
-                    print(f'#### ✏️ Modifications: {mod_cat_str}')
+                    print(f'#### 🌀 Modifications: {mod_cat_str}')
                     for r in mod_recs:
                         print(f'- {r}')
                     print('')
                 
                 # Removals
                 if rem_cat_str:
-                    print(f'#### 🗑️ Removals: {rem_cat_str}')
+                    print(f'#### ❌ Removals: {rem_cat_str}')
                     for r in rem_recs:
                         print(f'- {r}')
                 
@@ -261,7 +261,6 @@ jobs:
         " >> "$GITHUB_STEP_SUMMARY"
     
     - name: Send email notification
-      if: steps.changes.outputs.changes == 'true'
       run: |
         python3 << 'EOF'
         import smtplib
@@ -288,6 +287,12 @@ jobs:
         new_details = json.loads('${{ steps.update.outputs.new_details }}' or '[]')
         mod_details = json.loads('${{ steps.update.outputs.modified_details }}' or '[]')
         rem_details = json.loads('${{ steps.update.outputs.removed_details }}' or '[]')
+        
+        # MOCK DATA FOR PREVIEW (only if real data is empty)
+        if not new_details and not mod_details and not rem_details:
+            new_details = ["99999 - PRASHANTH (BPHARM)", "88888 - ANITHA (MPHARM)", "77777 - RAHUL (BPHARM)"]
+            mod_details = ["66666 - SANDHYA (PHARMD)"]
+            rem_details = ["55555 - VIJAY (BPHARM)"]
         
         def get_reg_no(s):
             match = re.search(r'^(\d+)', s)
@@ -324,13 +329,13 @@ jobs:
             html += '</div>'
             return html
 
-        added_html = format_html_list("✨ New Additions", new_details, "#00cc66")
-        mod_html = format_html_list("✏️ Modifications", mod_details, "#3b82f6")
-        rem_html = format_html_list("🗑️ Removals", rem_details, "#ef4444")
+        added_html = format_html_list("✨ Additions", new_details, "#00cc66")
+        mod_html = format_html_list("🌀 Modifications", mod_details, "#3b82f6")
+        rem_html = format_html_list("❌ Removals", rem_details, "#ef4444")
         
         # Text body generation (kept simple)
         text_body = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
-        sections = [("NEW ADDITIONS", new_details), ("MODIFICATIONS", mod_details), ("REMOVALS", rem_details)]
+        sections = [("ADDITIONS", new_details), ("MODIFICATIONS", mod_details), ("REMOVALS", rem_details)]
         for label, items in sections:
             if items:
                 text_body += f"{label} ({len(items)}):\n"
@@ -361,7 +366,7 @@ jobs:
         msg = MIMEMultipart('alternative')
         msg['From'] = formataddr(("Rx Data Sync", sender_email))
         msg['To'] = recipient_email
-        msg['Subject'] = f"♻️ Data Sync - {len(new_details)} New • {len(mod_details)} Mod - {subject_time}"
+        msg['Subject'] = f"♻️ Data Sync - {len(new_details)} ✨ • {len(mod_details)} 🌀 • {len(rem_details)} ❌ - {subject_time}"
         
         msg.attach(MIMEText(text_body, 'plain'))
         msg.attach(MIMEText(html_body, 'html'))
