@@ -503,7 +503,7 @@ async function performSearch() {
     } catch (error) {
         console.error('Search error:', error);
         loadingDiv.style.display = 'none';
-        errorDiv.innerHTML = `<div class="error">❌ Search failed. Please try again.</div>`;
+        errorDiv.innerHTML = `<div class="error">🛑 Search failed. Please try again.</div>`;
     }
 }
 

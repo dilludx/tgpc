@@ -157,7 +157,7 @@ class Manager:
         self.file_manager.save(list(sorted_records))
         self.backup_manager.cleanup()
         
-        logger.info(f"Update complete. Total: {total_count}, New: {new_count}, Removed: {removed_count}, Modified: {modified_count}")
+        logger.info(f"Update complete. Total: {total_count}, ✨ Additions: {new_count}, 🌀 Modifications: {modified_count}, ❌ Removals: {removed_count}")
 
         # Output for GitHub Actions
         if os.environ.get('GITHUB_OUTPUT'):

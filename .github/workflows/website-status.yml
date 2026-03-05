@@ -27,11 +27,11 @@ jobs:
               } >> "$GITHUB_STEP_SUMMARY"
               exit 0
             elif [ "$i" -eq 6 ]; then
-              echo "❌ Website is DOWN (Status: $STATUS) after 6 attempts"
+              echo "🛑 Website is DOWN (Status: $STATUS) after 6 attempts"
               {
                 echo "### 🛜 Website Status • $(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]') • $(TZ='Asia/Kolkata' date '+%H:%M IST')"
                 echo ""
-                echo "❌ Offline ($STATUS) • https://tgpc.pages.dev/"
+                echo "🛑 Offline ($STATUS) • https://tgpc.pages.dev/"
               } >> "$GITHUB_STEP_SUMMARY"
               exit 1
             else
