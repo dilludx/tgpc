@@ -361,25 +361,6 @@ jobs:
         except Exception as e:
             print(f"❌ Failed to send email: {e}")
         EOF
-        
-        msg = MIMEMultipart('alternative')
-        msg['From'] = formataddr(("Rx Data Sync", sender_email))
-        msg['To'] = recipient_email
-        msg['Subject'] = f"♻️ Data Sync - {len(new_details)} New • {len(mod_details)} Mod - {subject_time}"
-        
-        msg.attach(MIMEText(text_body, 'plain'))
-        msg.attach(MIMEText(html_body, 'html'))
-        
-        try:
-            server = smtplib.SMTP(smtp_server, smtp_port)
-            server.starttls()
-            server.login(sender_email, app_password)
-            server.send_message(msg)
-            server.quit()
-            print("✅ Email sent successfully")
-        except Exception as e:
-            print(f"❌ Failed to send email: {e}")
-        EOF
 
     - name: Notify on failure
       if: failure()
