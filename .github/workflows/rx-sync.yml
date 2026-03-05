@@ -47,7 +47,6 @@ jobs:
     
     - name: Run data update
       id: update
-      if: false  # DISABLED - Skip data update for email testing
       run: |
         echo "♻️ Starting TGPC data update..."
         
@@ -59,7 +58,6 @@ jobs:
     
     - name: Check for changes and save new records
       id: changes
-      if: false  # DISABLED - Skip changes check for email testing
       run: |
         rm -f /tmp/new_records.json
 
@@ -112,7 +110,6 @@ jobs:
         fi
     
     - name: Sync to Supabase
-      if: false  # DISABLED - Skip Supabase sync for email testing
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -121,7 +118,6 @@ jobs:
         python -m tgpc sync
     
     - name: Commit and push changes
-      if: false  # DISABLED - Skip commit for email testing
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
@@ -190,7 +186,6 @@ jobs:
         git push origin HEAD:"${{ github.ref_name }}"
     
     - name: Create update summary
-      if: false  # DISABLED - Skip summary for email testing
       run: |
         # Parse details JSON
         NEW_DETAILS='${{ steps.update.outputs.new_details }}'
@@ -266,13 +261,15 @@ jobs:
         " >> "$GITHUB_STEP_SUMMARY"
     
     - name: Send email notification
-      if: always()
+      if: steps.changes.outputs.changes == 'true'
       run: |
         python3 << 'EOF'
         import smtplib
+        import json
         from email.mime.text import MIMEText
         from email.mime.multipart import MIMEMultipart
-        import os
+        from email.utils import formataddr
+        from datetime import datetime, timezone, timedelta
         
         # Email configuration
         smtp_server = "smtp.gmail.com"
@@ -281,61 +278,50 @@ jobs:
         app_password = "${{ secrets.GMAIL_APP_PASSWORD }}"
         recipient_email = "${{ secrets.NOTIFICATION_EMAIL }}"
         
-        # Get variables from GitHub Actions (using mock data for testing)
-        new_cat_stats = "{}"  # Mock data for testing
-        total_records = "85323"  # Mock data for testing
-        
-        # Generate plain text email body
-        import subprocess
-        from datetime import datetime, timezone, timedelta
-        
-        # Get sync time in IST
+        # Get IST time
         ist = timezone(timedelta(hours=5, minutes=30))
         sync_time = datetime.now(ist).strftime("%d %B %Y, %A, %H:%M IST")
         subject_time = datetime.now(ist).strftime("%d %B %Y, %A, %H:%M")
         
-        # Get new records details
-        try:
-            with open("/tmp/new_records.json", "r") as f:
-                import json
-                new_records = json.load(f)
-                
-            if new_records:
-                formatted_records = "\n".join([
-                    f"• {r.get('registration_number', 'N/A')} - {r.get('name', 'N/A')} ({r.get('category', 'N/A')})"
-                    for r in new_records[:10]  # Limit to first 10 for email
-                ])
-                if len(new_records) > 10:
-                    formatted_records += f"\n... and {len(new_records) - 10} more"
-            else:
-                formatted_records = 'No new records to display'
-        except:
-            formatted_records = 'No new records to display'
+        # Parse details
+        new_details = json.loads('${{ steps.update.outputs.new_details }}' or '[]')
+        mod_details = json.loads('${{ steps.update.outputs.modified_details }}' or '[]')
         
-        # Plain text email body
-        text_body = (
-            "TGPC Rx Registry Sync Report\n" + sync_time + "\n\n" +
-            "• New Records: " + new_cat_stats + "\n" +
-            "• Total Database: " + total_records + " records\n\n" +
-            "---\nTGPC Rx Registry\nAutomated Data Synchronization System"
-        )
+        def format_html_list(title, items, color):
+            if not items: return ""
+            html = f'<div style="margin-bottom: 20px;">'
+            html += f'<h4 style="margin: 0 0 8px 0; color: {color}; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">{title}</h4>'
+            html += '<ul style="margin: 0; padding-left: 18px; list-style-type: disc; color: #444;">'
+            for item in items[:15]:  # Limit to 15
+                html += f'<li style="margin-bottom: 4px;">{item}</li>'
+            if len(items) > 15:
+                html += f'<li style="color: #888; list-style-type: none; margin-left: -18px;">... and {len(items) - 15} more</li>'
+            html += '</ul></div>'
+            return html
+
+        added_html = format_html_list("🆕 Newly Added", new_details, "#00cc66")
+        mod_html = format_html_list("✏️ Recently Modified", mod_details, "#3b82f6")
         
-        # Minimal HTML email with brand colors (practical content)
+        text_body = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
+        if new_details:
+            text_body += "ADDED:\n" + "\n".join(new_details[:10]) + "\n\n"
+        if mod_details:
+            text_body += "MODIFIED:\n" + "\n".join(mod_details[:10]) + "\n\n"
+        text_body += "---\nTGPC Rx Registry\nAutomated Data Synchronization System"
+        
         html_body = (
-            "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>TGPC Rx Registry Sync Report</title></head>" +
-            "<body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.6; margin: 0; padding: 0;\">" +
+            "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head>" +
+            "<body style=\"font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: #333; line-height: 1.5; margin: 0; padding: 0;\">" +
             "<div style=\"padding: 0;\">" +
             "<h2 style=\"margin: 0 0 4px 0; font-size: 18px;\">" +
             "<span style=\"color: #00cc66;\">TGPC</span> " +
             "<span style=\"color: #ef4444;\">Rx</span> " +
             "<span style=\"color: #808080;\">Registry</span> Sync Report</h2>" +
-            "<div style=\"color: #666; font-size: 14px; margin-bottom: 16px;\">" + sync_time + "</div>" +
+            "<div style=\"color: #666; font-size: 13px; margin-bottom: 20px;\">" + sync_time + "</div>" +
             
-            "<div style=\"margin-bottom: 16px;\">" +
-            "<div style=\"margin-bottom: 4px;\">• New Records: " + new_cat_stats + "</div>" +
-            "<div>• Total Database: " + total_records + " records</div></div>" +
+            added_html + mod_html +
             
-            "<div style=\"margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e5e5; font-size: 12px; color: #666; line-height: 1.2;\">" +
+            "<div style=\"margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; font-size: 12px; color: #666; line-height: 1.2;\">" +
             "<div style=\"font-weight: 600; margin-bottom: 0;\">" +
             "<span style=\"color: #00cc66;\">TGPC</span> " +
             "<span style=\"color: #ef4444;\">Rx</span> " +
@@ -343,22 +329,14 @@ jobs:
             "<div style=\"font-weight: normal; color: #999; font-size: 10px;\">Automated Data Synchronization System</div></div></div></body></html>"
         )
         
-        # Create message
-        from email.utils import formataddr
         msg = MIMEMultipart('alternative')
         msg['From'] = formataddr(("Rx Data Sync", sender_email))
         msg['To'] = recipient_email
-        msg['Subject'] = f"♻️ Data Sync - TGPC Rx Registry - {subject_time}"
+        msg['Subject'] = f"♻️ Data Sync - {len(new_details)} New • {len(mod_details)} Mod - {subject_time}"
         
-        # Attach both plain text and HTML versions
-        from email.mime.text import MIMEText
-        text_part = MIMEText(text_body, 'plain')
-        html_part = MIMEText(html_body, 'html')
+        msg.attach(MIMEText(text_body, 'plain'))
+        msg.attach(MIMEText(html_body, 'html'))
         
-        msg.attach(text_part)
-        msg.attach(html_part)
-        
-        # Send email
         try:
             server = smtplib.SMTP(smtp_server, smtp_port)
             server.starttls()
@@ -368,7 +346,6 @@ jobs:
             print("✅ Email sent successfully")
         except Exception as e:
             print(f"❌ Failed to send email: {e}")
-            print(f"Error details: {str(e)}")
         EOF
 
     - name: Notify on failure
