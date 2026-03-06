@@ -319,26 +319,28 @@ jobs:
             }
             return mapping.get(cat, cat.title())
 
-        def format_html_list(title, items, color, bg_color):
+        def format_html_list(title, items, color_start, color_end, bg_color):
             if not items: return ""
-            html = f'<div style="margin-bottom: 48px;">'
-            html += f'<div style="font-size: 12px; font-weight: 600; color: {color}; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">{title}</div>'
-            html += f'<div style="height: 1px; width: 40px; background: {color}; margin-bottom: 20px;"></div>'
-            for i in sorted(items, key=get_reg_no):
+            html = f'<div style="margin-bottom: 30px; border-radius: 8px; overflow: hidden; border: 1px solid #f0f0f0;">'
+            html += f'<div style="background: {color_start}; background: linear-gradient(90deg, {color_start}, {color_end}); padding: 10px 16px; color: #fff;">'
+            html += f'<h3 style="margin: 0; font-size: 15px; font-weight: 700;">{title} ({len(items)})</h3></div>'
+            html += '<div style="background: #fff;">'
+            for idx, i in enumerate(sorted(items, key=get_reg_no)):
                 reg = str(get_reg_no(i))
                 name = re.sub(r"^\d+\s*-\s*", "", i)
                 name = re.sub(r"\s*\(.*?\)", "", name).strip()
                 cat = get_category(i)
-                html += f'<div style="margin-bottom: 16px;">'
-                html += f'<div style="font-size: 15px; color: #1a1a1a; font-weight: 500;">{name}</div>'
-                html += f'<div style="font-size: 12px; color: #888;">{reg} &bull; {cat}</div>'
+                bg = "#fff" if idx % 2 == 0 else "#fafafa"
+                html += f'<div style="padding: 12px 16px; background: {bg}; border-bottom: 1px solid #f5f5f5; display: flex; justify-content: space-between; align-items: center;">'
+                html += f'<div><div style="font-size: 13px; font-weight: 600; color: #333;">{name}</div><div style="font-size: 11px; color: #888;">{reg}</div></div>'
+                html += f'<div style="font-size: 10px; font-weight: 700; color: {color_start}; background: {bg_color}; padding: 2px 8px; border-radius: 12px; border: 1px solid {color_start}22;">{cat}</div>'
                 html += '</div>'
-            html += '</div>'
+            html += '</div></div>'
             return html
 
-        added_html = format_html_list("Additions", new_details, "#00cc66", "")
-        mod_html = format_html_list("Modifications", mod_details, "#3b82f6", "")
-        rem_html = format_html_list("Removals", rem_details, "#ef4444", "")
+        added_html = format_html_list("🌱 New", new_details, "#00b894", "#00cec9", "#e6fffb")
+        mod_html = format_html_list("🌀 Changes", mod_details, "#0984e3", "#74b9ff", "#e6f7ff")
+        rem_html = format_html_list("❌ Removals", rem_details, "#d63031", "#ff7675", "#fff1f0")
         
         # Text body generation (kept simple)
         text_body = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
@@ -352,22 +354,17 @@ jobs:
         
         html_body = (
             "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head>" +
-            "<body style=\"font-family: 'Georgia', serif; background: #ffffff; padding: 60px 40px; color: #333; line-height: 1.6;\">" +
-            "<div style=\"max-width: 550px; margin: 0 auto;\">" +
-            "<div style=\"text-align: center; margin-bottom: 60px;\">" +
-            "<h1 style=\"font-size: 32px; font-weight: 400; margin: 0; letter-spacing: -0.5px; color: #000;\">Sync Report</h1>" +
-            "<div style=\"font-size: 14px; font-style: italic; color: #888; margin-top: 8px;\">" + sync_time + "</div></div>" +
-            
-            "<div style=\"display: table; width: 100%; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 25px 0; margin-bottom: 60px;\">" +
-            f"<div style=\"display: table-cell; text-align: center;\"><div style=\"font-size: 24px; color: #00cc66;\">{len(new_details)}</div><div style=\"font-size: 10px; color: #999; text-transform: uppercase;\">New</div></div>" +
-            f"<div style=\"display: table-cell; text-align: center;\"><div style=\"font-size: 24px; color: #3b82f6;\">{len(mod_details)}</div><div style=\"font-size: 10px; color: #999; text-transform: uppercase;\">Modified</div></div>" +
-            f"<div style=\"display: table-cell; text-align: center;\"><div style=\"font-size: 24px; color: #ef4444;\">{len(rem_details)}</div><div style=\"font-size: 10px; color: #999; text-transform: uppercase;\">Removed</div></div>" +
-            "</div>" +
+            "<body style=\"font-family: -apple-system, sans-serif; background: #fcfcfc; padding: 40px 20px; color: #333;\">" +
+            "<div style=\"max-width: 600px; margin: 0 auto;\">" +
+            "<div style=\"padding: 0 10px 30px 10px;\">" +
+            "<div style=\"font-weight: 800; font-size: 22px; color: #333;\">" +
+            "TGPC <span style=\"color: #00cc66;\">Rx</span> Registry</div>" +
+            "<div style=\"font-size: 13px; color: #999; margin-top: 4px;\">Sync Status: " + sync_time + "</div></div>" +
             
             added_html + mod_html + rem_html +
             
-            "<div style=\"margin-top: 60px; border-top: 1px solid #eee; padding-top: 20px; font-size: 12px; font-style: italic; color: #aaa; text-align: center;\">" +
-            "TGPC Rx Registry &bull; Automated Data Synchronization System</div></div></body></html>"
+            "<div style=\"margin-top: 40px; text-align: center; font-size: 12px; color: #bbb;\">" +
+            "Automated Data Synchronization System &bull; TGPC Rx Registry</div></div></body></html>"
         )
         
         # Build dynamic subject: 🌱 3 | 🌀 1 | 05MAR2026 THU 09:53 IST | Rx Data Sync
