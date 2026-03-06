@@ -321,33 +321,24 @@ jobs:
 
         def format_html_list(title, items, color):
             if not items: return ""
-            
-            # Category color mapping for badges
-            cat_colors = {
-                "BPharm": {"bg": "#f0fdf4", "text": "#166534", "border": "#bbf7d0"},
-                "MPharm": {"bg": "#eff6ff", "text": "#1e40af", "border": "#bfdbfe"},
-                "DPharm": {"bg": "#fffbeb", "text": "#92400e", "border": "#fde68a"},
-                "PharmD": {"bg": "#faf5ff", "text": "#6b21a8", "border": "#e9d5ff"},
-                "QP": {"bg": "#fef2f2", "text": "#991b1b", "border": "#fecaca"}
-            }
+            cats = {}
+            for i in items:
+                c = get_category(i)
+                cats.setdefault(c, []).append(i)
             
             html = f'<div style="margin-bottom: 20px;">'
-            html += f'<h4 style="margin: 0 0 10px 0; color: {color}; font-size: 14px; font-weight: 700;">{title} ({len(items)})</h4>'
-            html += '<div style="padding: 0;">'
-            for i in sorted(items, key=get_reg_no):
-                reg = str(get_reg_no(i))
-                name = re.sub(r"^\d+\s*-\s*", "", i)
-                name = re.sub(r"\s*\(.*?\)", "", name).strip()
-                cat = get_category(i)
-                colors = cat_colors.get(cat, {"bg": "#f9fafb", "text": "#4b5563", "border": "#e5e7eb"})
-                
-                html += f'<div style="margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">'
-                html += f'<div style="display: flex; align-items: center;">'
-                html += f'<span style="font-family: ui-monospace, monospace; font-size: 11px; background: #f8f9fa; padding: 1px 4px; border-radius: 3px; color: #666; border: 1px solid #eee; margin-right: 10px;">{reg}</span>'
-                html += f'<span style="font-size: 13px; color: #111827; font-weight: 500;">{name}</span></div>'
-                html += f'<span style="font-size: 10px; font-weight: 700; background: {colors["bg"]}; color: {colors["text"]}; padding: 0 6px; border-radius: 10px; border: 1px solid {colors["border"]};">{cat}</span>'
-                html += '</div>'
-            html += '</div></div>'
+            html += f'<h4 style="margin: 0 0 8px 0; color: {color}; font-size: 14px; font-weight: 700; border-bottom: 1px solid #f0f0f0; padding-bottom: 2px;">{title} ({len(items)})</h4>'
+            for c in sorted(cats.keys()):
+                recs = cats[c]
+                html += f'<div style="font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; margin: 10px 0 5px 0;">{c} ({len(recs)})</div>'
+                for r in sorted(recs, key=get_reg_no):
+                    reg = str(get_reg_no(r))
+                    name = re.sub(r"^\d+\s*-\s*", "", r)
+                    name = re.sub(r"\s*\(.*?\)", "", name).strip()
+                    html += f'<div style="margin-bottom: 3px; font-size: 13px; color: #333;">'
+                    html += f'<span style="font-family: ui-monospace, monospace; color: #666; margin-right: 10px;">{reg}</span>'
+                    html += f'<span>{name}</span></div>'
+            html += '</div>'
             return html
 
         added_html = format_html_list("🌱 New", new_details, "#00cc66")
