@@ -303,7 +303,16 @@ jobs:
 
         def get_category(s):
             match = re.search(r'\((.*?)\)', s)
-            return match.group(1).upper() if match else "OTHER"
+            if not match: return "Other"
+            cat = match.group(1).upper()
+            mapping = {
+                "BPHARM": "BPharm",
+                "MPHARM": "MPharm",
+                "DPHARM": "DPharm",
+                "PHARMD": "PharmD",
+                "QP": "QP"
+            }
+            return mapping.get(cat, cat.title())
 
         def format_html_list(title, items, color, bg_color):
             if not items: return ""
