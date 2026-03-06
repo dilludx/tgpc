@@ -293,8 +293,9 @@ jobs:
         
         # MOCK DATA FOR TEST EMAIL
         if not new_details and not mod_details and not rem_details:
-            new_details = ["11111 - TEST NEW (BPHARM)"]
+            new_details = ["11111 - TEST NEW (BPHARM)", "11112 - TEST NEW (DPHARM)"]
             mod_details = ["22222 - TEST CHANGE (MPHARM)"]
+            rem_details = ["33333 - TEST REMOVAL (PHARMD)"]
         
         def get_reg_no(s):
             match = re.search(r'^(\d+)', s)
@@ -304,7 +305,7 @@ jobs:
             match = re.search(r'\((.*?)\)', s)
             return match.group(1).upper() if match else "OTHER"
 
-        def format_html_list(title, items, color):
+        def format_html_list(title, items, color, bg_color):
             if not items: return ""
             
             # Group by category
@@ -315,25 +316,25 @@ jobs:
                     categories[cat] = []
                 categories[cat].append(item)
             
-            html = f'<div style="margin-bottom: 25px;">'
-            html += f'<h4 style="margin: 0 0 12px 0; color: {color}; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 0;">{title} ({len(items)})</h4>'
+            html = f'<div style="margin-bottom: 24px; padding: 12px 16px; background-color: {bg_color}; border-left: 4px solid {color}; border-radius: 0 4px 4px 0;">'
+            html += f'<h4 style="margin: 0 0 10px 0; color: {color}; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">{title} ({len(items)})</h4>'
             
             for cat in sorted(categories.keys()):
                 cat_items = sorted(categories[cat], key=get_reg_no)
-                html += f'<div style="margin: 10px 0 5px 0; font-weight: 700; font-size: 13px; color: #666; text-decoration: underline;">{cat} ({len(cat_items)})</div>'
-                html += '<ul style="margin: 0 0 15px 0; padding-left: 20px; list-style-type: disc; color: #444; font-size: 13px;">'
+                html += f'<div style="margin: 12px 0 6px 0; font-weight: 700; font-size: 12px; color: #666; text-transform: uppercase; font-family: monospace;">{cat} ({len(cat_items)})</div>'
+                html += '<ul style="margin: 0; padding-left: 18px; list-style-type: disc; color: #444; font-size: 13px;">'
                 for item in cat_items:
                     # Remove redundant category from display string
-                    clean_item = re.sub(r'\s*\(.*?\)', '', item)
+                    clean_item = re.sub(r"\s*\(.*?\)", "", item)
                     html += f'<li style="margin-bottom: 4px;">{clean_item}</li>'
                 html += '</ul>'
             
             html += '</div>'
             return html
 
-        added_html = format_html_list("🌱 NEW", new_details, "#00cc66")
-        mod_html = format_html_list("🌀 CHANGES", mod_details, "#3b82f6")
-        rem_html = format_html_list("❌ REMOVALS", rem_details, "#ef4444")
+        added_html = format_html_list("🌱 NEW", new_details, "#00cc66", "#f0fdf4")
+        mod_html = format_html_list("🌀 CHANGES", mod_details, "#3b82f6", "#eff6ff")
+        rem_html = format_html_list("❌ REMOVALS", rem_details, "#ef4444", "#fef2f2")
         
         # Text body generation (kept simple)
         text_body = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
