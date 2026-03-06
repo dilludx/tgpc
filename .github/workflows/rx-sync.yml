@@ -321,7 +321,7 @@ jobs:
             
             for cat in sorted(categories.keys()):
                 cat_items = sorted(categories[cat], key=get_reg_no)
-                html += f'<div style="margin: 12px 0 6px 0; font-weight: 700; font-size: 12px; color: #666; text-transform: uppercase; font-family: monospace;">{cat} ({len(cat_items)})</div>'
+                html += f'<div style="margin: 12px 0 6px 0; font-weight: 700; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">{cat} ({len(cat_items)})</div>'
                 html += '<ul style="margin: 0; padding-left: 18px; list-style-type: disc; color: #444; font-size: 13px;">'
                 for item in cat_items:
                     # Remove redundant category from display string
