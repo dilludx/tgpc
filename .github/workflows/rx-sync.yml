@@ -316,12 +316,12 @@ jobs:
                     categories[cat] = []
                 categories[cat].append(item)
             
-            html = f'<div style="margin-bottom: 24px; padding: 12px 16px; background-color: {bg_color}; border-left: 4px solid {color}; border-radius: 0 4px 4px 0;">'
-            html += f'<h4 style="margin: 0 0 10px 0; color: {color}; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">{title} ({len(items)})</h4>'
+            html = f'<div style="margin-bottom: 24px; padding: 12px 16px; background-color: {bg_color}; border-left: 4px solid {color}; border-radius: 4px;">'
+            html += f'<h4 style="margin: 0 0 10px 0; color: {color}; font-size: 14px; font-weight: 700; letter-spacing: 0.2px;">{title} ({len(items)})</h4>'
             
             for cat in sorted(categories.keys()):
                 cat_items = sorted(categories[cat], key=get_reg_no)
-                html += f'<div style="margin: 12px 0 6px 0; font-weight: 700; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">{cat} ({len(cat_items)})</div>'
+                html += f'<div style="margin: 12px 0 6px 0; font-weight: 700; font-size: 11px; color: #666; letter-spacing: 0.2px;">{cat} ({len(cat_items)})</div>'
                 html += '<ul style="margin: 0; padding-left: 18px; list-style-type: disc; color: #444; font-size: 13px;">'
                 for item in cat_items:
                     # Remove redundant category from display string
@@ -332,9 +332,9 @@ jobs:
             html += '</div>'
             return html
 
-        added_html = format_html_list("🌱 NEW", new_details, "#00cc66", "#f0fdf4")
-        mod_html = format_html_list("🌀 CHANGES", mod_details, "#3b82f6", "#eff6ff")
-        rem_html = format_html_list("❌ REMOVALS", rem_details, "#ef4444", "#fef2f2")
+        added_html = format_html_list("🌱 New records", new_details, "#00cc66", "#f0fdf4")
+        mod_html = format_html_list("🌀 Modified records", mod_details, "#3b82f6", "#eff6ff")
+        rem_html = format_html_list("❌ Removed records", rem_details, "#ef4444", "#fef2f2")
         
         # Text body generation (kept simple)
         text_body = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
