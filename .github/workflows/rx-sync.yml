@@ -330,7 +330,7 @@ jobs:
             html += f'<h4 style="margin: 0 0 8px 0; color: {color}; font-size: 14px; font-weight: 700;">{title} ({len(items)})</h4>'
             for c in sorted(cats.keys()):
                 recs = cats[c]
-                html += f'<div style="font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; margin: 10px 0 5px 0;">{c} ({len(recs)})</div>'
+                html += f'<div style="font-size: 14px; font-weight: 700; color: #888; text-transform: uppercase; margin: 12px 0 6px 0;">{c} ({len(recs)})</div>'
                 for r in sorted(recs, key=get_reg_no):
                     reg = str(get_reg_no(r))
                     name = re.sub(r"^\d+\s*-\s*", "", r)
