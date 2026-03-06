@@ -270,7 +270,7 @@ jobs:
         " >> "$GITHUB_STEP_SUMMARY"
     
     - name: Send email notification
-      if: always()
+      if: false
       run: |
         python3 << 'EOF'
         import smtplib
