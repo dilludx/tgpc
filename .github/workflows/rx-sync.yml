@@ -332,9 +332,9 @@ jobs:
             html += '</div>'
             return html
 
-        added_html = format_html_list("🌱 New records", new_details, "#00cc66", "#f0fdf4")
-        mod_html = format_html_list("🌀 Modified records", mod_details, "#3b82f6", "#eff6ff")
-        rem_html = format_html_list("❌ Removed records", rem_details, "#ef4444", "#fef2f2")
+        added_html = format_html_list("🌱 New", new_details, "#00cc66", "#f0fdf4")
+        mod_html = format_html_list("🌀 Changes", mod_details, "#3b82f6", "#eff6ff")
+        rem_html = format_html_list("❌ Removals", rem_details, "#ef4444", "#fef2f2")
         
         # Text body generation (kept simple)
         text_body = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
