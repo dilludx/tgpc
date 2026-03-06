@@ -331,21 +331,21 @@ jobs:
                 "QP": {"bg": "#fef2f2", "text": "#991b1b", "border": "#fecaca"}
             }
             
-            html = f'<div style="margin-bottom: 30px;">'
-            html += f'<h4 style="margin: 0 0 12px 0; color: {color}; font-size: 15px; font-weight: 700; border-bottom: 1px solid #eee; padding-bottom: 4px;">{title} ({len(items)})</h4>'
-            html += '<div style="padding-left: 4px;">'
-            for idx, i in enumerate(sorted(items, key=get_reg_no)):
+            html = f'<div style="margin-bottom: 35px;">'
+            html += f'<h4 style="margin: 0 0 15px 0; color: {color}; font-size: 15px; font-weight: 700;">{title} ({len(items)})</h4>'
+            html += '<div style="padding: 0;">'
+            for i in sorted(items, key=get_reg_no):
                 reg = str(get_reg_no(i))
                 name = re.sub(r"^\d+\s*-\s*", "", i)
                 name = re.sub(r"\s*\(.*?\)", "", name).strip()
                 cat = get_category(i)
                 colors = cat_colors.get(cat, {"bg": "#f9fafb", "text": "#4b5563", "border": "#e5e7eb"})
                 
-                html += f'<div style="margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;">'
+                html += f'<div style="margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">'
                 html += f'<div style="display: flex; align-items: center;">'
-                html += f'<span style="font-family: ui-monospace, monospace; font-size: 11px; color: #888; margin-right: 10px;">{reg}</span>'
-                html += f'<span style="font-size: 13px; color: #333; font-weight: 500;">{name}</span></div>'
-                html += f'<span style="font-size: 10px; font-weight: 700; background: {colors["bg"]}; color: {colors["text"]}; padding: 1px 6px; border-radius: 4px; border: 1px solid {colors["border"]};">{cat}</span>'
+                html += f'<span style="font-family: ui-monospace, monospace; font-size: 11px; background: #f8f9fa; padding: 2px 6px; border-radius: 4px; color: #666; border: 1px solid #eee; margin-right: 12px;">{reg}</span>'
+                html += f'<span style="font-size: 13px; color: #111827; font-weight: 500;">{name}</span></div>'
+                html += f'<span style="font-size: 10px; font-weight: 700; background: {colors["bg"]}; color: {colors["text"]}; padding: 1px 8px; border-radius: 12px; border: 1px solid {colors["border"]};">{cat}</span>'
                 html += '</div>'
             html += '</div></div>'
             return html
