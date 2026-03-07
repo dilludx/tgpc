@@ -597868,5 +597868,19 @@
     "father_name": "SANTOSH KUMAR",
     "category": "BPharm",
     "serial_number": 85410
+  },
+  {
+    "registration_number": "TG078726",
+    "name": "KASAGONI BHANU PRAKASH",
+    "father_name": "KASAGONI PRABHU",
+    "category": "BPharm",
+    "serial_number": 85411
+  },
+  {
+    "registration_number": "TG078727",
+    "name": "MOGULLA KISHOR",
+    "father_name": "MOGULLA MALLAIAH",
+    "category": "BPharm",
+    "serial_number": 85412
   }
 ]
