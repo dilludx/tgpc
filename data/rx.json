@@ -597882,5 +597882,103 @@
     "father_name": "MOGULLA MALLAIAH",
     "category": "BPharm",
     "serial_number": 85412
+  },
+  {
+    "registration_number": "TG078734",
+    "name": "AKONCAR SHALAVI",
+    "father_name": "AKONCAR DEVRAO",
+    "category": "DPharm",
+    "serial_number": 85413
+  },
+  {
+    "registration_number": "TG078735",
+    "name": "ADEPU MAHESHWARI",
+    "father_name": "ADEPU NARAYANA",
+    "category": "DPharm",
+    "serial_number": 85414
+  },
+  {
+    "registration_number": "TG078736",
+    "name": "U KAVYA",
+    "father_name": "U THIMMAPPA",
+    "category": "DPharm",
+    "serial_number": 85415
+  },
+  {
+    "registration_number": "TG078747",
+    "name": "V VENKATESHWARA CHARY",
+    "father_name": "V RAMASWAMY",
+    "category": "DPharm",
+    "serial_number": 85416
+  },
+  {
+    "registration_number": "TG078749",
+    "name": "RENJARLA SAIKRUSHNA",
+    "father_name": "RENJARLA SHANKER",
+    "category": "DPharm",
+    "serial_number": 85417
+  },
+  {
+    "registration_number": "TG078750",
+    "name": "SURESH J",
+    "father_name": "VASU",
+    "category": "DPharm",
+    "serial_number": 85418
+  },
+  {
+    "registration_number": "TG078751",
+    "name": "L VIJAYALAXMI",
+    "father_name": "VENKATASWAMY L",
+    "category": "DPharm",
+    "serial_number": 85419
+  },
+  {
+    "registration_number": "TG078752",
+    "name": "DURGAM RAMAKOTAIAH",
+    "father_name": "DURGAM VENKATESWARLU",
+    "category": "DPharm",
+    "serial_number": 85420
+  },
+  {
+    "registration_number": "TG078754",
+    "name": "C RAGHAVENDRA",
+    "father_name": "SIVA SHANKAR",
+    "category": "DPharm",
+    "serial_number": 85421
+  },
+  {
+    "registration_number": "TG078763",
+    "name": "BANDA MALLESHAM",
+    "father_name": "BANDA KALAMMA mother",
+    "category": "DPharm",
+    "serial_number": 85422
+  },
+  {
+    "registration_number": "TG078764",
+    "name": "GANGONI SAI KUMAR",
+    "father_name": "GANGONI PREM KUMAR",
+    "category": "DPharm",
+    "serial_number": 85423
+  },
+  {
+    "registration_number": "TG078765",
+    "name": "MOHAMMED UMAIR ANSARI",
+    "father_name": "MOHAMMED MOIN",
+    "category": "DPharm",
+    "serial_number": 85424
+  },
+  {
+    "registration_number": "TG078766",
+    "name": "Padma Mandava",
+    "father_name": "Anjaiah",
+    "category": "DPharm",
+    "serial_number": 85425
+  },
+  {
+    "registration_number": "TG078767",
+    "name": "ASFAN AHMED",
+    "father_name": "ASIF ALI",
+    "category": "DPharm",
+    "serial_number": 85426
   }
 ]
