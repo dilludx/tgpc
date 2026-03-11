@@ -599121,5 +599121,47 @@
     "father_name": "SHAIK AZRABBABU",
     "category": "BPharm",
     "serial_number": 85589
+  },
+  {
+    "registration_number": "TG078939",
+    "name": "Kanta Gouni Shoba Rani Goud",
+    "father_name": "K P Goud",
+    "category": "DPharm",
+    "serial_number": 85590
+  },
+  {
+    "registration_number": "TG078940",
+    "name": "RUDRA RUCHIRA",
+    "father_name": "RUDRA RAJENDRAPRASAD",
+    "category": "DPharm",
+    "serial_number": 85591
+  },
+  {
+    "registration_number": "TG078941",
+    "name": "GELLI RAMAKANTH",
+    "father_name": "GELLI RAJA LINGAM",
+    "category": "BPharm",
+    "serial_number": 85592
+  },
+  {
+    "registration_number": "TG078942",
+    "name": "BANDARI SRINIVAS",
+    "father_name": "BANDARI YADAIAH",
+    "category": "BPharm",
+    "serial_number": 85593
+  },
+  {
+    "registration_number": "TG078943",
+    "name": "BELLI SANDHYA",
+    "father_name": "BELLI RAJAIAH",
+    "category": "BPharm",
+    "serial_number": 85594
+  },
+  {
+    "registration_number": "TG078944",
+    "name": "Bijjiga Vyshnavi",
+    "father_name": "B Ramakrishna",
+    "category": "BPharm",
+    "serial_number": 85595
   }
 ]
