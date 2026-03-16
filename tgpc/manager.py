@@ -30,13 +30,24 @@ class FileManager:
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
     def save(self, records: List[PharmacistRecord], filename: str = "rx.json") -> Path:
-        """Save records to JSON."""
+        """Save records to JSON atomically."""
         path = self.data_dir / filename
         data = [r.to_dict() for r in records]
         
-        with open(path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False, default=str)
-        logger.info(f"Saved {len(records)} records to {path}")
+        # Atomic write: write to temp file first, then rename
+        temp_path = path.with_suffix('.tmp')
+        try:
+            with open(temp_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False, default=str)
+                f.flush()
+                os.fsync(f.fileno())
+            temp_path.rename(path)
+            logger.info(f"Saved {len(records)} records to {path}")
+        except Exception:
+            # Clean up temp file on failure
+            if temp_path.exists():
+                temp_path.unlink()
+            raise
         return path
 
     def load(self, filename: str = "rx.json") -> List[PharmacistRecord]:
@@ -318,9 +329,18 @@ class Manager:
             except Exception as e:
                 logger.error(f"Enrichment failed for {reg_no}: {e}")
                 
-        # Save to Disk
-        with open(details_path, 'w', encoding='utf-8') as f:
-            json.dump(existing_details, f, indent=2, ensure_ascii=False)
+        # Save to Disk atomically
+        temp_details_path = details_path.with_suffix('.tmp')
+        try:
+            with open(temp_details_path, 'w', encoding='utf-8') as f:
+                json.dump(existing_details, f, indent=2, ensure_ascii=False)
+                f.flush()
+                os.fsync(f.fileno())
+            temp_details_path.rename(details_path)
+        except Exception:
+            if temp_details_path.exists():
+                temp_details_path.unlink()
+            raise
             
         logger.info(f"Enrichment complete. Processed {processed_count}/{len(batch_ids)}")
 

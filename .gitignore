@@ -1,63 +1,23 @@
-# Environment
-.env
-.env.*
-!.env.example
-
+```gitignore
 # Python
 __pycache__/
-*.py[cod]
-*.so
-*.egg-info/
-*.egg
-build/
-dist/
-.Python
 *.pyc
 *.pyo
+*.pyd
 
-# Virtual environments
+# Dependencies
+.venv/
 venv/
 env/
-.venv/
+.env
+.env.local
+.env.*
 
-# Backups and temporary files
-data/backups/
-data/detailed/
-data/metadata/
-data/photos/
-*.backup
-*.bak
-*.tmp
-*.log
-debug_*.html
-
-# Database files (we use Supabase cloud)
-*.db
-*.db-journal
-*.sqlite
-*.sqlite3
-
-# IDE and editors
-.idea/
-.vscode/
-.kiro/
-.continue/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-*.DS_Store
-
-# Testing and linting
-# Cache
-.cache/
+# Testing
 .pytest_cache/
-.ruff_cache/
-__pycache__/
-*.pyc
+.coverage
+coverage/
 
-# Logs
-*.log
+# Data files (if they are generated)
+data/*.json
+```
