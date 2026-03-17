@@ -296,11 +296,11 @@ jobs:
         mod_details = json.loads('${{ steps.update.outputs.modified_details }}' or '[]')
         rem_details = json.loads('${{ steps.update.outputs.removed_details }}' or '[]')
         
-        # MOCK DATA FOR TEST EMAIL
+        # Exit if there is no data to sync
         if not new_details and not mod_details and not rem_details:
-            new_details = ["11111 - TEST NEW (BPHARM)", "11112 - TEST NEW (DPHARM)"]
-            mod_details = ["22222 - TEST CHANGE (MPHARM)"]
-            rem_details = ["33333 - TEST REMOVAL (PHARMD)"]
+            print("✅ No new updates to sync. Skipping email notification.")
+            import sys
+            sys.exit(0)
         
         def get_reg_no(s):
             match = re.search(r'^(\d+)', s)
@@ -326,24 +326,30 @@ jobs:
                 c = get_category(i)
                 cats.setdefault(c, []).append(i)
             
-            html = f'<div style="margin-bottom: 20px;">'
-            html += f'<h4 style="margin: 0 0 8px 0; color: {color}; font-size: 14px; font-weight: 700;">{title} ({len(items)})</h4>'
+            html = f'<div style="margin-bottom: 35px;">'
+            html += f'<h4 style="margin: 0 0 15px 0; color: {color}; font-size: 14px; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid {color}; padding-bottom: 6px; display: inline-block; letter-spacing: 0.5px;">{title} ({len(items)})</h4>\n'
+            
             for c in sorted(cats.keys()):
                 recs = cats[c]
-                html += f'<div style="font-size: 14px; font-weight: 700; color: #888; text-transform: uppercase; margin: 12px 0 6px 0;">{c} ({len(recs)})</div>'
+                html += f'<div style="margin-bottom: 20px;">\n'
+                html += f'<div style="font-size: 11px; font-weight: 700; color: #111; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px;">{c} ({len(recs)})</div>\n'
+                
                 for r in sorted(recs, key=get_reg_no):
                     reg = str(get_reg_no(r))
+                    # Remove the registration number and trailing category if it exists, leaving name untouched
                     name = re.sub(r"^\d+\s*-\s*", "", r)
-                    name = re.sub(r"\s*\(.*?\)", "", name).strip()
-                    html += f'<div style="margin-bottom: 3px; font-size: 13px; color: #333;">'
-                    html += f'<span style="font-family: ui-monospace, monospace; color: #666; margin-right: 10px;">{reg}</span>'
-                    html += f'<span>{name}</span></div>'
+                    name = re.sub(r"\s*\(.*?\)$", "", name).strip()
+                    
+                    html += f'<div style="font-size: 13px; color: #6b7280; padding: 3px 0; margin-bottom: 2px;">'
+                    html += f'<span style="font-family: ui-monospace, monospace;">{reg}</span> - {name}</div>\n'
+                    
+                html += f'</div>\n'
             html += '</div>'
             return html
 
-        added_html = format_html_list("🌱 New", new_details, "#00cc66")
-        mod_html = format_html_list("🌀 Changes", mod_details, "#3b82f6")
-        rem_html = format_html_list("❌ Removals", rem_details, "#ef4444")
+        added_html = format_html_list("🌱 NEW", new_details, "#00cc66")
+        mod_html = format_html_list("🌀 CHANGES", mod_details, "#3b82f6")
+        rem_html = format_html_list("❌ REMOVALS", rem_details, "#ef4444")
         
         # Text body generation (kept simple)
         text_body = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
@@ -363,11 +369,11 @@ jobs:
             "<span style=\"color: #00cc66;\">TGPC</span> " +
             "<span style=\"color: #ef4444;\">Rx</span> " +
             "<span style=\"color: #808080;\">Registry</span> Sync Report</h2>" +
-            "<div style=\"color: #666; font-size: 12px; margin-bottom: 20px; font-weight: 500;\">" + sync_time + "</div>" +
+            "<div style=\"color: #666; font-size: 12px; margin-bottom: 30px; font-weight: 500;\">" + sync_time + "</div>" +
             
             added_html + mod_html + rem_html +
             
-            "<div style=\"margin-top: 15px; font-size: 11px; color: #888; line-height: 1.4;\">" +
+            "<div style=\"margin-top: 15px; font-size: 11px; color: #888; line-height: 1.4; padding-top: 10px;\">" +
             "<div style=\"font-weight: 700;\">" +
             "<span style=\"color: #00cc66;\">TGPC</span> " +
             "<span style=\"color: #ef4444;\">Rx</span> " +
