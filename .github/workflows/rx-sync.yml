@@ -46,7 +46,7 @@ jobs:
         mkdir -p data/backups
     
     - name: Run data update
-      if: false
+      if: ${{ false }}
       id: update
       run: |
         echo "♻️ STARTING TGPC DATA UPDATE..."
@@ -58,7 +58,7 @@ jobs:
 
     
     - name: Check for changes and save new records
-      if: false
+      if: ${{ false }}
       id: changes
       run: |
         rm -f /tmp/new_records.json
@@ -112,7 +112,7 @@ jobs:
         fi
     
     - name: Sync to Supabase
-      if: false
+      if: ${{ false }}
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -121,7 +121,7 @@ jobs:
         python -m tgpc sync
     
     - name: Commit and push changes
-      if: false
+      if: ${{ false }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
@@ -190,7 +190,7 @@ jobs:
         git push origin HEAD:"${{ github.ref_name }}"
     
     - name: Create update summary
-      if: false
+      if: ${{ false }}
       run: |
         # Parse details JSON
         NEW_DETAILS='${{ steps.update.outputs.new_details }}'
