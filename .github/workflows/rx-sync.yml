@@ -298,7 +298,7 @@ jobs:
             sys.exit(0)
         
         def get_reg_no(s):
-            match = re.search(r'^(\d+)', s)
+            match = re.search(r'(\d+)', s)
             return int(match.group(1)) if match else 0
 
         def get_category(s):
@@ -330,9 +330,11 @@ jobs:
                 html += f'<div style="font-size: 11px; font-weight: 700; color: #111; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 1px;">{c} ({len(recs)})</div>\n'
                 
                 for r in sorted(recs, key=get_reg_no):
-                    reg = str(get_reg_no(r))
-                    # Remove the registration number and trailing category if it exists, leaving name untouched
-                    name = re.sub(r"^\d+\s*-\s*", "", r)
+                    # Split on first " - " to get reg number and the rest
+                    parts = r.split(' - ', 1)
+                    reg = parts[0].strip()
+                    name = parts[1] if len(parts) > 1 else r
+                    # Remove trailing category like (BPharm)
                     name = re.sub(r"\s*\(.*?\)$", "", name).strip()
                     
                     html += f'<div style="font-size: 13px; color: #6b7280; padding: 3px 0; margin-bottom: 2px;">'
