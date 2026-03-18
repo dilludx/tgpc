@@ -599716,5 +599716,26 @@
     "father_name": "GOWLIKARI SREENU",
     "category": "BPharm",
     "serial_number": 85674
+  },
+  {
+    "registration_number": "TG078988",
+    "name": "PATLOLA CHANDANA",
+    "father_name": "PATLOLA BAKTAVATSALA REDDY",
+    "category": "BPharm",
+    "serial_number": 85675
+  },
+  {
+    "registration_number": "TG078990",
+    "name": "EMMADI ARUN",
+    "father_name": "EMMADI RAVI",
+    "category": "BPharm",
+    "serial_number": 85676
+  },
+  {
+    "registration_number": "TG078991",
+    "name": "D Vishnuvardhanudu",
+    "father_name": "subhas chandra bose D",
+    "category": "BPharm",
+    "serial_number": 85677
   }
 ]
