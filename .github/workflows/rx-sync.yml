@@ -291,11 +291,27 @@ jobs:
         mod_details = json.loads('${{ steps.update.outputs.modified_details }}' or '[]')
         rem_details = json.loads('${{ steps.update.outputs.removed_details }}' or '[]')
         
-        # Exit if there is no data to sync
+        # TEMPORARY MOCK DATA — REVERT AFTER TEST
         if not new_details and not mod_details and not rem_details:
-            print("✅ No new updates to sync. Skipping email notification.")
-            import sys
-            sys.exit(0)
+            new_details = [
+                "TG078907 - PALETI SURESH (BPharm)",
+                "TG078908 - K Vishnu Priya (BPharm)",
+                "TG078930 - TELUKUNTLA LINGACHARY (BPharm)",
+                "TG078952 - ANSU SINSODHIYA KUMARI (BPharm)",
+                "TG078956 - Patel Abhishek Reddy (BPharm)",
+                "TG078895 - KUNIWARD KIRAN KUMAR (DPharm)",
+                "TG078897 - T KRISHNA (DPharm)",
+                "TG078899 - HUZEFA REHAN (DPharm)",
+                "TG078979 - mohammed azmath (DPharm)",
+                "TG078980 - Mohammed Asim (DPharm)"
+            ]
+            mod_details = [
+                "TG045123 - BANDARI SRIKANTH (BPharm)",
+                "TG061789 - Rayudu Lakshmi (MPharm)"
+            ]
+            rem_details = [
+                "TG012456 - GADDAM RAJESH (DPharm)"
+            ]
         
         def get_reg_no(s):
             match = re.search(r'(\d+)', s)
