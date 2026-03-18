@@ -384,7 +384,7 @@ jobs:
         if mod_details: subject_parts.append(f"🌀 {len(mod_details)}")
         if rem_details: subject_parts.append(f"❌ {len(rem_details)}")
         
-        subject = " | ".join(subject_parts + [subject_time, "Rx Data Sync"])
+        subject = " | ".join(subject_parts + ["Rx Data Sync", subject_time])
         
         msg = MIMEMultipart('alternative')
         msg['From'] = formataddr(("Rx Data Sync", sender_email))
