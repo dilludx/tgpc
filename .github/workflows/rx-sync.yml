@@ -261,7 +261,6 @@ jobs:
         " >> "$GITHUB_STEP_SUMMARY"
     
     - name: Send email notification
-
       run: |
         python3 << 'EOF'
         import smtplib
