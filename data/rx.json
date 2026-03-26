@@ -495798,7 +495798,7 @@
   {
     "registration_number": "TG065873",
     "name": "JONNALAGADDA SUNAYANA",
-    "father_name": "JONNALAGADDA VISWAKUMAR",
+    "father_name": "JONNALAGADDA VISWA KUMAR",
     "category": "BPharm",
     "serial_number": 70829
   },
@@ -599751,5 +599751,40 @@
     "father_name": "GANGABHISAN",
     "category": "DPharm",
     "serial_number": 85679
+  },
+  {
+    "registration_number": "TG078994",
+    "name": "BANDARAPU RAVALIKA",
+    "father_name": "BANDARAPU MALLIKARJUN GOUD",
+    "category": "BPharm",
+    "serial_number": 85680
+  },
+  {
+    "registration_number": "TG078995",
+    "name": "PULISHETTY RAMU",
+    "father_name": "GANGAIAH",
+    "category": "BPharm",
+    "serial_number": 85681
+  },
+  {
+    "registration_number": "TG078996",
+    "name": "BATHUKU AISHWARYA",
+    "father_name": "BATHUKU DEVADAS",
+    "category": "BPharm",
+    "serial_number": 85682
+  },
+  {
+    "registration_number": "TG078997",
+    "name": "JULIE JAMES",
+    "father_name": "JAMES MATHEW",
+    "category": "BPharm",
+    "serial_number": 85683
+  },
+  {
+    "registration_number": "TG078998",
+    "name": "A CHANDRASHEKAR",
+    "father_name": "A BALAKISTAIAH",
+    "category": "BPharm",
+    "serial_number": 85684
   }
 ]
