@@ -1,6 +1,4 @@
-
 import sys
-import os
 from unittest.mock import MagicMock, patch
 
 # Mock supabase before importing tgpc

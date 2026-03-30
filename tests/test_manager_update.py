@@ -113,6 +113,72 @@ class ManagerUpdateTests(unittest.TestCase):
 
             os.unlink(github_output)
 
+    def test_update_outputs_deterministic_detail_order(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            existing = [
+                record("R2", "Removed Two", "F2", "DPharm", 2),
+                record("R4", "Kept Four", "F4", "BPharm", 4),
+                record("R6", "Kept Six", "F6", "QP", 6),
+                record("R8", "Removed Eight", "F8", "PharmD", 8),
+            ]
+            fresh = [
+                record("R6", "Updated Six", "F6", "QC", 6),
+                record("R3", "New Three", "F3", "DPharm", 3),
+                record("R1", "New One", "F1", "BPharm", 1),
+                record("R4", "Updated Four", "F4", "MPharm", 4),
+            ]
+
+            manager = self._make_manager(temp_dir, fresh)
+            manager.file_manager.save(existing)
+
+            with tempfile.NamedTemporaryFile(delete=False) as out_file:
+                github_output = out_file.name
+
+            old_env = os.environ.get("GITHUB_OUTPUT")
+            try:
+                os.environ["GITHUB_OUTPUT"] = github_output
+                manager.run_daily_update()
+            finally:
+                if old_env is None:
+                    os.environ.pop("GITHUB_OUTPUT", None)
+                else:
+                    os.environ["GITHUB_OUTPUT"] = old_env
+
+            output_lines = Path(github_output).read_text(encoding="utf-8").splitlines()
+            output = {}
+            for line in output_lines:
+                if "=" in line:
+                    k, v = line.split("=", 1)
+                    output[k] = v
+
+            self.assertEqual(
+                output["new_details"],
+                json.dumps([
+                    "R1 - New One (BPharm)",
+                    "R3 - New Three (DPharm)",
+                ]),
+            )
+            self.assertEqual(
+                output["removed_details"],
+                json.dumps([
+                    "R2 - Removed Two (DPharm)",
+                    "R8 - Removed Eight (PharmD)",
+                ]),
+            )
+            self.assertEqual(
+                output["modified_details"],
+                json.dumps([
+                    "R4 - Updated Four (MPharm)",
+                    "R6 - Updated Six (QC)",
+                ]),
+            )
+
+            self.assertEqual(output["new_cat_stats"], json.dumps({"BPharm": 1, "DPharm": 1}))
+            self.assertEqual(output["rem_cat_stats"], json.dumps({"DPharm": 1, "PharmD": 1}))
+            self.assertEqual(output["mod_cat_stats"], json.dumps({"MPharm": 1, "QC": 1}))
+
+            os.unlink(github_output)
+
 
 if __name__ == "__main__":
     unittest.main()

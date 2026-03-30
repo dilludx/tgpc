@@ -2,7 +2,6 @@
 CLI entry point for TGPC system.
 """
 
-import sys
 import argparse
 from tgpc.manager import Manager
 

@@ -5,22 +5,25 @@ Handles file storage, backups, daily updates, and cloud sync.
 
 import json
 import shutil
-import hashlib
 import os
 import base64
 import time
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Tuple
+from typing import List
 from collections import Counter
-from dataclasses import asdict
 
 from supabase import create_client
 
-from tgpc.utils import Config, TGPCError, setup_logging
+from tgpc.utils import Config, setup_logging
 from tgpc.scraper import Scraper, PharmacistRecord
 
 logger = setup_logging("tgpc.manager")
+
+
+class DataIntegrityError(RuntimeError):
+    """Raised when scraped detail data does not match the requested record."""
+
 
 class FileManager:
     """Handles local file storage."""
@@ -131,27 +134,38 @@ class Manager:
         removed_count = len(removed_ids)
         total_count = len(sorted_records)
         duplicates = len(fresh_records) - len(sorted_records)
+
+        def detail_sort_key(record: PharmacistRecord):
+            return (
+                record.serial_number is None,
+                record.serial_number if record.serial_number is not None else 0,
+                record.registration_number,
+            )
+
+        def format_detail(record: PharmacistRecord) -> str:
+            return f"{record.registration_number} - {record.name} ({record.category})"
+
+        sorted_new_ids = sorted(new_ids, key=lambda rid: detail_sort_key(current_map[rid]))
+        sorted_removed_ids = sorted(removed_ids, key=lambda rid: detail_sort_key(existing_map[rid]))
         
         # Detailed changes
-        new_details = [f"{current_map[i].registration_number} - {current_map[i].name} ({current_map[i].category})" for i in new_ids]
-        removed_details = [f"{existing_map[i].registration_number} - {existing_map[i].name} ({existing_map[i].category})" for i in removed_ids]
-        
-        modified_count = 0
-        modified_details = []
-        modified_ids = []
-        for rid in common_ids:
-            if existing_map[rid] != current_map[rid]:
-                modified_count += 1
-                modified_ids.append(rid)
-                modified_details.append(f"{current_map[rid].registration_number} - {current_map[rid].name} ({current_map[rid].category})")
+        new_details = [format_detail(current_map[rid]) for rid in sorted_new_ids]
+        removed_details = [format_detail(existing_map[rid]) for rid in sorted_removed_ids]
+
+        modified_ids = sorted(
+            [rid for rid in common_ids if existing_map[rid] != current_map[rid]],
+            key=lambda rid: detail_sort_key(current_map[rid]),
+        )
+        modified_count = len(modified_ids)
+        modified_details = [format_detail(current_map[rid]) for rid in modified_ids]
 
         # Category Statistics
         def get_cat_stats(ids, mapping):
             counts = Counter(mapping[i].category for i in ids)
-            return dict(counts)
+            return dict(sorted(counts.items()))
 
-        new_cat_stats = get_cat_stats(new_ids, current_map)
-        rem_cat_stats = get_cat_stats(removed_ids, existing_map)
+        new_cat_stats = get_cat_stats(sorted_new_ids, current_map)
+        rem_cat_stats = get_cat_stats(sorted_removed_ids, existing_map)
         mod_cat_stats = get_cat_stats(modified_ids, current_map) # Use modified_ids, NOT common_ids
 
         self.file_manager.save(list(sorted_records))
@@ -261,7 +275,7 @@ class Manager:
                 # Ensure the data we got belongs to the ID we asked for
                 if details.registration_number != reg_no:
                     logger.critical(f"SECURITY MISMATCH! Requested {reg_no} but got data for {details.registration_number}")
-                    raise RuntimeError("Data Integrity Violation: Stopping immediately to prevent corruption.")
+                    raise DataIntegrityError("Data Integrity Violation: Stopping immediately to prevent corruption.")
 
                 logger.info(f"✅ MATCH CONFIRMED: {reg_no}")
 
@@ -315,6 +329,8 @@ class Manager:
                 # Rate limit
                 time.sleep(1) 
                 
+            except DataIntegrityError:
+                raise
             except Exception as e:
                 logger.error(f"Enrichment failed for {reg_no}: {e}")
                 
@@ -323,4 +339,3 @@ class Manager:
             json.dump(existing_details, f, indent=2, ensure_ascii=False)
             
         logger.info(f"Enrichment complete. Processed {processed_count}/{len(batch_ids)}")
-
