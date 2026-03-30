@@ -8,14 +8,15 @@ import shutil
 import os
 import base64
 import time
+import requests
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Iterable
 from collections import Counter
 
 from supabase import create_client
 
-from tgpc.utils import Config, setup_logging
+from tgpc.utils import Config, TGPCError, setup_logging
 from tgpc.scraper import Scraper, PharmacistRecord
 
 logger = setup_logging("tgpc.manager")
@@ -94,6 +95,71 @@ class Manager:
         self.backup_manager = BackupManager(self.config)
         self.scraper = Scraper()
 
+    @staticmethod
+    def _iter_exception_chain(error: BaseException) -> Iterable[BaseException]:
+        seen = set()
+        pending = [error]
+
+        while pending:
+            current = pending.pop()
+            if current is None:
+                continue
+
+            current_id = id(current)
+            if current_id in seen:
+                continue
+            seen.add(current_id)
+            yield current
+
+            for attr in ("original_error", "__cause__", "__context__"):
+                nested = getattr(current, attr, None)
+                if isinstance(nested, BaseException):
+                    pending.append(nested)
+
+    @classmethod
+    def _is_source_unavailable_error(cls, error: BaseException) -> bool:
+        for current in cls._iter_exception_chain(error):
+            if isinstance(current, (requests.exceptions.Timeout, requests.exceptions.ConnectionError)):
+                return True
+
+            if isinstance(current, requests.exceptions.HTTPError):
+                status_code = getattr(getattr(current, "response", None), "status_code", None)
+                if status_code == 429 or (status_code is not None and status_code >= 500):
+                    return True
+
+        return False
+
+    def _write_update_outputs(self, **values) -> None:
+        output_path = os.environ.get("GITHUB_OUTPUT")
+        if not output_path:
+            return
+
+        defaults = {
+            "update_status": "",
+            "success": False,
+            "total_records": 0,
+            "new_records": 0,
+            "removed_records": 0,
+            "modified_records": 0,
+            "duplicates_removed": 0,
+            "integrity_score": 1.0,
+            "new_details": [],
+            "removed_details": [],
+            "modified_details": [],
+            "new_cat_stats": {},
+            "rem_cat_stats": {},
+            "mod_cat_stats": {},
+        }
+        defaults.update(values)
+
+        with open(output_path, "a", encoding="utf-8") as f:
+            for key, value in defaults.items():
+                if isinstance(value, (dict, list)):
+                    serialized = json.dumps(value)
+                else:
+                    serialized = str(value)
+                f.write(f"{key}={serialized}\n")
+
     def run_daily_update(self):
         """Execute daily update workflow."""
         logger.info("Starting daily update...")
@@ -101,18 +167,40 @@ class Manager:
         # 1. Backup existing
         rx_path = Path(self.config.data_directory) / "rx.json"
         self.backup_manager.create(rx_path)
+        existing_records = self.file_manager.load()
 
         # 2. Scrape fresh data
-        fresh_records = self.scraper.extract_basic_records()
+        try:
+            fresh_records = self.scraper.extract_basic_records()
+        except Exception as e:
+            if self._is_source_unavailable_error(e):
+                logger.warning("TGPC source is temporarily unavailable. Preserving existing data and skipping sync.")
+                self._write_update_outputs(
+                    update_status="source_unavailable",
+                    success=False,
+                    total_records=len(existing_records),
+                )
+                return "source_unavailable"
+            raise
+
         if not fresh_records:
             logger.error("No records extracted, aborting update")
-            return
+            self._write_update_outputs(
+                update_status="empty_scrape",
+                success=False,
+                total_records=len(existing_records),
+            )
+            return "empty_scrape"
 
         # Safety Check: Prevent massive data loss
-        existing_records = self.file_manager.load()
         if existing_records and len(fresh_records) < len(existing_records) * 0.9:
             logger.error(f"Safety Alert: New count ({len(fresh_records)}) < 90% of existing ({len(existing_records)}). Aborting.")
-            return
+            self._write_update_outputs(
+                update_status="safety_abort",
+                success=False,
+                total_records=len(existing_records),
+            )
+            return "safety_abort"
 
         # 3. Validate & Save
         # Simple deduplication by registration number
@@ -173,26 +261,23 @@ class Manager:
         
         logger.info(f"Update complete. Total: {total_count}, 🌱 NEW: {new_count}, 🌀 CHANGES: {modified_count}, ❌ REMOVALS: {removed_count}")
 
-        # Output for GitHub Actions
-        if os.environ.get('GITHUB_OUTPUT'):
-            with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-                f.write(f"total_records={total_count}\n")
-                f.write(f"new_records={new_count}\n")
-                f.write(f"removed_records={removed_count}\n")
-                f.write(f"modified_records={modified_count}\n")
-                f.write(f"duplicates_removed={duplicates}\n")
-                f.write(f"integrity_score=1.0\n")
-                f.write(f"success=True\n")
-                
-                # Output details as JSON strings (no limit - GitHub allows 1MB)
-                f.write(f"new_details={json.dumps(new_details)}\n")
-                f.write(f"removed_details={json.dumps(removed_details)}\n")
-                f.write(f"modified_details={json.dumps(modified_details)}\n")
-                
-                # Output Category Stats
-                f.write(f"new_cat_stats={json.dumps(new_cat_stats)}\n")
-                f.write(f"rem_cat_stats={json.dumps(rem_cat_stats)}\n")
-                f.write(f"mod_cat_stats={json.dumps(mod_cat_stats)}\n")
+        self._write_update_outputs(
+            update_status="updated",
+            success=True,
+            total_records=total_count,
+            new_records=new_count,
+            removed_records=removed_count,
+            modified_records=modified_count,
+            duplicates_removed=duplicates,
+            integrity_score=1.0,
+            new_details=new_details,
+            removed_details=removed_details,
+            modified_details=modified_details,
+            new_cat_stats=new_cat_stats,
+            rem_cat_stats=rem_cat_stats,
+            mod_cat_stats=mod_cat_stats,
+        )
+        return "updated"
 
     def sync_to_supabase(self):
         """Sync data to Supabase."""

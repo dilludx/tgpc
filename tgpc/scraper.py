@@ -116,7 +116,11 @@ class Scraper:
                 continue
         return None
 
-    @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=4, max=30))
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1, min=4, max=30),
+        reraise=True,
+    )
     def _request(self, method: str, url: str, **kwargs) -> requests.Response:
         """Make HTTP request with retry and rate limiting."""
         self.rate_limiter.wait()

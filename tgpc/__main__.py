@@ -24,7 +24,10 @@ def main():
     manager = Manager()
 
     if args.command == 'update':
-        manager.run_daily_update()
+        status = manager.run_daily_update()
+        if status in {"source_unavailable", "updated"}:
+            return
+        raise SystemExit(1)
     elif args.command == 'sync':
         manager.sync_to_supabase()
     elif args.command == 'enrich':

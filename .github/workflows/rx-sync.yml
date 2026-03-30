@@ -52,12 +52,11 @@ jobs:
         
         # Run the update via CLI (outputs stats to GITHUB_OUTPUT automatically)
         python -m tgpc update
-        
-        echo "success=True" >> "$GITHUB_OUTPUT"
 
     
     - name: Check for changes and save new records
       id: changes
+      if: ${{ steps.update.outputs.success == 'True' }}
       run: |
         rm -f /tmp/new_records.json
 
@@ -110,6 +109,7 @@ jobs:
         fi
     
     - name: Sync to Supabase
+      if: ${{ steps.update.outputs.success == 'True' }}
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
@@ -118,6 +118,7 @@ jobs:
         python -m tgpc sync
     
     - name: Commit and push changes
+      if: ${{ steps.update.outputs.success == 'True' }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
@@ -186,7 +187,10 @@ jobs:
         git push origin HEAD:"${{ github.ref_name }}"
     
     - name: Create update summary
+      if: always()
       run: |
+        UPDATE_STATUS='${{ steps.update.outputs.update_status }}'
+
         # Parse details JSON
         NEW_DETAILS='${{ steps.update.outputs.new_details }}'
         REM_DETAILS='${{ steps.update.outputs.removed_details }}'
@@ -200,6 +204,33 @@ jobs:
           echo "### ♻️ Rx Sync • $(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]') • $(TZ='Asia/Kolkata' date '+%H:%M IST')"
           echo ""
         } >> "$GITHUB_STEP_SUMMARY"
+
+        if [ "$UPDATE_STATUS" = "source_unavailable" ]; then
+          {
+            echo "⚠️ TGPC source was unreachable during this run."
+            echo ""
+            echo "Existing data was preserved, and Supabase sync / commit steps were skipped."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
+
+        if [ "$UPDATE_STATUS" = "empty_scrape" ]; then
+          {
+            echo "🛑 Update aborted because the scraper returned no records."
+            echo ""
+            echo "Existing data was preserved."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
+
+        if [ "$UPDATE_STATUS" = "safety_abort" ]; then
+          {
+            echo "🛑 Update aborted by the safety guard."
+            echo ""
+            echo "The new scrape dropped below the 90% integrity threshold, so existing data was preserved."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
         
         # Use python to parse JSON and output lists
         python -c "
@@ -258,14 +289,10 @@ jobs:
                 
         except Exception as e:
             print(f'Error parsing details: {e}')
-
-  website-status:
-    needs: rx-sync
-    if: ${{ needs.rx-sync.result == 'success' }}
-    uses: ./.github/workflows/website-status.yml
         " >> "$GITHUB_STEP_SUMMARY"
     
     - name: Send email notification
+      if: ${{ steps.update.outputs.success == 'True' }}
       run: |
         python3 << 'EOF'
         import smtplib
