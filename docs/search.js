@@ -456,6 +456,62 @@ function loadMore() {
     displayResults(displayedResults, true);
 }
 
+async function performSearch() {
+    const queryText = document.getElementById('searchInput').value.trim();
+    const errorEl = document.getElementById('error');
+    const loadingEl = document.getElementById('loading');
+    const resultsPanelEl = document.getElementById('resultsPanel');
+
+    errorEl.innerHTML = '';
+
+    if (queryText.length < 3) {
+        currentResults = [];
+        displayedResults = [];
+        resultsPanelEl.style.display = 'none';
+        errorEl.textContent = 'Enter at least 3 characters to search.';
+        return;
+    }
+
+    if (!supabaseClient) {
+        resultsPanelEl.style.display = 'none';
+        errorEl.textContent = 'Search is temporarily unavailable.';
+        return;
+    }
+
+    loadingEl.style.display = 'block';
+    resultsPanelEl.style.display = 'none';
+
+    try {
+        let query = supabaseClient
+            .from('rx')
+            .select('registration_number,name,father_name,category')
+            .or(`registration_number.ilike.%${queryText}%,name.ilike.%${queryText}%,father_name.ilike.%${queryText}%`);
+
+        if (currentFilters.category !== 'all') {
+            query = query.eq('category', currentFilters.category);
+        }
+
+        const { data, error } = await query.limit(100000);
+
+        if (error) {
+            throw error;
+        }
+
+        currentResults = data || [];
+        currentPage = 1;
+        sortResults();
+        resultsPanelEl.style.display = 'block';
+    } catch (error) {
+        console.error('Search error:', error);
+        currentResults = [];
+        displayedResults = [];
+        resultsPanelEl.style.display = 'none';
+        errorEl.textContent = 'Error searching database. Please try again.';
+    } finally {
+        loadingEl.style.display = 'none';
+    }
+}
+
 // Display all results (no pagination)
 function displayResults(data) {
     const resultsDiv = document.getElementById('results');
