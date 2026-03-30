@@ -4,19 +4,25 @@ on:
   pull_request:
     branches: [ main, exp ]
     paths:
+      - "docs/**"
       - "tgpc/**"
       - "tests/**"
       - "scripts/**"
       - ".github/workflows/**"
+      - "README.md"
+      - ".gitignore"
       - "pyproject.toml"
       - "requirements.txt"
   push:
     branches: [ main, exp ]
     paths:
+      - "docs/**"
       - "tgpc/**"
       - "tests/**"
       - "scripts/**"
       - ".github/workflows/**"
+      - "README.md"
+      - ".gitignore"
       - "pyproject.toml"
       - "requirements.txt"
 
@@ -45,6 +51,9 @@ jobs:
 
       - name: Unit tests
         run: python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Frontend JS syntax check
+        run: node --check docs/config.js docs/search.js docs/mobile.js docs/_worker.js
 
       - name: Install actionlint
         run: |
