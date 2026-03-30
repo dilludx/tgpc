@@ -6,12 +6,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import requests
+
 # Mock supabase before importing manager
 sys.modules["supabase"] = MagicMock()
 
 from tgpc.manager import Manager
 from tgpc.scraper import PharmacistRecord
-from tgpc.utils import Config
+from tgpc.utils import Config, TGPCError
 
 
 class FakeScraper:
@@ -20,6 +22,14 @@ class FakeScraper:
 
     def extract_basic_records(self):
         return self._records
+
+
+class FailingScraper:
+    def __init__(self, error):
+        self._error = error
+
+    def extract_basic_records(self):
+        raise self._error
 
 
 def record(reg_no, name, father, category, serial):
@@ -36,6 +46,11 @@ class ManagerUpdateTests(unittest.TestCase):
     def _make_manager(self, temp_dir: str, fresh_records):
         with patch("tgpc.manager.Config.load", return_value=Config(data_directory=temp_dir)):
             with patch("tgpc.manager.Scraper", return_value=FakeScraper(fresh_records)):
+                return Manager()
+
+    def _make_manager_with_scraper(self, temp_dir: str, scraper):
+        with patch("tgpc.manager.Config.load", return_value=Config(data_directory=temp_dir)):
+            with patch("tgpc.manager.Scraper", return_value=scraper):
                 return Manager()
 
     def test_safety_guard_blocks_large_drop(self):
@@ -176,6 +191,52 @@ class ManagerUpdateTests(unittest.TestCase):
             self.assertEqual(output["new_cat_stats"], json.dumps({"BPharm": 1, "DPharm": 1}))
             self.assertEqual(output["rem_cat_stats"], json.dumps({"DPharm": 1, "PharmD": 1}))
             self.assertEqual(output["mod_cat_stats"], json.dumps({"MPharm": 1, "QC": 1}))
+
+            os.unlink(github_output)
+
+    def test_update_soft_skips_when_source_is_unavailable(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            existing = [
+                record("RX001", "Existing", "Parent", "BPharm", 1),
+            ]
+            scraper = FailingScraper(
+                TGPCError(
+                    "Request failed",
+                    requests.exceptions.ConnectTimeout("source timed out"),
+                )
+            )
+            manager = self._make_manager_with_scraper(temp_dir, scraper)
+            manager.file_manager.save(existing)
+
+            with tempfile.NamedTemporaryFile(delete=False) as out_file:
+                github_output = out_file.name
+
+            old_env = os.environ.get("GITHUB_OUTPUT")
+            try:
+                os.environ["GITHUB_OUTPUT"] = github_output
+                status = manager.run_daily_update()
+            finally:
+                if old_env is None:
+                    os.environ.pop("GITHUB_OUTPUT", None)
+                else:
+                    os.environ["GITHUB_OUTPUT"] = old_env
+
+            self.assertEqual(status, "source_unavailable")
+            saved = json.loads(Path(temp_dir, "rx.json").read_text(encoding="utf-8"))
+            self.assertEqual(saved, [existing[0].to_dict()])
+
+            output_lines = Path(github_output).read_text(encoding="utf-8").splitlines()
+            output = {}
+            for line in output_lines:
+                if "=" in line:
+                    k, v = line.split("=", 1)
+                    output[k] = v
+
+            self.assertEqual(output["update_status"], "source_unavailable")
+            self.assertEqual(output["success"], "False")
+            self.assertEqual(output["total_records"], "1")
+            self.assertEqual(output["new_details"], "[]")
+            self.assertEqual(output["mod_cat_stats"], "{}")
 
             os.unlink(github_output)
 
