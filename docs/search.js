@@ -12,6 +12,8 @@ let currentFilters = {
     category: 'all'
 };
 let searchTimeout;
+let currentPage = 1;
+const RESULTS_PER_PAGE = 100;
 
 // Date/Time constants (shared across functions)
 const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -195,7 +197,7 @@ async function checkConnection() {
         const dateText = dateEl ? dateEl.textContent : 'Loading...';
 
         statusEl.className = 'header-status error';
-        statusEl.innerHTML = `<span class="status-dot"></span><span class="status-text">Offline</span>`;
+        statusEl.innerHTML = `<span class="status-dot"></span><span class="status-text">Offline</span><span class="status-separator">|</span><span class="status-date">${dateText}</span>`;
     }
 }
 
@@ -293,11 +295,12 @@ async function loadStatsUpdated() {
             const utcValue = data.value.endsWith('Z') ? data.value : data.value + 'Z';
             const syncDate = new Date(utcValue);
             updateDisplay(formatUpdatedTimestamp(syncDate));
-            try {
-                localStorage.setItem(CACHE_KEY, utcValue);
-            } catch (e) {
-                console.warn('localStorage.setItem failed:', e);
-            }
+            // Save to cache
+        try {
+            localStorage.setItem(CACHE_KEY, utcValue);
+        } catch (e) {
+            console.warn('localStorage.setItem failed:', e);
+        }
         } else {
         }
     } catch (error) {
@@ -414,99 +417,6 @@ function displayAnalytics(stats) {
     }
 }
 
-// Security: Rate limiting (6 requests per 30 seconds)
-const rateLimiter = {
-    requests: [],
-    maxRequests: 6,
-    windowMs: 30000, // 30 seconds
-
-    canMakeRequest() {
-        const now = Date.now();
-        this.requests = this.requests.filter(time => now - time < this.windowMs);
-        if (this.requests.length >= this.maxRequests) {
-            return false;
-        }
-        this.requests.push(now);
-        return true;
-    }
-};
-
-// Security: Sanitize search query
-function sanitizeQuery(query) {
-    // Remove any SQL-like characters and limit length
-    return query
-        .replace(/[;'"\\]/g, '')  // Remove dangerous chars
-        .substring(0, 100);        // Max 100 characters
-}
-
-// Perform search
-async function performSearch() {
-    const rawQuery = document.getElementById('searchInput').value.trim();
-    const loadingDiv = document.getElementById('loading');
-    const errorDiv = document.getElementById('error');
-    const resultsPanel = document.getElementById('resultsPanel');
-
-    // Input validation
-    if (rawQuery.length < 3) {
-        resultsPanel.style.display = 'none';
-        return;
-    }
-
-    if (rawQuery.length > 100) {
-        errorDiv.innerHTML = '<div class="error">⚠️ Search query too long (max 100 characters)</div>';
-        return;
-    }
-
-    // Rate limiting
-    if (!rateLimiter.canMakeRequest()) {
-        errorDiv.innerHTML = '<div class="error">⚠️ Too many requests. Please wait a moment.</div>';
-        // Auto-dismiss after 3 seconds
-        setTimeout(() => {
-            if (errorDiv.innerHTML.includes('Too many requests')) {
-                errorDiv.innerHTML = '';
-            }
-        }, 3000);
-        return;
-    }
-
-    // Sanitize query
-    const query = sanitizeQuery(rawQuery);
-
-    loadingDiv.style.display = 'block';
-    resultsPanel.style.display = 'none';
-    errorDiv.innerHTML = '';
-
-    try {
-        let queryBuilder = supabaseClient
-            .from('rx')
-            .select('registration_number,name,father_name,category')
-            .or(`registration_number.ilike.%${query}%,name.ilike.%${query}%,father_name.ilike.%${query}%`);
-
-        // Apply category filter
-        if (currentFilters.category !== 'all') {
-            queryBuilder = queryBuilder.eq('category', currentFilters.category);
-        }
-
-        const { data, error } = await queryBuilder.limit(100000);
-
-        if (error) throw error;
-
-        currentResults = data;
-        loadingDiv.style.display = 'none';
-        resultsPanel.style.display = 'block';
-
-        // Shareable URL removed
-        // updateUrlQuery(query);
-
-        sortResults();
-
-    } catch (error) {
-        console.error('Search error:', error);
-        loadingDiv.style.display = 'none';
-        errorDiv.innerHTML = `<div class="error">🛑 Search failed. Please try again.</div>`;
-    }
-}
-
 // Shareable URLs: DISABLED
 function checkUrlQuery() {
     // Shareable links functionality removed
@@ -536,9 +446,15 @@ function sortResults() {
         // Then by number (ascending)
         return regA.num - regB.num;
     });
+    currentPage = 1;
     displayResults(sorted);
 }
 
+// Load more results
+function loadMore() {
+    currentPage++;
+    displayResults(displayedResults, true);
+}
 
 // Display all results (no pagination)
 function displayResults(data) {
@@ -614,6 +530,7 @@ function resetSearch() {
     // Clear results
     currentResults = [];
     displayedResults = [];
+    currentPage = 1;
 
     // Hide results panel
     document.getElementById('resultsPanel').style.display = 'none';

@@ -20,10 +20,13 @@ jobs:
     steps:
       - name: ⚠️ DISABLED - Dangerous Auto-Fix
         run: |
-          echo "⚠️ Auto-Fix workflow has been disabled due to safety concerns"
-          echo "🔧 The regex-based fixes can corrupt valid code"
-          echo "📝 Please fix issues manually or with proper tooling"
+          echo "⚠️ Auto-fix workflow disabled for safety"
+          echo "Regex-based auto-fixes are dangerous and can corrupt code"
           exit 0
+
+      - name: Checkout
+        if: false
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -126,7 +129,7 @@ jobs:
               if result.returncode == 0:
                   print("✅ Syntax check passed!")
               else:
-                  print(f"🛑 Syntax issues remain: {result.stderr}")
+                  print(f"❌ Syntax issues remain: {result.stderr}")
           else:
               print("ℹ️ No auto-fixes needed")
           EOF
