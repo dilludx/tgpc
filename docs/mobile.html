@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#00cc66">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://vhgpyvzgmvhijqgsapnk.supabase.co; img-src 'self' data: https:; object-src 'none'; base-uri 'self';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <title>TGPC Rx Registry</title>
 
     <!-- Open Graph / Facebook -->
@@ -473,14 +477,14 @@
 
     <div class="search-wrap">
         <div class="search-box">
-            <button class="icon-btn reset" onclick="reset()" title="Reset">
+            <button class="icon-btn reset" id="mobileResetButton" title="Reset" type="button">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                     stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
             </button>
             <input type="text" id="q" placeholder="Search name or registration..." autocomplete="off">
-            <button class="icon-btn search" onclick="search()" title="Search">
+            <button class="icon-btn search" id="mobileSearchButton" title="Search" type="button">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <circle cx="11" cy="11" r="7" />
                     <path d="m21 21-4.35-4.35" />
@@ -522,190 +526,9 @@
         Indian Copyright Act
         1957. © 2025 TGPC Rx Registry
     </footer>
-
-
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const db = window.supabase.createClient(
-            'https://vhgpyvzgmvhijqgsapnk.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoZ3B5dnpnbXZoaWpxZ3NhcG5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4Njc1MjAsImV4cCI6MjA3ODQ0MzUyMH0.Cp4oyw2M72RCFnsKeLg49hSMvGs4pm6-ul0sFmAasRs'
-        );
-
-        let cat = 'all';
-        let timer;
-
-        const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-        function getDateText() {
-            const now = new Date();
-            const dayName = DAYS[now.getDay()];
-            const day = now.getDate().toString().padStart(2, '0');
-            const month = MONTHS[now.getMonth()];
-            return `${dayName} ${day} ${month}`;
-        }
-
-        function getTimeText() {
-            const now = new Date();
-            const h = now.getHours().toString().padStart(2, '0');
-            const m = now.getMinutes().toString().padStart(2, '0');
-            const s = now.getSeconds().toString().padStart(2, '0');
-            return `${h}:${m}:${s}`;
-        }
-
-        function startClock() {
-            const el = document.getElementById('liveTime');
-            if (el) {
-                el.textContent = getTimeText();
-                setInterval(() => el.textContent = getTimeText(), 1000);
-            }
-        }
-
-        // Init
-        (async () => {
-            try {
-                await db.from('rx').select('id').limit(1);
-                const statusEl = document.getElementById('status');
-                statusEl.classList.add('live');
-                statusEl.innerHTML = `<span class="dot"></span><span>Live</span><span class="sep">|</span><span class="date">${getDateText()} <span id="liveTime"></span></span>`;
-                startClock();
-            } catch (e) {
-                document.getElementById('statusText').textContent = 'Offline';
-            }
-
-            try {
-                const { data } = await db.rpc('get_rx_stats');
-                if (data) {
-                    document.getElementById('total').textContent = fmt(data.total);
-                    if (data.categories) {
-                        for (let [k, v] of Object.entries(data.categories)) {
-                            const el = document.getElementById(k.toLowerCase());
-                            if (el) el.textContent = fmt(v);
-                        }
-                    }
-                }
-            } catch (e) { }
-
-            // Events - only search on Enter or button click
-            document.getElementById('q').addEventListener('keypress', e => {
-                if (e.key === 'Enter') search();
-            });
-
-            // Slider animation function
-            function moveSlider(chip) {
-                const slider = document.getElementById('filterSlider');
-                const filters = document.querySelector('.filters');
-                const chipRect = chip.getBoundingClientRect();
-                const filtersRect = filters.getBoundingClientRect();
-                slider.style.left = (chipRect.left - filtersRect.left) + 'px';
-                slider.style.width = chipRect.width + 'px';
-            }
-
-            document.querySelectorAll('.chip').forEach(c => {
-                c.onclick = () => {
-                    const hasSearch = document.getElementById('q').value.length >= 2;
-
-                    // Store selection internally
-                    cat = c.dataset.v;
-
-                    if (hasSearch) {
-                        // Update visual state and slider only when searching
-                        document.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
-                        c.classList.add('active');
-                        moveSlider(c);
-                        search();
-                    }
-                    // If no search, don't change visual state - stay on All
-                };
-            });
-
-            // Initialize slider position
-            setTimeout(() => {
-                const activeChip = document.querySelector('.chip.active');
-                if (activeChip) moveSlider(activeChip);
-            }, 100);
-        })();
-
-        function fmt(n) { return n?.toLocaleString() || '—'; }
-        function esc(s) { return s ? s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''; }
-        function hide() { document.getElementById('resultsSection').style.display = 'none'; }
-
-        async function search() {
-            const q = document.getElementById('q').value.trim();
-            if (q.length < 2) return;
-
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('resultsSection').style.display = 'none';
-
-            try {
-                let query = db.from('rx')
-                    .select('registration_number,name,father_name,category')
-                    .or(`registration_number.ilike.%${q}%,name.ilike.%${q}%,father_name.ilike.%${q}%`);
-
-                if (cat !== 'all') query = query.eq('category', cat);
-
-                const { data } = await query.limit(100000);
-
-                // Sort by registration number: prefix alphabetically (TG before TS), then number ascending
-                const sorted = (data || []).sort((a, b) => {
-                    const parseReg = (reg) => {
-                        const match = reg.match(/^([A-Z]+)(\d+)$/);
-                        if (match) return { prefix: match[1], num: parseInt(match[2], 10) };
-                        return { prefix: reg, num: 0 };
-                    };
-                    const regA = parseReg(a.registration_number);
-                    const regB = parseReg(b.registration_number);
-                    if (regA.prefix !== regB.prefix) return regA.prefix.localeCompare(regB.prefix);
-                    return regA.num - regB.num;
-                });
-
-                render(sorted);
-            } catch (e) {
-                document.getElementById('list').innerHTML = '<div class="empty">Error searching</div>';
-            }
-
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('resultsSection').style.display = 'block';
-        }
-
-        function render(data) {
-            document.getElementById('count').textContent = data.length;
-            const list = document.getElementById('list');
-
-            if (data.length === 0) {
-                list.innerHTML = '<div class="empty">No results</div>';
-                return;
-            }
-
-            list.innerHTML = data.map(r => `
-                <div class="card">
-                    <div class="card-row">
-                        <span class="reg">${esc(r.registration_number)}</span>
-                        <span class="tag ${esc(r.category).toLowerCase()}">${esc(r.category)}</span>
-                    </div>
-                    <div class="name">${esc(r.name)}</div>
-                    ${r.father_name ? `<div class="father">FATHER NAME: ${esc(r.father_name)}</div>` : ''}
-                </div>
-            `).join('');
-        }
-
-        function reset() {
-            document.getElementById('q').value = '';
-            hide();
-            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-            const allChip = document.querySelector('.chip[data-v="all"]');
-            allChip.classList.add('active');
-            // Reset slider to All position
-            const slider = document.getElementById('filterSlider');
-            const filters = document.querySelector('.filters');
-            const chipRect = allChip.getBoundingClientRect();
-            const filtersRect = filters.getBoundingClientRect();
-            slider.style.left = (chipRect.left - filtersRect.left) + 'px';
-            slider.style.width = chipRect.width + 'px';
-            cat = 'all';
-        }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0"></script>
+    <script src="config.js?v=20260330a"></script>
+    <script src="mobile.js?v=20260330a"></script>
 </body>
 
 </html>

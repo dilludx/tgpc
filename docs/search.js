@@ -1,6 +1,4 @@
-// Supabase Configuration
-const SUPABASE_URL = 'https://vhgpyvzgmvhijqgsapnk.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoZ3B5dnpnbXZoaWpxZ3NhcG5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4Njc1MjAsImV4cCI6MjA3ODQ0MzUyMH0.Cp4oyw2M72RCFnsKeLg49hSMvGs4pm6-ul0sFmAasRs';
+const desktopConfig = window.TGPC_CONFIG || {};
 
 // Supabase client - initialized in DOMContentLoaded
 let supabaseClient;
@@ -31,10 +29,10 @@ function escapeHtml(text) {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Supabase client here to ensure library is loaded
-    if (window.supabase && window.supabase.createClient) {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (window.supabase && window.supabase.createClient && desktopConfig.SUPABASE_URL && desktopConfig.SUPABASE_ANON_KEY) {
+        supabaseClient = window.supabase.createClient(desktopConfig.SUPABASE_URL, desktopConfig.SUPABASE_ANON_KEY);
     } else {
-        console.error('DOMContentLoaded: window.supabase not available!');
+        console.error('DOMContentLoaded: Supabase configuration not available!');
     }
 
     setupEventListeners();
@@ -43,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadStatsUpdated();
     checkUrlQuery(); // Check if URL has a search query
     setupRealtimeUpdates(); // Subscribe to database changes
+    setupScrollTop();
 });
 
 // Polling for updates (checks every 5 minutes)
@@ -123,8 +122,27 @@ function showUpdateNotification() {
 }
 
 function setupEventListeners() {
+    const searchButton = document.getElementById('searchButton');
+    const resetButton = document.getElementById('resetButton');
+    const exportPdfButton = document.getElementById('exportPdfButton');
+    const exportCsvButton = document.getElementById('exportCsvButton');
+    const searchInput = document.getElementById('searchInput');
+
+    if (searchButton) {
+        searchButton.addEventListener('click', performSearch);
+    }
+    if (resetButton) {
+        resetButton.addEventListener('click', resetSearch);
+    }
+    if (exportPdfButton) {
+        exportPdfButton.addEventListener('click', exportResults);
+    }
+    if (exportCsvButton) {
+        exportCsvButton.addEventListener('click', exportCSV);
+    }
+
     // Search input - only hide results when cleared (no auto-search)
-    document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchInput.addEventListener('input', (e) => {
         // If input is cleared, hide results
         if (e.target.value.trim().length === 0) {
             document.getElementById('resultsPanel').style.display = 'none';
@@ -135,7 +153,7 @@ function setupEventListeners() {
     });
 
     // Enter key to search
-    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+    searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             performSearch();
         }
@@ -157,6 +175,25 @@ function setupEventListeners() {
             // Update filter (no auto-search to reduce Supabase load)
             currentFilters[filterType] = filterValue;
         });
+    });
+}
+
+function setupScrollTop() {
+    const scrollTopBtn = document.getElementById('scrollTopBtn');
+    if (!scrollTopBtn) {
+        return;
+    }
+
+    scrollTopBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            scrollTopBtn.classList.add('visible');
+        } else {
+            scrollTopBtn.classList.remove('visible');
+        }
     });
 }
 
