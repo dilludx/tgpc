@@ -8,7 +8,7 @@
 
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://vhgpyvzgmvhijqgsapnk.supabase.co; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://vhgpyvzgmvhijqgsapnk.supabase.co https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https:;">
+        content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://vhgpyvzgmvhijqgsapnk.supabase.co https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https:; object-src 'none'; base-uri 'self';">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()">
@@ -1349,10 +1349,10 @@
             <div class="search-bar">
                 <input type="text" class="search-input" id="searchInput"
                     placeholder="Enter name or registration number (min 3 chars)" autocomplete="off">
-                <button class="btn btn-primary" onclick="performSearch()">Search</button>
-                <button class="btn btn-secondary" onclick="resetSearch()">Reset</button>
-                <button class="btn btn-secondary" onclick="exportResults()">Export PDF</button>
-                <button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button>
+                <button class="btn btn-primary" id="searchButton" type="button">Search</button>
+                <button class="btn btn-secondary" id="resetButton" type="button">Reset</button>
+                <button class="btn btn-secondary" id="exportPdfButton" type="button">Export PDF</button>
+                <button class="btn btn-secondary" id="exportCsvButton" type="button">Export CSV</button>
             </div>
 
             <span class="separator"></span>
@@ -1385,13 +1385,14 @@
         </section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-    <script src="search.js?v=20251218d"></script>
+    <script src="config.js?v=20260330a"></script>
+    <script src="search.js?v=20260330a"></script>
 
     <!-- Scroll to Top Button -->
-    <button class="scroll-top-btn" id="scrollTopBtn" onclick="scrollToTop()" aria-label="Scroll to top">
+    <button class="scroll-top-btn" id="scrollTopBtn" aria-label="Scroll to top" type="button">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
             stroke-linecap="round" stroke-linejoin="round">
             <polyline points="18 15 12 9 6 15"></polyline>
@@ -1407,23 +1408,6 @@
         🚫 No liability assumed for any damages or legal consequences. ⚖️ Fair Dealing, Section 52, Indian Copyright Act
         1957. © 2025 TGPC Rx Registry
     </footer>
-
-    <script>
-        // Scroll to top functionality
-        const scrollTopBtn = document.getElementById('scrollTopBtn');
-
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 300) {
-                scrollTopBtn.classList.add('visible');
-            } else {
-                scrollTopBtn.classList.remove('visible');
-            }
-        });
-
-        function scrollToTop() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    </script>
 </body>
 
 </html>
