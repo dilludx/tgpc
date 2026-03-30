@@ -258,6 +258,11 @@ jobs:
                 
         except Exception as e:
             print(f'Error parsing details: {e}')
+
+  website-status:
+    needs: rx-sync
+    if: ${{ needs.rx-sync.result == 'success' }}
+    uses: ./.github/workflows/website-status.yml
         " >> "$GITHUB_STEP_SUMMARY"
     
     - name: Send email notification
