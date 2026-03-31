@@ -233,6 +233,7 @@ class ManagerUpdateTests(unittest.TestCase):
                     output[k] = v
 
             self.assertEqual(output["update_status"], "source_unavailable")
+            self.assertEqual(output["source_error"], "ConnectTimeout")
             self.assertEqual(output["success"], "False")
             self.assertEqual(output["total_records"], "1")
             self.assertEqual(output["new_details"], "[]")

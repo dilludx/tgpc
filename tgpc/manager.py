@@ -129,6 +129,13 @@ class Manager:
 
         return False
 
+    @classmethod
+    def _source_error_label(cls, error: BaseException) -> str:
+        for current in cls._iter_exception_chain(error):
+            if isinstance(current, requests.exceptions.RequestException):
+                return type(current).__name__
+        return type(error).__name__
+
     def _write_update_outputs(self, **values) -> None:
         output_path = os.environ.get("GITHUB_OUTPUT")
         if not output_path:
@@ -136,6 +143,7 @@ class Manager:
 
         defaults = {
             "update_status": "",
+            "source_error": "",
             "success": False,
             "total_records": 0,
             "new_records": 0,
@@ -174,9 +182,14 @@ class Manager:
             fresh_records = self.scraper.extract_basic_records()
         except Exception as e:
             if self._is_source_unavailable_error(e):
-                logger.warning("TGPC source is temporarily unavailable. Preserving existing data and skipping sync.")
+                source_error = self._source_error_label(e)
+                logger.warning(
+                    "TGPC source is temporarily unavailable (%s). Preserving existing data and skipping sync.",
+                    source_error,
+                )
                 self._write_update_outputs(
                     update_status="source_unavailable",
+                    source_error=source_error,
                     success=False,
                     total_records=len(existing_records),
                 )

@@ -92,8 +92,8 @@ class Scraper:
             "Accept-Language": "en-IN,en;q=0.9",
             "Connection": "keep-alive",
             "Upgrade-Insecure-Requests": "1",
+            "Referer": self.config.base_url,
         })
-
         self.urls = {
             'total': f"{self.config.base_url}/pharmacy/srchpharmacisttotal",
             'search': f"{self.config.base_url}/pharmacy/getsearchpharmacist"
@@ -102,9 +102,11 @@ class Scraper:
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=4, max=30), reraise=True)
     def _request(self, method: str, url: str, **kwargs) -> requests.Response:
         self.rate_limiter.wait()
+        timeout = (self.config.connect_timeout, self.config.read_timeout)
 
         try:
-            response = self.session.request(method, url, timeout=self.config.timeout, **kwargs)
+            response = self.session.request(method, url, timeout=timeout, **kwargs)
+            response.raise_for_status()
 
             content = response.text.lower()
 
@@ -117,7 +119,6 @@ class Scraper:
                 or len(response.text) < 1000
             ):
                 raise Exception("Blocked response")
-
             self.rate_limiter.record_result(True)
             return response
 
@@ -132,9 +133,11 @@ class Scraper:
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
                     "Referer": url,
                     "Accept-Language": "en-IN,en;q=0.9",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
                 }
 
-                response = requests.request(method, url, headers=headers, timeout=self.config.timeout, **kwargs)
+                response = requests.request(method, url, headers=headers, timeout=timeout, **kwargs)
+                response.raise_for_status()
 
                 if response.status_code == 200 and len(response.text) > 1000:
                     return response

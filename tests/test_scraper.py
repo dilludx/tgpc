@@ -16,6 +16,26 @@ def make_response(html: str) -> MagicMock:
 
 
 class ScraperParsingTests(unittest.TestCase):
+    def test_request_uses_split_connect_and_read_timeouts(self):
+        scraper = Scraper()
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+
+        with patch.object(scraper.rate_limiter, "wait"), patch.object(
+            scraper.rate_limiter, "record_result"
+        ) as record_result, patch.object(
+            scraper.session, "request", return_value=response
+        ) as request_mock:
+            result = scraper._request("GET", "https://example.com")
+
+        self.assertIs(result, response)
+        request_mock.assert_called_once_with(
+            "GET",
+            "https://example.com",
+            timeout=(scraper.config.connect_timeout, scraper.config.read_timeout),
+        )
+        record_result.assert_called_once_with(True)
+
     def test_extract_basic_records_falls_back_to_first_table_and_skips_bad_rows(self):
         html = """
         <html>
