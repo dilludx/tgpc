@@ -94,6 +94,15 @@ class Scraper:
             "Upgrade-Insecure-Requests": "1",
             "Referer": self.config.base_url,
         })
+        self.proxies = None
+        if self.config.proxy_url:
+            self.proxies = {
+                "http": self.config.proxy_url,
+                "https": self.config.proxy_url,
+            }
+            self.session.proxies.update(self.proxies)
+            self.session.trust_env = False
+            logger.info("Using configured TGPC proxy for outbound requests")
         self.urls = {
             'total': f"{self.config.base_url}/pharmacy/srchpharmacisttotal",
             'search': f"{self.config.base_url}/pharmacy/getsearchpharmacist"
@@ -155,7 +164,14 @@ class Scraper:
                     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
                 }
 
-                response = requests.request(method, url, headers=headers, timeout=timeout, **kwargs)
+                response = requests.request(
+                    method,
+                    url,
+                    headers=headers,
+                    timeout=timeout,
+                    proxies=self.proxies,
+                    **kwargs,
+                )
                 response.raise_for_status()
 
                 if response.status_code == 200 and len(response.text) > 1000:

@@ -42,6 +42,7 @@ node --check docs/config.js docs/search.js docs/mobile.js docs/_worker.js
 ## Required Environment Variables
 - `SUPABASE_URL`: project URL used by the sync command
 - `SUPABASE_SERVICE_KEY`: service-role key used by the sync command
+- `TGPC_PROXY_URL`: optional outbound proxy URL for TGPC scraping when GitHub-hosted runners cannot reach the source directly
 
 The public frontend uses the anon key from `docs/config.js`, so database access rules must stay appropriately locked down in Supabase.
 

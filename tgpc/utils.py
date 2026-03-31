@@ -4,6 +4,7 @@ Combines configuration, logging, and exception handling.
 """
 
 import logging
+import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,6 +29,7 @@ class Config:
     connect_timeout: int = 20
     read_timeout: int = 180
     max_retries: int = 3
+    proxy_url: Optional[str] = None
     
     # Rate Limiting
     min_delay: float = 3.0
@@ -44,7 +46,13 @@ class Config:
     @classmethod
     def load(cls) -> "Config":
         """Load configuration."""
-        config = cls()
+        proxy_url = (
+            os.environ.get("TGPC_PROXY_URL")
+            or os.environ.get("HTTPS_PROXY")
+            or os.environ.get("HTTP_PROXY")
+            or None
+        )
+        config = cls(proxy_url=proxy_url)
         Path(config.data_directory).mkdir(parents=True, exist_ok=True)
         return config
 

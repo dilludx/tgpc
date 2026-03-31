@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 # Mock supabase before importing tgpc package modules
 sys.modules["supabase"] = MagicMock()
 
+from tgpc.utils import Config
 from tgpc.scraper import Scraper
 
 
@@ -16,6 +17,14 @@ def make_response(html: str) -> MagicMock:
 
 
 class ScraperParsingTests(unittest.TestCase):
+    def test_scraper_configures_proxy_when_present(self):
+        with patch("tgpc.scraper.Config.load", return_value=Config(proxy_url="http://proxy.local:8080")):
+            scraper = Scraper()
+
+        self.assertEqual(scraper.proxies, {"http": "http://proxy.local:8080", "https": "http://proxy.local:8080"})
+        self.assertEqual(scraper.session.proxies["https"], "http://proxy.local:8080")
+        self.assertFalse(scraper.session.trust_env)
+
     def test_request_uses_split_connect_and_read_timeouts(self):
         scraper = Scraper()
         response = MagicMock()
