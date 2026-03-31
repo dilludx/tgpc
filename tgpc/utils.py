@@ -26,9 +26,9 @@ class Config:
     
     # API Settings
     base_url: str = "https://www.pharmacycouncil.telangana.gov.in"
-    connect_timeout: int = 20
-    read_timeout: int = 180
-    max_retries: int = 3
+    connect_timeout: int = 30  # Increased for Tor
+    read_timeout: int = 300   # Increased for Tor
+    max_retries: int = 5      # Increased for Tor
     proxy_url: Optional[str] = None
     
     # Tor Settings

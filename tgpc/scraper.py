@@ -230,7 +230,12 @@ class Scraper:
     def _request(self, method: str, url: str, **kwargs) -> requests.Response:
         self.rate_limiter.wait()
         self.rate_limiter.count_request()  # Count for Tor circuit rotation
-        timeout = (self.config.connect_timeout, self.config.read_timeout)
+        
+        # Use longer timeouts for Tor
+        if self.config.use_tor:
+            timeout = (60, 300)  # (connect, read) for Tor
+        else:
+            timeout = (self.config.connect_timeout, self.config.read_timeout)
 
         try:
             response = self.session.request(method, url, timeout=timeout, **kwargs)
@@ -252,6 +257,25 @@ class Scraper:
 
         except Exception as e:
             self.rate_limiter.record_result(False)
+            
+            # If Tor is timing out, fallback to direct connection
+            if self.config.use_tor and "timeout" in str(e).lower():
+                logger.warning("Tor timeout detected, falling back to direct connection")
+                self.config.use_tor = False
+                self.session.proxies.clear()
+                self.tor_controller = None
+                logger.info("Connection method: Direct connection (fallback)")
+                
+                # Retry with direct connection
+                timeout = (self.config.connect_timeout, self.config.read_timeout)
+                try:
+                    response = requests.request(method, url, timeout=timeout, **kwargs)
+                    response.raise_for_status()
+                    self.rate_limiter.record_result(True)
+                    return response
+                except Exception as retry_e:
+                    logger.error(f"Direct connection also failed: {retry_e}")
+                    raise retry_e
 
             # 🔁 FALLBACK REQUEST
             try:
