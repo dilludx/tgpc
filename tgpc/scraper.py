@@ -14,6 +14,14 @@ import requests
 from bs4 import BeautifulSoup
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+try:
+    import socks
+    import stem
+    from stem.control import Controller
+    TOR_AVAILABLE = True
+except ImportError:
+    TOR_AVAILABLE = False
+
 from tgpc.utils import Config, TGPCError, setup_logging
 
 logger = setup_logging("tgpc.scraper")
@@ -55,11 +63,14 @@ class PharmacistRecord:
 # --- Rate Limiter ---
 
 class RateLimiter:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, scraper_instance=None):
         self.min_delay = config.min_delay
         self.max_delay = config.max_delay
         self.current_delay = config.min_delay
         self.consecutive_failures = 0
+        self.scraper = scraper_instance
+        self.config = config
+        self.request_count = 0
 
     def wait(self):
         delay = self.current_delay * random.uniform(0.8, 1.2)
@@ -72,6 +83,18 @@ class RateLimiter:
         else:
             self.consecutive_failures += 1
             self.current_delay = min(self.max_delay, self.current_delay * 1.5)
+            
+            # Rotate Tor circuit on failures
+            if self.config.use_tor and self.consecutive_failures >= 3 and self.scraper:
+                self.scraper.rotate_tor_circuit()
+                self.consecutive_failures = 0
+    
+    def count_request(self):
+        """Count requests and rotate Tor circuit periodically."""
+        self.request_count += 1
+        # Rotate Tor circuit every 50 requests to avoid pattern detection
+        if self.config.use_tor and self.request_count % 50 == 0 and self.scraper:
+            self.scraper.rotate_tor_circuit()
 
 # --- Scraper ---
 
@@ -79,7 +102,7 @@ class Scraper:
 
     def __init__(self):
         self.config = Config.load()
-        self.rate_limiter = RateLimiter(self.config)
+        self.rate_limiter = RateLimiter(self.config, scraper_instance=self)
 
         # 🔥 FIX: Real browser-like session
         self.session = requests.Session()
@@ -95,7 +118,13 @@ class Scraper:
             "Referer": self.config.base_url,
         })
         self.proxies = None
-        if self.config.proxy_url:
+        if self.config.use_tor:
+            if not TOR_AVAILABLE:
+                logger.warning("Tor requested but required packages not installed. Install with: pip install requests[socks] stem")
+                self.config.use_tor = False
+            else:
+                self._setup_tor()
+        elif self.config.proxy_url:
             self.proxies = {
                 "http": self.config.proxy_url,
                 "https": self.config.proxy_url,
@@ -107,6 +136,48 @@ class Scraper:
             'total': f"{self.config.base_url}/pharmacy/srchpharmacisttotal",
             'search': f"{self.config.base_url}/pharmacy/getsearchpharmacist"
         }
+        self.tor_controller = None
+
+    def _setup_tor(self):
+        """Setup Tor connection with circuit rotation."""
+        try:
+            # Configure session to use Tor SOCKS proxy
+            self.session.proxies.update({
+                'http': f'socks5://127.0.0.1:{self.config.tor_socks_port}',
+                'https': f'socks5://127.0.0.1:{self.config.tor_socks_port}'
+            })
+            
+            # Try to connect to Tor control port for circuit rotation
+            try:
+                self.tor_controller = Controller.from_port(
+                    port=self.config.tor_control_port
+                )
+                if self.config.tor_password:
+                    self.tor_controller.authenticate(password=self.config.tor_password)
+                else:
+                    self.tor_controller.authenticate()
+                logger.info("Tor control connection established - circuit rotation enabled")
+            except Exception as e:
+                logger.warning(f"Tor control connection failed: {e}. Circuit rotation disabled.")
+                self.tor_controller = None
+            
+            logger.info("Using Tor for outbound requests")
+            
+        except Exception as e:
+            logger.error(f"Failed to setup Tor: {e}")
+            self.config.use_tor = False
+
+    def rotate_tor_circuit(self):
+        """Rotate Tor circuit for new IP."""
+        if self.tor_controller:
+            try:
+                self.tor_controller.signal(stem.Signal.NEWNYM)
+                logger.info("Tor circuit rotated - new IP address")
+                time.sleep(2)  # Wait for circuit to establish
+            except Exception as e:
+                logger.warning(f"Failed to rotate Tor circuit: {e}")
+        else:
+            logger.info("Tor control not available - cannot rotate circuit")
 
     @staticmethod
     def _normalize_header(text: str) -> str:
@@ -130,6 +201,7 @@ class Scraper:
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=4, max=30), reraise=True)
     def _request(self, method: str, url: str, **kwargs) -> requests.Response:
         self.rate_limiter.wait()
+        self.rate_limiter.count_request()  # Count for Tor circuit rotation
         timeout = (self.config.connect_timeout, self.config.read_timeout)
 
         try:
