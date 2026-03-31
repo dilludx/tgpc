@@ -99,6 +99,25 @@ class Scraper:
             'search': f"{self.config.base_url}/pharmacy/getsearchpharmacist"
         }
 
+    @staticmethod
+    def _normalize_header(text: str) -> str:
+        return re.sub(r'\s+', ' ', text).strip().lower()
+
+    @staticmethod
+    def _cell_text(cell) -> str:
+        return " ".join(cell.stripped_strings)
+
+    @staticmethod
+    def _parse_date_value(value: str) -> Optional[str]:
+        cleaned = value.strip()
+        for fmt in ("%d-%m-%Y", "%d/%m/%Y", "%d-%b-%Y", "%d-%B-%Y"):
+            try:
+                dt = datetime.strptime(cleaned, fmt)
+                return dt.strftime("%Y-%m-%d")
+            except ValueError:
+                continue
+        return None
+
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=4, max=30), reraise=True)
     def _request(self, method: str, url: str, **kwargs) -> requests.Response:
         self.rate_limiter.wait()
@@ -196,7 +215,114 @@ class Scraper:
 
             record = PharmacistRecord(registration_number=reg_no, name="", father_name="", category="")
 
-            # (rest of your logic unchanged)
+            basic_headers = []
+            basic_values = {}
+
+            img = soup.find('img', id=re.compile(r'imgPhoto', re.I))
+            if not img:
+                info_table = next(
+                    (
+                        table for table in tables
+                        if 'registration no' in [self._normalize_header(th.get_text(" ", strip=True)) for th in table.find_all('th')]
+                    ),
+                    None,
+                )
+                if info_table:
+                    img = info_table.find('img')
+            if img and img.get('src'):
+                src = img['src']
+                if 'base64' in src:
+                    record.photo_base64 = src.split(',')[-1]
+
+            for table in tables:
+                headers = [self._normalize_header(th.get_text(" ", strip=True)) for th in table.find_all('th')]
+                if 'registration no' in headers and 'name' in headers:
+                    data_row = next((row for row in table.find_all('tr') if row.find_all('td')), None)
+                    if data_row:
+                        cells = [self._cell_text(cell) for cell in data_row.find_all('td')]
+                        basic_headers = headers
+                        basic_values = {
+                            basic_headers[i]: cells[i]
+                            for i in range(min(len(basic_headers), len(cells)))
+                        }
+                    break
+
+            if basic_values:
+                record.registration_number = basic_values.get('registration no') or reg_no
+                record.name = basic_values.get('name', '')
+                record.father_name = basic_values.get('father name', '')
+                record.category = basic_values.get('category', '')
+                validity_date = self._parse_date_value(basic_values.get('validity', ''))
+                if validity_date:
+                    record.validity_date = validity_date
+
+            main_text = soup.get_text()
+            if not record.validity_date:
+                validity_match = re.search(
+                    r'Valid\s*(?:Upto|Up\s*to)\s*[:\-]?\s*([0-9]{2}(?:[-/][0-9]{2}(?:[-/][0-9]{4})|-[A-Za-z]{3}-[0-9]{4}))',
+                    main_text,
+                    re.I,
+                )
+                if validity_match:
+                    parsed_date = self._parse_date_value(validity_match.group(1).replace('/', '-'))
+                    if parsed_date:
+                        record.validity_date = parsed_date
+
+            for table in tables:
+                headers = [self._normalize_header(th.get_text(" ", strip=True)) for th in table.find_all('th')]
+                if any('qualification' in h for h in headers) or (
+                    'category' in headers and any('board/university' in h or 'university' in h for h in headers)
+                ):
+                    edu_list = []
+                    rows = table.find_all('tr')[1:]
+                    for row in rows:
+                        cols = [self._cell_text(cell) for cell in row.find_all(['th', 'td'])]
+                        if len(cols) >= 2:
+                            row_map = {
+                                headers[i]: cols[i]
+                                for i in range(min(len(headers), len(cols)))
+                            }
+                            education = {
+                                'qualification': row_map.get('qualification') or row_map.get('category', ''),
+                                'university': row_map.get('board/university') or row_map.get('university', ''),
+                                'year': row_map.get('year') or row_map.get('to', ''),
+                            }
+                            optional_fields = {
+                                'college name': 'college_name',
+                                'college address': 'college_address',
+                                'from': 'from',
+                                'to': 'to',
+                                'ht no': 'hall_ticket_number',
+                            }
+                            for header, key in optional_fields.items():
+                                value = row_map.get(header, '')
+                                if value:
+                                    education[key] = value
+                            edu_list.append(education)
+                    record.education = edu_list or None
+
+            for table in tables:
+                headers = [self._normalize_header(th.get_text(" ", strip=True)) for th in table.find_all('th')]
+                if 'address' in headers and 'state' in headers and 'district' in headers:
+                    data_row = next((row for row in table.find_all('tr')[1:] if row.find_all('td')), None)
+                    if not data_row:
+                        continue
+
+                    cols = [self._cell_text(cell) for cell in data_row.find_all('td')]
+                    row_map = {
+                        headers[i]: cols[i]
+                        for i in range(min(len(headers), len(cols)))
+                    }
+                    work_info = {
+                        'address': row_map.get('address', ''),
+                        'state': row_map.get('state', ''),
+                        'district': row_map.get('district', ''),
+                        'pin_code': row_map.get('pin code', ''),
+                    }
+                    if any(work_info.values()):
+                        record.work_experience = work_info
+                    break
+
             return record
 
         except Exception as e:

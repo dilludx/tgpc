@@ -19,6 +19,8 @@ class ScraperParsingTests(unittest.TestCase):
     def test_request_uses_split_connect_and_read_timeouts(self):
         scraper = Scraper()
         response = MagicMock()
+        response.status_code = 200
+        response.text = "ok" * 1000
         response.raise_for_status.return_value = None
 
         with patch.object(scraper.rate_limiter, "wait"), patch.object(
