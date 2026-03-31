@@ -118,12 +118,15 @@ class Scraper:
             "Referer": self.config.base_url,
         })
         self.proxies = None
+        # Try Tor first if enabled
         if self.config.use_tor:
             if not TOR_AVAILABLE:
                 logger.warning("Tor requested but required packages not installed. Install with: pip install requests[socks] stem")
                 self.config.use_tor = False
             else:
                 self._setup_tor()
+        
+        # If Tor failed or not enabled, try regular proxy
         elif self.config.proxy_url:
             self.proxies = {
                 "http": self.config.proxy_url,
@@ -132,6 +135,14 @@ class Scraper:
             self.session.proxies.update(self.proxies)
             self.session.trust_env = False
             logger.info("Using configured TGPC proxy for outbound requests")
+        
+        # Log final connection method
+        if self.config.use_tor:
+            logger.info("Connection method: Tor with circuit rotation")
+        elif self.proxies:
+            logger.info("Connection method: HTTP proxy")
+        else:
+            logger.info("Connection method: Direct connection")
         self.urls = {
             'total': f"{self.config.base_url}/pharmacy/srchpharmacisttotal",
             'search': f"{self.config.base_url}/pharmacy/getsearchpharmacist"
@@ -146,6 +157,22 @@ class Scraper:
                 'http': f'socks5://127.0.0.1:{self.config.tor_socks_port}',
                 'https': f'socks5://127.0.0.1:{self.config.tor_socks_port}'
             })
+            
+            # Test Tor connection first
+            try:
+                import requests
+                test_response = requests.get(
+                    'https://check.torproject.org/',
+                    proxies={'https': f'socks5://127.0.0.1:{self.config.tor_socks_port}'},
+                    timeout=10
+                )
+                if 'Congratulations' not in test_response.text:
+                    raise Exception("Tor not working properly")
+            except Exception as e:
+                logger.warning(f"Tor connection test failed: {e}")
+                self.session.proxies.clear()
+                self.config.use_tor = False
+                return
             
             # Try to connect to Tor control port for circuit rotation
             try:
@@ -165,6 +192,7 @@ class Scraper:
             
         except Exception as e:
             logger.error(f"Failed to setup Tor: {e}")
+            self.session.proxies.clear()
             self.config.use_tor = False
 
     def rotate_tor_circuit(self):

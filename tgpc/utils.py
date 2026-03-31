@@ -36,6 +36,7 @@ class Config:
     tor_socks_port: int = 9050
     tor_control_port: int = 9051
     tor_password: Optional[str] = None
+    tor_timeout: int = 30  # Tor connection timeout
     
     # Rate Limiting
     min_delay: float = 3.0
