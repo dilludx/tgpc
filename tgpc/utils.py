@@ -37,6 +37,8 @@ class Config:
     tor_control_port: int = 9051
     tor_password: Optional[str] = None
     tor_timeout: int = 30  # Tor connection timeout
+    tor_use_bridges: bool = False
+    tor_bridge_type: str = "obfs4"  # obfs4, meek, snowflake
     
     # Rate Limiting
     min_delay: float = 3.0

@@ -23,6 +23,12 @@ except ImportError:
     TOR_AVAILABLE = False
 
 try:
+    from tgpc.proxy_pool import get_free_proxy
+    PROXY_POOL_AVAILABLE = True
+except ImportError:
+    PROXY_POOL_AVAILABLE = False
+
+try:
     from urllib3.exceptions import ConnectTimeoutError, MaxRetryError, NewConnectionError
     URF3_AVAILABLE = True
 except ImportError:
@@ -142,6 +148,10 @@ class Scraper:
             self.session.trust_env = False
             logger.info("Using configured TGPC proxy for outbound requests")
         
+        # If no proxy configured, try free proxy pool
+        elif PROXY_POOL_AVAILABLE:
+            self._setup_free_proxy()
+        
         # Log final connection method
         if self.config.use_tor:
             logger.info("Connection method: Tor with circuit rotation")
@@ -212,6 +222,31 @@ class Scraper:
                 logger.warning(f"Failed to rotate Tor circuit: {e}")
         else:
             logger.info("Tor control not available - cannot rotate circuit")
+
+    def _setup_free_proxy(self):
+        """Setup free proxy pool for IP anonymity."""
+        try:
+            import asyncio
+            
+            # Try to get a working free proxy
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            proxy_dict = loop.run_until_complete(get_free_proxy())
+            
+            if proxy_dict:
+                self.proxies = proxy_dict
+                self.session.proxies.update(self.proxies)
+                self.session.trust_env = False
+                logger.info("Using free proxy pool for IP anonymity")
+            else:
+                logger.warning("No working free proxies available")
+                
+        except Exception as e:
+            logger.warning(f"Failed to setup free proxy pool: {e}")
 
     @staticmethod
     def _normalize_header(text: str) -> str:
