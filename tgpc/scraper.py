@@ -22,6 +22,12 @@ try:
 except ImportError:
     TOR_AVAILABLE = False
 
+try:
+    from urllib3.exceptions import ConnectTimeoutError, MaxRetryError, NewConnectionError
+    URF3_AVAILABLE = True
+except ImportError:
+    URF3_AVAILABLE = False
+
 from tgpc.utils import Config, TGPCError, setup_logging
 
 logger = setup_logging("tgpc.scraper")

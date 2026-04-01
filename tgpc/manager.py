@@ -122,6 +122,14 @@ class Manager:
             if isinstance(current, (requests.exceptions.Timeout, requests.exceptions.ConnectionError)):
                 return True
 
+            # Catch urllib3 timeout errors (common in GitHub Actions)
+            try:
+                from urllib3.exceptions import ConnectTimeoutError, MaxRetryError, NewConnectionError
+                if isinstance(current, (ConnectTimeoutError, MaxRetryError, NewConnectionError)):
+                    return True
+            except ImportError:
+                pass
+
             if isinstance(current, requests.exceptions.HTTPError):
                 status_code = getattr(getattr(current, "response", None), "status_code", None)
                 if status_code == 429 or (status_code is not None and status_code >= 500):
@@ -134,6 +142,15 @@ class Manager:
         for current in cls._iter_exception_chain(error):
             if isinstance(current, requests.exceptions.RequestException):
                 return type(current).__name__
+            
+            # Also handle urllib3 exceptions
+            try:
+                from urllib3.exceptions import ConnectTimeoutError, MaxRetryError, NewConnectionError
+                if isinstance(current, (ConnectTimeoutError, MaxRetryError, NewConnectionError)):
+                    return type(current).__name__
+            except ImportError:
+                pass
+                
         return type(error).__name__
 
     def _write_update_outputs(self, **values) -> None:
