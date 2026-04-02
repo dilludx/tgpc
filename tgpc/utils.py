@@ -26,19 +26,10 @@ class Config:
     
     # API Settings
     base_url: str = "https://www.pharmacycouncil.telangana.gov.in"
-    connect_timeout: int = 30  # Increased for Tor
-    read_timeout: int = 300   # Increased for Tor
-    max_retries: int = 5      # Increased for Tor
+    connect_timeout: int = 20
+    read_timeout: int = 180
+    max_retries: int = 3
     proxy_url: Optional[str] = None
-    
-    # Tor Settings
-    use_tor: bool = False
-    tor_socks_port: int = 9050
-    tor_control_port: int = 9051
-    tor_password: Optional[str] = None
-    tor_timeout: int = 30  # Tor connection timeout
-    tor_use_bridges: bool = False
-    tor_bridge_type: str = "obfs4"  # obfs4, meek, snowflake
     
     # Rate Limiting
     min_delay: float = 3.0
@@ -62,13 +53,7 @@ class Config:
             or None
         )
         
-        return cls(
-            proxy_url=proxy_url,
-            use_tor=os.getenv('TGPC_USE_TOR', '').lower() in ('true', '1', 'yes'),
-            tor_socks_port=int(os.getenv('TGPC_TOR_SOCKS_PORT', str(cls.tor_socks_port))),
-            tor_control_port=int(os.getenv('TGPC_TOR_CONTROL_PORT', str(cls.tor_control_port))),
-            tor_password=os.getenv('TGPC_TOR_PASSWORD'),
-        )
+        return cls(proxy_url=proxy_url)
 
 # --- Logging ---
 

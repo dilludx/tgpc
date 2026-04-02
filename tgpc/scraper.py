@@ -1,6 +1,6 @@
 """
 Core scraping logic for TGPC system.
-Handles data extraction, rate limiting, and parsing.
+Simple, clean scraper for local use only.
 """
 
 import time
@@ -13,26 +13,6 @@ from dataclasses import dataclass
 import requests
 from bs4 import BeautifulSoup
 from tenacity import retry, stop_after_attempt, wait_exponential
-
-try:
-    import socks
-    import stem
-    from stem.control import Controller
-    TOR_AVAILABLE = True
-except ImportError:
-    TOR_AVAILABLE = False
-
-try:
-    from tgpc.proxy_pool import get_free_proxy
-    PROXY_POOL_AVAILABLE = True
-except ImportError:
-    PROXY_POOL_AVAILABLE = False
-
-try:
-    from urllib3.exceptions import ConnectTimeoutError, MaxRetryError, NewConnectionError
-    URF3_AVAILABLE = True
-except ImportError:
-    URF3_AVAILABLE = False
 
 from tgpc.utils import Config, TGPCError, setup_logging
 
@@ -75,14 +55,11 @@ class PharmacistRecord:
 # --- Rate Limiter ---
 
 class RateLimiter:
-    def __init__(self, config: Config, scraper_instance=None):
+    def __init__(self, config: Config):
         self.min_delay = config.min_delay
         self.max_delay = config.max_delay
         self.current_delay = config.min_delay
         self.consecutive_failures = 0
-        self.scraper = scraper_instance
-        self.config = config
-        self.request_count = 0
 
     def wait(self):
         delay = self.current_delay * random.uniform(0.8, 1.2)
@@ -95,18 +72,6 @@ class RateLimiter:
         else:
             self.consecutive_failures += 1
             self.current_delay = min(self.max_delay, self.current_delay * 1.5)
-            
-            # Rotate Tor circuit on failures
-            if self.config.use_tor and self.consecutive_failures >= 3 and self.scraper:
-                self.scraper.rotate_tor_circuit()
-                self.consecutive_failures = 0
-    
-    def count_request(self):
-        """Count requests and rotate Tor circuit periodically."""
-        self.request_count += 1
-        # Rotate Tor circuit every 50 requests to avoid pattern detection
-        if self.config.use_tor and self.request_count % 50 == 0 and self.scraper:
-            self.scraper.rotate_tor_circuit()
 
 # --- Scraper ---
 
@@ -114,9 +79,9 @@ class Scraper:
 
     def __init__(self):
         self.config = Config.load()
-        self.rate_limiter = RateLimiter(self.config, scraper_instance=self)
+        self.rate_limiter = RateLimiter(self.config)
 
-        # 🔥 FIX: Real browser-like session
+        # Simple browser session
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": random.choice([
@@ -129,124 +94,13 @@ class Scraper:
             "Upgrade-Insecure-Requests": "1",
             "Referer": self.config.base_url,
         })
-        self.proxies = None
-        # Try Tor first if enabled
-        if self.config.use_tor:
-            if not TOR_AVAILABLE:
-                logger.warning("Tor requested but required packages not installed. Install with: pip install requests[socks] stem")
-                self.config.use_tor = False
-            else:
-                self._setup_tor()
         
-        # If Tor failed or not enabled, try regular proxy
-        elif self.config.proxy_url:
-            self.proxies = {
-                "http": self.config.proxy_url,
-                "https": self.config.proxy_url,
-            }
-            self.session.proxies.update(self.proxies)
-            self.session.trust_env = False
-            logger.info("Using configured TGPC proxy for outbound requests")
-        
-        # If no proxy configured, try free proxy pool
-        elif PROXY_POOL_AVAILABLE:
-            self._setup_free_proxy()
-        
-        # Log final connection method
-        if self.config.use_tor:
-            logger.info("Connection method: Tor with circuit rotation")
-        elif self.proxies:
-            logger.info("Connection method: HTTP proxy")
-        else:
-            logger.info("Connection method: Direct connection")
         self.urls = {
             'total': f"{self.config.base_url}/pharmacy/srchpharmacisttotal",
             'search': f"{self.config.base_url}/pharmacy/getsearchpharmacist"
         }
-        self.tor_controller = None
-
-    def _setup_tor(self):
-        """Setup Tor connection with circuit rotation."""
-        try:
-            # Configure session to use Tor SOCKS proxy
-            self.session.proxies.update({
-                'http': f'socks5://127.0.0.1:{self.config.tor_socks_port}',
-                'https': f'socks5://127.0.0.1:{self.config.tor_socks_port}'
-            })
-            
-            # Test Tor connection first
-            try:
-                import requests
-                test_response = requests.get(
-                    'https://check.torproject.org/',
-                    proxies={'https': f'socks5://127.0.0.1:{self.config.tor_socks_port}'},
-                    timeout=10
-                )
-                if 'Congratulations' not in test_response.text:
-                    raise Exception("Tor not working properly")
-            except Exception as e:
-                logger.warning(f"Tor connection test failed: {e}")
-                self.session.proxies.clear()
-                self.config.use_tor = False
-                return
-            
-            # Try to connect to Tor control port for circuit rotation
-            try:
-                self.tor_controller = Controller.from_port(
-                    port=self.config.tor_control_port
-                )
-                if self.config.tor_password:
-                    self.tor_controller.authenticate(password=self.config.tor_password)
-                else:
-                    self.tor_controller.authenticate()
-                logger.info("Tor control connection established - circuit rotation enabled")
-            except Exception as e:
-                logger.warning(f"Tor control connection failed: {e}. Circuit rotation disabled.")
-                self.tor_controller = None
-            
-            logger.info("Using Tor for outbound requests")
-            
-        except Exception as e:
-            logger.error(f"Failed to setup Tor: {e}")
-            self.session.proxies.clear()
-            self.config.use_tor = False
-
-    def rotate_tor_circuit(self):
-        """Rotate Tor circuit for new IP."""
-        if self.tor_controller:
-            try:
-                self.tor_controller.signal(stem.Signal.NEWNYM)
-                logger.info("Tor circuit rotated - new IP address")
-                time.sleep(2)  # Wait for circuit to establish
-            except Exception as e:
-                logger.warning(f"Failed to rotate Tor circuit: {e}")
-        else:
-            logger.info("Tor control not available - cannot rotate circuit")
-
-    def _setup_free_proxy(self):
-        """Setup free proxy pool for IP anonymity."""
-        try:
-            import asyncio
-            
-            # Try to get a working free proxy
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            
-            proxy_dict = loop.run_until_complete(get_free_proxy())
-            
-            if proxy_dict:
-                self.proxies = proxy_dict
-                self.session.proxies.update(self.proxies)
-                self.session.trust_env = False
-                logger.info("Using free proxy pool for IP anonymity")
-            else:
-                logger.warning("No working free proxies available")
-                
-        except Exception as e:
-            logger.warning(f"Failed to setup free proxy pool: {e}")
+        
+        logger.info("Simple scraper initialized - direct connection only")
 
     @staticmethod
     def _normalize_header(text: str) -> str:
@@ -258,8 +112,14 @@ class Scraper:
 
     @staticmethod
     def _parse_date_value(value: str) -> Optional[str]:
-        cleaned = value.strip()
-        for fmt in ("%d-%m-%Y", "%d/%m/%Y", "%d-%b-%Y", "%d-%B-%Y"):
+        """Parse various date formats into ISO format."""
+        if not value or value.strip() == '-':
+            return None
+        
+        cleaned = re.sub(r'[^\d/\\-]', '', value.strip())
+        date_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y/%m/%d', '%Y-%m-%d']
+        
+        for fmt in date_formats:
             try:
                 dt = datetime.strptime(cleaned, fmt)
                 return dt.strftime("%Y-%m-%d")
@@ -267,16 +127,11 @@ class Scraper:
                 continue
         return None
 
-    @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=4, max=30), reraise=True)
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10), reraise=True)
     def _request(self, method: str, url: str, **kwargs) -> requests.Response:
+        """Simple direct request - no proxies, no Tor."""
         self.rate_limiter.wait()
-        self.rate_limiter.count_request()  # Count for Tor circuit rotation
-        
-        # Use longer timeouts for Tor
-        if self.config.use_tor:
-            timeout = (60, 300)  # (connect, read) for Tor
-        else:
-            timeout = (self.config.connect_timeout, self.config.read_timeout)
+        timeout = (self.config.connect_timeout, self.config.read_timeout)
 
         try:
             response = self.session.request(method, url, timeout=timeout, **kwargs)
@@ -284,7 +139,7 @@ class Scraper:
 
             content = response.text.lower()
 
-            # 🚨 BLOCK DETECTION
+            # Basic block detection
             if (
                 response.status_code != 200
                 or "access denied" in content
@@ -293,40 +148,13 @@ class Scraper:
                 or len(response.text) < 1000
             ):
                 raise Exception("Blocked response")
+            
             self.rate_limiter.record_result(True)
             return response
 
         except Exception as e:
             self.rate_limiter.record_result(False)
-            
-            # If Tor is timing out, fallback to direct connection
-            if self.config.use_tor and "timeout" in str(e).lower():
-                logger.warning("Tor timeout detected, falling back to direct connection")
-                self.config.use_tor = False
-                self.session.proxies.clear()
-                self.tor_controller = None
-                logger.info("Connection method: Direct connection (fallback)")
-                
-                # Retry with direct connection
-                timeout = (self.config.connect_timeout, self.config.read_timeout)
-                try:
-                    response = requests.request(method, url, timeout=timeout, **kwargs)
-                    response.raise_for_status()
-                    self.rate_limiter.record_result(True)
-                    return response
-                except Exception as retry_e:
-                    logger.error(f"Direct connection also failed: {retry_e}")
-                    raise retry_e
-
-            # 🔁 FALLBACK REQUEST
-            try:
-                time.sleep(random.uniform(2, 5))
-
-                headers = {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36",
-                    "Referer": url,
-                    "Accept-Language": "en-IN,en;q=0.9",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            raise e
                 }
 
                 response = requests.request(
