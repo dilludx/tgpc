@@ -155,25 +155,6 @@ class Scraper:
         except Exception as e:
             self.rate_limiter.record_result(False)
             raise e
-                }
-
-                response = requests.request(
-                    method,
-                    url,
-                    headers=headers,
-                    timeout=timeout,
-                    proxies=self.proxies,
-                    **kwargs,
-                )
-                response.raise_for_status()
-
-                if response.status_code == 200 and len(response.text) > 1000:
-                    return response
-
-            except Exception:
-                pass
-
-            raise TGPCError(f"Request failed: {url}", e)
 
     def extract_basic_records(self) -> List[PharmacistRecord]:
         logger.info("Extracting basic records...")
