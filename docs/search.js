@@ -29,8 +29,8 @@ function escapeHtml(text) {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Supabase client here to ensure library is loaded
-    if (window.supabase && window.supabase.createClient && desktopConfig.SUPABASE_URL && desktopConfig.SUPABASE_ANON_KEY) {
-        supabaseClient = window.supabase.createClient(desktopConfig.SUPABASE_URL, desktopConfig.SUPABASE_ANON_KEY);
+    if (window.supabase && window.supabase.createClient && desktopConfig.SUPABASE_URL && desktopConfig.SUPABASE_PUBLISHABLE_KEY) {
+        supabaseClient = window.supabase.createClient(desktopConfig.SUPABASE_URL, desktopConfig.SUPABASE_PUBLISHABLE_KEY);
     } else {
         console.error('DOMContentLoaded: Supabase configuration not available!');
     }

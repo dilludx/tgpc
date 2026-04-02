@@ -312,7 +312,7 @@ class Manager:
     def sync_to_supabase(self):
         """Sync data to Supabase."""
         url = os.environ.get("SUPABASE_URL")
-        key = os.environ.get("SUPABASE_SERVICE_KEY")
+        key = os.environ.get("SUPABASE_SECRET_KEY")
         
         if not url or not key:
             logger.error("Missing Supabase credentials")

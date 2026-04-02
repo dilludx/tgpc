@@ -172,8 +172,8 @@ function resetSearch() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.supabase?.createClient && mobileConfig.SUPABASE_URL && mobileConfig.SUPABASE_ANON_KEY) {
-        db = window.supabase.createClient(mobileConfig.SUPABASE_URL, mobileConfig.SUPABASE_ANON_KEY);
+    if (window.supabase?.createClient && mobileConfig.SUPABASE_URL && mobileConfig.SUPABASE_PUBLISHABLE_KEY) {
+        db = window.supabase.createClient(mobileConfig.SUPABASE_URL, mobileConfig.SUPABASE_PUBLISHABLE_KEY);
     }
 
     document.getElementById('mobileResetButton').addEventListener('click', resetSearch);
