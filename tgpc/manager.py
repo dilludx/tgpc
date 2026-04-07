@@ -353,25 +353,25 @@ class Manager:
         
         # Load Data
         rx_records = self.file_manager.load("rx.json")
-        details_path = Path(self.config.data_directory) / "rxdetails.json"
+        details_dir = Path(self.config.data_directory) / "details"
+        details_dir.mkdir(parents=True, exist_ok=True)
         
-        existing_details = {}
-        if details_path.exists():
-            with open(details_path, 'r', encoding='utf-8') as f:
-                existing_details = json.load(f)
-                
-        # Identify Pending
-        all_ids = {r.registration_number for r in rx_records}
-        done_ids = set(existing_details.keys())
-        pending_ids = list(all_ids - done_ids)
-        pending_ids.sort() # Deterministic order
+        # Create lookup by registration number
+        rx_lookup = {r.registration_number: r for r in rx_records}
         
-        if not pending_ids:
+        # Identify Pending - check for existing individual detail files
+        done_ids = {f.stem for f in details_dir.glob("*.json")}
+        
+        # Sort by serial number ascending (start from serial 1)
+        pending_records = [r for r in rx_records if r.registration_number not in done_ids]
+        pending_records.sort(key=lambda r: (r.serial_number or 0, r.registration_number))
+        
+        if not pending_records:
             logger.info("No pending records to enrich.")
             return
 
-        batch_ids = pending_ids[:batch_size]
-        logger.info(f"Processing {len(batch_ids)} records...")
+        batch_records = pending_records[:batch_size]
+        logger.info(f"Processing {len(batch_records)} records starting from serial {batch_records[0].serial_number}...")
         
         # Setup Photos Directory
         photos_dir = Path(self.config.data_directory) / "photos"
@@ -379,7 +379,8 @@ class Manager:
         
         processed_count = 0
         
-        for reg_no in batch_ids:
+        for record in batch_records:
+            reg_no = record.registration_number
             try:
                 # Scrape
                 details = self.scraper.extract_detailed_info(reg_no)
@@ -392,53 +393,59 @@ class Manager:
                     logger.critical(f"SECURITY MISMATCH! Requested {reg_no} but got data for {details.registration_number}")
                     raise DataIntegrityError("Data Integrity Violation: Stopping immediately to prevent corruption.")
 
-                logger.info(f"✅ MATCH CONFIRMED: {reg_no}")
+                logger.info(f"✅ MATCH CONFIRMED: {reg_no} (Serial: {record.serial_number})")
 
-                # Convert to dictionary for storage
-                data = details.to_detailed_dict()
+                # Get basic info from rx.json lookup
+                basic_info = rx_lookup.get(reg_no)
+                if not basic_info:
+                    logger.warning(f"Basic info not found for {reg_no}, using scraped data")
+                    basic_data = {
+                        "registration_number": details.registration_number,
+                        "name": details.name,
+                        "father_name": details.father_name,
+                        "category": details.category,
+                        "serial_number": None
+                    }
+                else:
+                    basic_data = {
+                        "registration_number": basic_info.registration_number,
+                        "name": basic_info.name,
+                        "father_name": basic_info.father_name,
+                        "category": basic_info.category,
+                        "serial_number": basic_info.serial_number
+                    }
+                
+                # Combine basic info + extracted details
+                extracted_data = details.to_detailed_dict()
+                data = {**basic_data, **extracted_data}
 
-                # Save Photo Locally with WebP conversion
+                # Save Photo Locally with WebP conversion only
                 if details.photo_base64:
                     try:
-                        file_data = base64.b64decode(details.photo_base64)
+                        from PIL import Image
+                        import io
                         
-                        # Convert to WebP for better compression
-                        try:
-                            from PIL import Image
-                            import io
-                            
-                            # Open image from bytes
-                            img = Image.open(io.BytesIO(file_data))
-                            
-                            # Convert to RGB if necessary (for PNG with transparency)
-                            if img.mode in ('RGBA', 'LA', 'P'):
-                                rgb_img = Image.new('RGB', img.size, (255, 255, 255))
-                                rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
-                                img = rgb_img
-                            
-                            # Save as WebP with good quality/compression balance
-                            webp_path = photos_dir / f"{reg_no}.webp"
-                            img.save(webp_path, 'WebP', quality=85, method=6)
-                            
-                            # Store relative path for WebP
-                            data['photo_path'] = f"photos/{reg_no}.webp"
-                            data['photo_format'] = 'webp'
-                            
-                        except ImportError:
-                            # Fallback to JPEG if Pillow not available
-                            file_path = photos_dir / f"{reg_no}.jpg"
-                            with open(file_path, "wb") as f:
-                                f.write(file_data)
-                            
-                            # Store relative path for JPEG
-                            data['photo_path'] = f"photos/{reg_no}.jpg"
-                            data['photo_format'] = 'jpeg'
-                            
+                        file_data = base64.b64decode(details.photo_base64)
+                        img = Image.open(io.BytesIO(file_data))
+                        
+                        # Convert to RGB if necessary (for PNG with transparency)
+                        if img.mode in ('RGBA', 'LA', 'P'):
+                            rgb_img = Image.new('RGB', img.size, (255, 255, 255))
+                            rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                            img = rgb_img
+                        
+                        # Save as WebP with good quality/compression balance
+                        webp_path = photos_dir / f"{reg_no}.webp"
+                        img.save(webp_path, 'WebP', quality=85, method=6)
+                        
                     except Exception as e:
                         logger.error(f"Photo save failed for {reg_no}: {e}")
                 
-                # Save to memory
-                existing_details[reg_no] = data
+                # Save to individual JSON file
+                detail_file = details_dir / f"{reg_no}.json"
+                with open(detail_file, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                
                 processed_count += 1
                 
                 # Rate limit
@@ -449,8 +456,4 @@ class Manager:
             except Exception as e:
                 logger.error(f"Enrichment failed for {reg_no}: {e}")
                 
-        # Save to Disk
-        with open(details_path, 'w', encoding='utf-8') as f:
-            json.dump(existing_details, f, indent=2, ensure_ascii=False)
-            
-        logger.info(f"Enrichment complete. Processed {processed_count}/{len(batch_ids)}")
+        logger.info(f"Enrichment complete. Processed {processed_count}/{len(batch_records)}")
