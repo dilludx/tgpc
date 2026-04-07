@@ -2,25 +2,26 @@
 .env
 .env.*
 !.env.example
+supabase-creds.sh
 
 # Python
 __pycache__/
 *.py[cod]
+*.pyc
+*.pyo
 *.so
 *.egg-info/
 *.egg
 build/
 dist/
 .Python
-*.pyc
-*.pyo
 
 # Virtual environments
 venv/
 env/
 .venv/
 
-# Backups and temporary files
+# Data files (keep main data, ignore backups and temp)
 data/backups/
 data/detailed/
 data/metadata/
@@ -50,15 +51,8 @@ debug_*.html
 # OS
 .DS_Store
 Thumbs.db
-*.DS_Store
 
 # Testing and linting
-# Cache
 .cache/
 .pytest_cache/
 .ruff_cache/
-__pycache__/
-*.pyc
-
-# Logs
-*.log
