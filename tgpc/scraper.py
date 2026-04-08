@@ -105,6 +105,45 @@ class Scraper:
         
         logger.info("Simple scraper initialized - direct connection only")
 
+    def health_check(self, timeout: int = 10) -> bool:
+        """Quick health check to detect if connection is blocked."""
+        try:
+            response = self.session.get(
+                self.urls['total'],
+                timeout=timeout
+            )
+            
+            if response.status_code != 200:
+                logger.warning(f"Health check failed: status {response.status_code}")
+                return False
+            
+            content = response.text.lower()
+            blocked_indicators = [
+                "access denied",
+                "forbidden",
+                "captcha",
+                "blocked",
+                "suspicious",
+                "security check",
+                "unusual traffic"
+            ]
+            
+            for indicator in blocked_indicators:
+                if indicator in content:
+                    logger.warning(f"Health check failed: blocked indicator '{indicator}'")
+                    return False
+            
+            if len(response.text) < 1000:
+                logger.warning(f"Health check failed: too small response ({len(response.text)} bytes)")
+                return False
+            
+            logger.info("Health check passed - connection OK")
+            return True
+            
+        except Exception as e:
+            logger.warning(f"Health check failed: {e}")
+            return False
+
     @staticmethod
     def _normalize_header(text: str) -> str:
         return re.sub(r'\s+', ' ', text).strip().lower()

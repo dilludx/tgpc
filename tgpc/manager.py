@@ -8,6 +8,7 @@ import shutil
 import os
 import base64
 import time
+import random
 import requests
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -174,6 +175,7 @@ class Manager:
             "new_cat_stats": {},
             "rem_cat_stats": {},
             "mod_cat_stats": {},
+            "blocked": False,
         }
         defaults.update(values)
 
@@ -188,6 +190,17 @@ class Manager:
     def run_daily_update(self):
         """Execute daily update workflow."""
         logger.info("Starting daily update...")
+        
+        # 0. Health check - abort if blocked
+        if not self.scraper.health_check():
+            logger.error("Health check failed - connection is blocked. Aborting to avoid wasted time.")
+            self._write_update_outputs(
+                update_status="blocked",
+                success=False,
+                blocked=True,
+                total_records=len(self.file_manager.load()),
+            )
+            return "blocked"
         
         # 1. Backup existing
         rx_path = Path(self.config.data_directory) / "rx.json"
@@ -347,9 +360,34 @@ class Manager:
         except Exception as e:
             logger.error(f"Sync failed: {e}")
 
-    def run_enrichment(self, batch_size: int = 50):
-        """Run enrichment pipeline."""
-        logger.info(f"Starting enrichment batch ({batch_size})...")
+    def run_enrichment(self, batch_size: int = 50, max_batches: int = None):
+        """Run enrichment pipeline with resume capability.
+        
+        Args:
+            batch_size: Records per batch (default 50)
+            max_batches: Limit batches for testing (None = unlimited)
+        """
+        
+        # Health check - abort if blocked
+        if not self.scraper.health_check():
+            logger.error("Health check failed - connection is blocked. Aborting.")
+            return
+        
+        # Progress file for resume capability
+        progress_file = Path(self.config.data_directory) / "enrichment_progress.json"
+        
+        # Load previous progress if exists
+        batch_count = 0
+        if progress_file.exists():
+            try:
+                with open(progress_file) as f:
+                    progress = json.load(f)
+                    batch_count = progress.get("batch_count", 0)
+                    logger.info(f"Resuming from batch {batch_count}")
+            except:
+                batch_count = 0
+        
+        logger.info(f"Starting enrichment (batch_size={batch_size})...")
         
         # Load Data
         rx_records = self.file_manager.load("rx.json")
@@ -368,102 +406,163 @@ class Manager:
         
         if not pending_records:
             logger.info("No pending records to enrich.")
+            # Clear progress file when done
+            if progress_file.exists():
+                progress_file.unlink()
             return
-
-        batch_records = pending_records[:batch_size]
-        logger.info(f"Processing {len(batch_records)} records starting from serial {batch_records[0].serial_number}...")
+        
+        total_pending = len(pending_records)
+        logger.info(f"Total pending: {total_pending} records")
         
         # Setup Photos Directory
         photos_dir = Path(self.config.data_directory) / "photos"
         photos_dir.mkdir(parents=True, exist_ok=True)
         
-        processed_count = 0
+        # Process in batches
+        batch_num = 0
+        total_processed = 0
         
-        for record in batch_records:
-            reg_no = record.registration_number
-            try:
-                # Scrape
-                details = self.scraper.extract_detailed_info(reg_no)
-                if not details: 
-                    continue
-                
-                # Get basic info from rx.json lookup FIRST for validation
-                basic_info = rx_lookup.get(reg_no)
-                
-                # CRITICAL SAFETY CHECK - Validate all details match the same person
-                mismatches = []
-                if details.registration_number and details.registration_number.lower() != reg_no.lower():
-                    mismatches.append(f"registration_number: expected '{reg_no}', got '{details.registration_number}'")
-                if details.name and basic_info and details.name.strip().lower() != basic_info.name.strip().lower():
-                    mismatches.append(f"name: expected '{basic_info.name}', got '{details.name}'")
-                if details.father_name and basic_info and details.father_name.strip().lower() != basic_info.father_name.strip().lower():
-                    mismatches.append(f"father_name: expected '{basic_info.father_name}', got '{details.father_name}'")
-                if details.category and basic_info and details.category.strip().lower() != basic_info.category.strip().lower():
-                    mismatches.append(f"category: expected '{basic_info.category}', got '{details.category}'")
-                
-                if mismatches:
-                    logger.critical(f"DATA CORRUPTION PREVENTED for {reg_no}: " + "; ".join(mismatches))
-                    raise DataIntegrityError(f"Data Integrity Violation: Mismatched fields for {reg_no}. Stopping to prevent corruption.")
+        while pending_records:
+            # Check max batches limit
+            if max_batches and batch_count >= max_batches:
+                logger.info(f"Reached max batches limit ({max_batches}), stopping for now.")
+                break
+            
+            batch_num += 1
+            batch_count += 1
+            
+            # Health check every 10 batches
+            if batch_num % 10 == 0:
+                logger.info(f"Health check at batch {batch_num}...")
+                if not self.scraper.health_check():
+                    logger.warning("Health check failed - pausing for 5 min before retry")
+                    time.sleep(300)
+                    if not self.scraper.health_check():
+                        logger.error("Still blocked after retry. Saving progress and stopping.")
+                        break
+            
+            batch_records = pending_records[:batch_size]
+            pending_records = pending_records[batch_size:]
+            
+            serial_start = batch_records[0].serial_number
+            serial_end = batch_records[-1].serial_number
+            logger.info(f"Batch {batch_count}: Processing serial {serial_start}-{serial_end} ({len(batch_records)} records)")
+            
+            processed_in_batch = 0
+            
+            for record in batch_records:
+                reg_no = record.registration_number
+                try:
+                    # Scrape
+                    details = self.scraper.extract_detailed_info(reg_no)
+                    if not details: 
+                        continue
+                    
+                    # Get basic info from rx.json lookup FIRST for validation
+                    basic_info = rx_lookup.get(reg_no)
+                    
+                    # CRITICAL SAFETY CHECK - Validate all details match the same person
+                    mismatches = []
+                    if details.registration_number and details.registration_number.lower() != reg_no.lower():
+                        mismatches.append(f"registration_number: expected '{reg_no}', got '{details.registration_number}'")
+                    if details.name and basic_info and details.name.strip().lower() != basic_info.name.strip().lower():
+                        mismatches.append(f"name: expected '{basic_info.name}', got '{details.name}'")
+                    if details.father_name and basic_info and details.father_name.strip().lower() != basic_info.father_name.strip().lower():
+                        mismatches.append(f"father_name: expected '{basic_info.father_name}', got '{details.father_name}'")
+                    if details.category and basic_info and details.category.strip().lower() != basic_info.category.strip().lower():
+                        mismatches.append(f"category: expected '{basic_info.category}', got '{details.category}'")
+                    
+                    if mismatches:
+                        logger.critical(f"DATA CORRUPTION PREVENTED for {reg_no}: " + "; ".join(mismatches))
+                        raise DataIntegrityError(f"Data Integrity Violation: Mismatched fields for {reg_no}. Stopping to prevent corruption.")
 
-                logger.info(f"✅ DATA VALIDATION PASSED: {reg_no} - {details.name} ({details.category})")
+                    logger.info(f"✅ DATA VALIDATION PASSED: {reg_no} - {details.name} ({details.category})")
 
-                if not basic_info:
-                    logger.warning(f"Basic info not found for {reg_no}, using scraped data")
-                    basic_data = {
-                        "registration_number": details.registration_number,
-                        "name": details.name,
-                        "father_name": details.father_name,
-                        "category": details.category,
-                        "serial_number": None
-                    }
-                else:
-                    basic_data = {
-                        "registration_number": basic_info.registration_number,
-                        "name": basic_info.name,
-                        "father_name": basic_info.father_name,
-                        "category": basic_info.category,
-                        "serial_number": basic_info.serial_number
-                    }
-                
-                # Combine basic info + extracted details
-                extracted_data = details.to_detailed_dict()
-                data = {**basic_data, **extracted_data}
+                    if not basic_info:
+                        logger.warning(f"Basic info not found for {reg_no}, using scraped data")
+                        basic_data = {
+                            "registration_number": details.registration_number,
+                            "name": details.name,
+                            "father_name": details.father_name,
+                            "category": details.category,
+                            "serial_number": None
+                        }
+                    else:
+                        basic_data = {
+                            "registration_number": basic_info.registration_number,
+                            "name": basic_info.name,
+                            "father_name": basic_info.father_name,
+                            "category": basic_info.category,
+                            "serial_number": basic_info.serial_number
+                        }
+                    
+                    # Combine basic info + extracted details
+                    extracted_data = details.to_detailed_dict()
+                    data = {**basic_data, **extracted_data}
 
-                # Save Photo Locally with WebP conversion only
-                if details.photo_base64:
-                    try:
-                        from PIL import Image
-                        import io
-                        
-                        file_data = base64.b64decode(details.photo_base64)
-                        img = Image.open(io.BytesIO(file_data))
-                        
-                        # Convert to RGB if necessary (for PNG with transparency)
-                        if img.mode in ('RGBA', 'LA', 'P'):
-                            rgb_img = Image.new('RGB', img.size, (255, 255, 255))
-                            rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
-                            img = rgb_img
-                        
-                        # Save as WebP with good quality/compression balance
-                        webp_path = photos_dir / f"{reg_no}.webp"
-                        img.save(webp_path, 'WebP', quality=85, method=6)
-                        
-                    except Exception as e:
-                        logger.error(f"Photo save failed for {reg_no}: {e}")
-                
-                # Save to individual JSON file
-                detail_file = details_dir / f"{reg_no}.json"
-                with open(detail_file, 'w', encoding='utf-8') as f:
-                    json.dump(data, f, indent=2, ensure_ascii=False)
-                
-                processed_count += 1
-                
-                # Rate limit
-                time.sleep(1) 
-                
-            except DataIntegrityError:
-                raise
-            except Exception as e:
-                logger.error(f"Enrichment failed for {reg_no}: {e}")
-                
-        logger.info(f"Enrichment complete. Processed {processed_count}/{len(batch_records)}")
+                    # Save Photo Locally with WebP conversion only
+                    if details.photo_base64:
+                        try:
+                            from PIL import Image
+                            import io
+                            
+                            file_data = base64.b64decode(details.photo_base64)
+                            img = Image.open(io.BytesIO(file_data))
+                            
+                            # Convert to RGB if necessary (for PNG with transparency)
+                            if img.mode in ('RGBA', 'LA', 'P'):
+                                rgb_img = Image.new('RGB', img.size, (255, 255, 255))
+                                rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                                img = rgb_img
+                            
+                            # Save as WebP with good quality/compression balance
+                            webp_path = photos_dir / f"{reg_no}.webp"
+                            img.save(webp_path, 'WebP', quality=85, method=6)
+                            
+                        except Exception as e:
+                            logger.error(f"Photo save failed for {reg_no}: {e}")
+                    
+                    # Save to individual JSON file
+                    detail_file = details_dir / f"{reg_no}.json"
+                    with open(detail_file, 'w', encoding='utf-8') as f:
+                        json.dump(data, f, indent=2, ensure_ascii=False)
+                    
+                    processed_in_batch += 1
+                    total_processed += 1
+                    
+                    # Rate limit - 2-3 seconds between requests (balanced)
+                    time.sleep(random.uniform(2, 3))
+                    
+                except DataIntegrityError:
+                    raise
+                except Exception as e:
+                    logger.error(f"Enrichment failed for {reg_no}: {e}")
+            
+            logger.info(f"Batch {batch_count} complete: {processed_in_batch}/{len(batch_records)} processed")
+            
+            # Batch pause: 30 seconds between batches
+            if pending_records:
+                logger.info("Pausing 30s before next batch...")
+                time.sleep(30)
+            
+            # Long pause after every 10 batches (5 minutes)
+            if batch_num % 10 == 0 and pending_records:
+                logger.info("Long pause: 5 minutes after 10 batches...")
+                time.sleep(300)
+            
+            # Save progress periodically (every batch)
+            with open(progress_file, 'w') as f:
+                json.dump({
+                    "batch_count": batch_count,
+                    "total_processed": total_processed,
+                    "last_serial": serial_end,
+                    "remaining": len(pending_records)
+                }, f)
+        
+        # Clear progress file when done
+        if not pending_records:
+            logger.info("All enrichment complete!")
+            if progress_file.exists():
+                progress_file.unlink()
+        else:
+            logger.info(f"Enrichment paused: {len(pending_records)} records remaining, {total_processed} processed")

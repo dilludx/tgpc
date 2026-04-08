@@ -28,6 +28,7 @@ data/details/
 data/metadata/
 data/rxdetails.json
 data/photos/
+data/enrichment_progress.json
 *.backup
 *.bak
 *.tmp
