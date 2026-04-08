@@ -45,11 +45,6 @@ class PharmacistRecord:
     
     def to_detailed_dict(self):
         return {
-            "registration_number": self.registration_number,
-            "name": self.name,
-            "father_name": self.father_name,
-            "category": self.category,
-            "serial_number": self.serial_number,
             "validity_date": self.validity_date or "",
             "education": self.education or [],
             "work_experience": self.work_experience or {

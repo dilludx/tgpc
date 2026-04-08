@@ -387,16 +387,26 @@ class Manager:
                 if not details: 
                     continue
                 
-                # CRITICAL SAFETY CHECK
-                # Ensure the data we got belongs to the ID we asked for
-                if details.registration_number != reg_no:
-                    logger.critical(f"SECURITY MISMATCH! Requested {reg_no} but got data for {details.registration_number}")
-                    raise DataIntegrityError("Data Integrity Violation: Stopping immediately to prevent corruption.")
-
-                logger.info(f"✅ MATCH CONFIRMED: {reg_no} (Serial: {record.serial_number})")
-
-                # Get basic info from rx.json lookup
+                # Get basic info from rx.json lookup FIRST for validation
                 basic_info = rx_lookup.get(reg_no)
+                
+                # CRITICAL SAFETY CHECK - Validate all details match the same person
+                mismatches = []
+                if details.registration_number and details.registration_number.lower() != reg_no.lower():
+                    mismatches.append(f"registration_number: expected '{reg_no}', got '{details.registration_number}'")
+                if details.name and basic_info and details.name.strip().lower() != basic_info.name.strip().lower():
+                    mismatches.append(f"name: expected '{basic_info.name}', got '{details.name}'")
+                if details.father_name and basic_info and details.father_name.strip().lower() != basic_info.father_name.strip().lower():
+                    mismatches.append(f"father_name: expected '{basic_info.father_name}', got '{details.father_name}'")
+                if details.category and basic_info and details.category.strip().lower() != basic_info.category.strip().lower():
+                    mismatches.append(f"category: expected '{basic_info.category}', got '{details.category}'")
+                
+                if mismatches:
+                    logger.critical(f"DATA CORRUPTION PREVENTED for {reg_no}: " + "; ".join(mismatches))
+                    raise DataIntegrityError(f"Data Integrity Violation: Mismatched fields for {reg_no}. Stopping to prevent corruption.")
+
+                logger.info(f"✅ DATA VALIDATION PASSED: {reg_no} - {details.name} ({details.category})")
+
                 if not basic_info:
                     logger.warning(f"Basic info not found for {reg_no}, using scraped data")
                     basic_data = {
