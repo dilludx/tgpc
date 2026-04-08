@@ -44,13 +44,21 @@ class PharmacistRecord:
         }
     
     def to_detailed_dict(self):
-        data = {
-            "validity_date": self.validity_date,
-            "education": self.education,
-            "work_experience": self.work_experience,
-            "photo_path": self.photo_path
+        return {
+            "registration_number": self.registration_number,
+            "name": self.name,
+            "father_name": self.father_name,
+            "category": self.category,
+            "serial_number": self.serial_number,
+            "validity_date": self.validity_date or "",
+            "education": self.education or [],
+            "work_experience": self.work_experience or {
+                "address": "",
+                "state": "",
+                "district": "",
+                "pin_code": ""
+            }
         }
-        return {k: v for k, v in data.items() if v}
 
 # --- Rate Limiter ---
 
@@ -276,20 +284,21 @@ class Scraper:
                                 'qualification': row_map.get('qualification') or row_map.get('category', ''),
                                 'university': row_map.get('board/university') or row_map.get('university', ''),
                                 'year': row_map.get('year') or row_map.get('to', ''),
+                                'college_name': row_map.get('college name', ''),
+                                'college_address': row_map.get('college address', ''),
+                                'from': row_map.get('from', ''),
+                                'to': row_map.get('to', ''),
+                                'hall_ticket_number': row_map.get('ht no', ''),
                             }
-                            optional_fields = {
-                                'college name': 'college_name',
-                                'college address': 'college_address',
-                                'from': 'from',
-                                'to': 'to',
-                                'ht no': 'hall_ticket_number',
-                            }
-                            for header, key in optional_fields.items():
-                                value = row_map.get(header, '')
-                                if value:
-                                    education[key] = value
                             edu_list.append(education)
-                    record.education = edu_list or None
+                    record.education = edu_list
+
+            record.work_experience = {
+                "address": "",
+                "state": "",
+                "district": "",
+                "pin_code": ""
+            }
 
             for table in tables:
                 headers = [self._normalize_header(th.get_text(" ", strip=True)) for th in table.find_all('th')]
@@ -309,8 +318,7 @@ class Scraper:
                         'district': row_map.get('district', ''),
                         'pin_code': row_map.get('pin code', ''),
                     }
-                    if any(work_info.values()):
-                        record.work_experience = work_info
+                    record.work_experience = work_info
                     break
 
             return record
