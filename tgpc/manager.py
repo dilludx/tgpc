@@ -478,31 +478,24 @@ class Manager:
 
                     logger.info(f"✅ DATA VALIDATION PASSED: {reg_no} - {details.name} ({details.category})")
 
+                    basic_info = rx_lookup.get(reg_no)
                     if not basic_info:
                         logger.warning(f"Basic info not found for {reg_no}, using scraped data")
-                        basic_data = {
-                            "registration_number": details.registration_number,
-                            "name": details.name,
-                            "father_name": details.father_name,
-                            "gender": details.gender or "",
-                            "category": details.category,
-                            "status": details.status or "",
-                            "serial_number": None
-                        }
-                    else:
-                        basic_data = {
-                            "registration_number": basic_info.registration_number,
-                            "name": basic_info.name,
-                            "father_name": basic_info.father_name,
-                            "gender": details.gender or "",
-                            "category": basic_info.category,
-                            "status": details.status or "",
-                            "serial_number": basic_info.serial_number
-                        }
+                    
+                    basic_data = {
+                        "registration_number": (basic_info.registration_number if basic_info else details.registration_number),
+                        "name": (basic_info.name if basic_info else details.name),
+                        "father_name": (basic_info.father_name if basic_info else details.father_name),
+                        "gender": details.gender or "",
+                        "category": (basic_info.category if basic_info else details.category),
+                        "status": details.status or "",
+                        "serial_number": (basic_info.serial_number if basic_info else None)
+                    }
                     
                     # Combine basic info + extracted details
                     extracted_data = details.to_detailed_dict()
-                    data = {**basic_data, **extracted_data}
+                    # Merge: use basic_data for core fields, extracted_data for extra fields (education, work_experience)
+                    data = {**extracted_data, **basic_data}
 
                     # Save Photo Locally with WebP conversion only
                     if details.photo_base64:
