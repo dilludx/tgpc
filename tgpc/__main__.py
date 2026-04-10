@@ -17,7 +17,9 @@ def main():
 
     # Enrich command
     enrich_parser = subparsers.add_parser('enrich', help='Run enrichment pipeline')
-    enrich_parser.add_argument('--batch-size', type=int, default=50, help='Number of records to process')
+    enrich_parser.add_argument('--batch-size', type=int, default=50, help='Number of records per batch')
+    enrich_parser.add_argument('--start', type=int, default=1, help='Start from serial number (default: 1)')
+    enrich_parser.add_argument('--stop', type=int, default=None, help='Stop at serial number (default: all)')
 
     args = parser.parse_args()
     
@@ -31,7 +33,7 @@ def main():
     elif args.command == 'sync':
         manager.sync_to_supabase()
     elif args.command == 'enrich':
-        manager.run_enrichment(batch_size=args.batch_size)
+        manager.run_enrichment(batch_size=args.batch_size, start=args.start, stop=args.stop)
     else:
         parser.print_help()
 

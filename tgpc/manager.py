@@ -360,12 +360,13 @@ class Manager:
         except Exception as e:
             logger.error(f"Sync failed: {e}")
 
-    def run_enrichment(self, batch_size: int = 50, max_batches: int = None):
+    def run_enrichment(self, batch_size: int = 50, start: int = 1, stop: int = None):
         """Run enrichment pipeline with resume capability.
         
         Args:
             batch_size: Records per batch (default 50)
-            max_batches: Limit batches for testing (None = unlimited)
+            start: Start from serial number (default: 1)
+            stop: Stop at serial number (default: all)
         """
         
         # Health check - abort if blocked
@@ -418,15 +419,28 @@ class Manager:
         photos_dir = Path(self.config.data_directory) / "photos"
         photos_dir.mkdir(parents=True, exist_ok=True)
         
+        # Filter by start/stop range
+        if start or stop:
+            filtered = []
+            for r in pending_records:
+                sn = r.serial_number or 0
+                if start and sn < start:
+                    continue
+                if stop and sn > stop:
+                    continue
+                filtered.append(r)
+            pending_records = filtered
+            logger.info(f"Processing serial {start or 1} to {stop or 'end'}")
+        
+        if not pending_records:
+            logger.info("No records in range.")
+            return
+        
         # Process in batches
         batch_num = 0
         total_processed = 0
         
         while pending_records:
-            # Check max batches limit
-            if max_batches and batch_count >= max_batches:
-                logger.info(f"Reached max batches limit ({max_batches}), stopping for now.")
-                break
             
             batch_num += 1
             batch_count += 1
@@ -536,16 +550,6 @@ class Manager:
                     logger.error(f"Enrichment failed for {reg_no}: {e}")
             
             logger.info(f"Batch {batch_count} complete: {processed_in_batch}/{len(batch_records)} processed")
-            
-            # Batch pause: 30 seconds between batches
-            if pending_records:
-                logger.info("Pausing 30s before next batch...")
-                time.sleep(30)
-            
-            # Long pause after every 10 batches (5 minutes)
-            if batch_num % 10 == 0 and pending_records:
-                logger.info("Long pause: 5 minutes after 10 batches...")
-                time.sleep(300)
             
             # Save progress periodically (every batch)
             with open(progress_file, 'w') as f:
