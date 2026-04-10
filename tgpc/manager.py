@@ -360,13 +360,14 @@ class Manager:
         except Exception as e:
             logger.error(f"Sync failed: {e}")
 
-    def run_enrichment(self, batch_size: int = 50, start: int = 1, stop: int = None):
+    def run_enrichment(self, batch_size: int = 50, start: int = 1, stop: int = None, force: bool = False):
         """Run enrichment pipeline with resume capability.
         
         Args:
             batch_size: Records per batch (default 50)
             start: Start from serial number (default: 1)
             stop: Stop at serial number (default: all)
+            force: Re-extract even if already done
         """
         
         # Health check - abort if blocked
@@ -419,18 +420,28 @@ class Manager:
         photos_dir = Path(self.config.data_directory) / "photos"
         photos_dir.mkdir(parents=True, exist_ok=True)
         
-        # Filter by start/stop range
+        # Filter by start/stop range - use serial_number from rx.json as position
         if start or stop:
+            rx_records_all = self.file_manager.load("rx.json")
+            rx_records_all.sort(key=lambda r: (r.serial_number or 0, r.registration_number))
+            
             filtered = []
-            for r in pending_records:
-                sn = r.serial_number or 0
-                if start and sn < start:
+            for i, r in enumerate(rx_records_all):
+                if start and i+1 < start:
                     continue
-                if stop and sn > stop:
+                if stop and i+1 > stop:
+                    break
+                if not force and r.registration_number in done_ids:
                     continue
                 filtered.append(r)
             pending_records = filtered
-            logger.info(f"Processing serial {start or 1} to {stop or 'end'}")
+            
+            if force:
+                logger.info(f"--force: re-extracting {len([r for r in pending_records if r.registration_number in done_ids])} already done records")
+            
+            start_str = f"serial {start}" if start else "all"
+            stop_str = f"serial {stop}" if stop else "end"
+            logger.info(f"Processing {start_str} to {stop_str} ({len(pending_records)} records)")
         
         if not pending_records:
             logger.info("No records in range.")
@@ -444,16 +455,6 @@ class Manager:
             
             batch_num += 1
             batch_count += 1
-            
-            # Health check every 10 batches
-            if batch_num % 10 == 0:
-                logger.info(f"Health check at batch {batch_num}...")
-                if not self.scraper.health_check():
-                    logger.warning("Health check failed - pausing for 5 min before retry")
-                    time.sleep(300)
-                    if not self.scraper.health_check():
-                        logger.error("Still blocked after retry. Saving progress and stopping.")
-                        break
             
             batch_records = pending_records[:batch_size]
             pending_records = pending_records[batch_size:]
@@ -533,7 +534,7 @@ class Manager:
                         except Exception as e:
                             logger.error(f"Photo save failed for {reg_no}: {e}")
                     
-                    # Save to individual JSON file
+# Save to individual JSON file
                     detail_file = details_dir / f"{reg_no}.json"
                     with open(detail_file, 'w', encoding='utf-8') as f:
                         json.dump(data, f, indent=2, ensure_ascii=False)
@@ -541,9 +542,18 @@ class Manager:
                     processed_in_batch += 1
                     total_processed += 1
                     
+                    # Save progress after each record (in case of abrupt stop)
+                    with open(progress_file, 'w') as f:
+                        json.dump({
+                            "batch_count": batch_count,
+                            "total_processed": total_processed,
+                            "last_serial": record.serial_number,
+                            "remaining": len(pending_records) + len(batch_records) - processed_in_batch
+                        }, f)
+                    
                     # Rate limit - 2-3 seconds between requests (balanced)
                     time.sleep(random.uniform(2, 3))
-                    
+                
                 except DataIntegrityError:
                     raise
                 except Exception as e:
