@@ -484,7 +484,9 @@ class Manager:
                             "registration_number": details.registration_number,
                             "name": details.name,
                             "father_name": details.father_name,
+                            "gender": details.gender or "",
                             "category": details.category,
+                            "status": details.status or "",
                             "serial_number": None
                         }
                     else:
@@ -492,7 +494,9 @@ class Manager:
                             "registration_number": basic_info.registration_number,
                             "name": basic_info.name,
                             "father_name": basic_info.father_name,
+                            "gender": details.gender or "",
                             "category": basic_info.category,
+                            "status": details.status or "",
                             "serial_number": basic_info.serial_number
                         }
                     

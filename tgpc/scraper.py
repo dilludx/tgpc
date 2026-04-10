@@ -28,24 +28,25 @@ class PharmacistRecord:
     category: str
     serial_number: Optional[int] = None
     
+    gender: Optional[str] = None
     validity_date: Optional[str] = None
-    education: Optional[List[Dict[str, str]]] = None
-    work_experience: Optional[Dict[str, str]] = None
+    status: Optional[str] = None
     photo_base64: Optional[str] = None
     photo_path: Optional[str] = None
+    
+    education: Optional[List[Dict[str, str]]] = None
+    work_experience: Optional[Dict[str, str]] = None
 
     def to_dict(self):
         return {
             "registration_number": self.registration_number,
             "name": self.name,
             "father_name": self.father_name,
-            "category": self.category,
-            "serial_number": self.serial_number
-        }
-    
-    def to_detailed_dict(self):
-        return {
+            "gender": self.gender or "",
             "validity_date": self.validity_date or "",
+            "category": self.category,
+            "status": self.status or "",
+            "serial_number": self.serial_number,
             "education": self.education or [],
             "work_experience": self.work_experience or {
                 "address": "",
@@ -54,6 +55,9 @@ class PharmacistRecord:
                 "pin_code": ""
             }
         }
+    
+    def to_detailed_dict(self):
+        return self.to_dict()
 
 # --- Rate Limiter ---
 
@@ -283,7 +287,9 @@ class Scraper:
                 record.registration_number = basic_values.get('registration no') or reg_no
                 record.name = basic_values.get('name', '')
                 record.father_name = basic_values.get('father name', '')
+                record.gender = basic_values.get('gender', '')
                 record.category = basic_values.get('category', '')
+                record.status = basic_values.get('status', '')
                 validity_date = self._parse_date_value(basic_values.get('validity', ''))
                 if validity_date:
                     record.validity_date = validity_date
