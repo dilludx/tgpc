@@ -20,6 +20,9 @@ class FakeScraper:
     def __init__(self, records):
         self._records = records
 
+    def health_check(self):
+        return True
+
     def extract_basic_records(self):
         return self._records
 
@@ -27,6 +30,9 @@ class FakeScraper:
 class FailingScraper:
     def __init__(self, error):
         self._error = error
+
+    def health_check(self):
+        return True
 
     def extract_basic_records(self):
         raise self._error

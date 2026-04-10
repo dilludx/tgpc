@@ -38,6 +38,17 @@ class PharmacistRecord:
     work_experience: Optional[Dict[str, str]] = None
 
     def to_dict(self):
+        """Convert to dictionary, strictly maintaining the 5-field schema for rx.json."""
+        return {
+            "registration_number": self.registration_number,
+            "name": self.name,
+            "father_name": self.father_name,
+            "category": self.category,
+            "serial_number": self.serial_number
+        }
+    
+    def to_detailed_dict(self):
+        """Convert to detailed dictionary for individual enrichment JSON files."""
         return {
             "registration_number": self.registration_number,
             "name": self.name,
@@ -55,9 +66,6 @@ class PharmacistRecord:
                 "pin_code": ""
             }
         }
-    
-    def to_detailed_dict(self):
-        return self.to_dict()
 
 # --- Rate Limiter ---
 

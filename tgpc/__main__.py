@@ -28,7 +28,7 @@ def main():
 
     if args.command == 'update':
         status = manager.run_daily_update()
-        if status in {"source_unavailable", "updated"}:
+        if status in {"source_unavailable", "updated", "blocked"}:
             return
         raise SystemExit(1)
     elif args.command == 'sync':

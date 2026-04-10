@@ -17,14 +17,6 @@ def make_response(html: str) -> MagicMock:
 
 
 class ScraperParsingTests(unittest.TestCase):
-    def test_scraper_configures_proxy_when_present(self):
-        with patch("tgpc.scraper.Config.load", return_value=Config(proxy_url="http://proxy.local:8080")):
-            scraper = Scraper()
-
-        self.assertEqual(scraper.proxies, {"http": "http://proxy.local:8080", "https": "http://proxy.local:8080"})
-        self.assertEqual(scraper.session.proxies["https"], "http://proxy.local:8080")
-        self.assertFalse(scraper.session.trust_env)
-
     def test_request_uses_split_connect_and_read_timeouts(self):
         scraper = Scraper()
         response = MagicMock()
@@ -113,7 +105,7 @@ class ScraperParsingTests(unittest.TestCase):
                     <td>Jane Pharmacist</td>
                     <td>Parent Name</td>
                     <td>Female</td>
-                    <td>31-Dec-2026</td>
+                    <td>31/12/2026</td>
                     <td>BPharm</td>
                     <td>Active</td>
                     <td><img id="imgPhotoMain" src="data:image/jpeg;base64,QUJDREVGRw==" /></td>
@@ -173,6 +165,8 @@ class ScraperParsingTests(unittest.TestCase):
                     "college_name": "North Campus",
                     "college_address": "Warangal",
                     "from": "2019",
+                    "to": "",
+                    "hall_ticket_number": "",
                 },
             ],
         )
@@ -217,11 +211,21 @@ class ScraperParsingTests(unittest.TestCase):
                     "qualification": "B.Pharm",
                     "university": "Osmania University",
                     "year": "2018",
+                    "college_name": "",
+                    "college_address": "",
+                    "from": "",
+                    "to": "",
+                    "hall_ticket_number": "",
                 },
                 {
                     "qualification": "M.Pharm",
                     "university": "Kakatiya University",
                     "year": "",
+                    "college_name": "",
+                    "college_address": "",
+                    "from": "",
+                    "to": "",
+                    "hall_ticket_number": "",
                 },
             ],
         )

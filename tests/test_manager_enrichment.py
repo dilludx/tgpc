@@ -17,6 +17,9 @@ class DetailScraper:
     def __init__(self, details_by_id):
         self.details_by_id = details_by_id
 
+    def health_check(self):
+        return True
+
     def extract_detailed_info(self, reg_no):
         return self.details_by_id.get(reg_no)
 
@@ -57,17 +60,18 @@ class ManagerEnrichmentTests(unittest.TestCase):
             manager.file_manager.save(
                 [
                     record("RX002", serial=2),
-                    record("RX001", serial=1),
+                    record("RX001", name="Alpha", father="Parent", serial=1),
                 ]
             )
 
             manager.run_enrichment(batch_size=1)
 
-            details = json.loads(Path(temp_dir, "rxdetails.json").read_text(encoding="utf-8"))
-            self.assertEqual(list(details.keys()), ["RX001"])
-            self.assertEqual(details["RX001"]["validity_date"], "2026-12-31")
-            self.assertEqual(details["RX001"]["education"][0]["qualification"], "BPharm")
-            self.assertEqual(details["RX001"]["work_experience"]["address"], "Clinic Street")
+            detail_file = Path(temp_dir, "details", "RX001.json")
+            self.assertTrue(detail_file.exists())
+            details = json.loads(detail_file.read_text(encoding="utf-8"))
+            self.assertEqual(details["validity_date"], "2026-12-31")
+            self.assertEqual(details["education"][0]["qualification"], "BPharm")
+            self.assertEqual(details["work_experience"]["address"], "Clinic Street")
 
     @patch("tgpc.manager.time.sleep", return_value=None)
     def test_run_enrichment_raises_on_registration_mismatch(self, _sleep):
@@ -88,7 +92,7 @@ class ManagerEnrichmentTests(unittest.TestCase):
             with self.assertRaises(DataIntegrityError):
                 manager.run_enrichment(batch_size=1)
 
-            self.assertFalse(Path(temp_dir, "rxdetails.json").exists())
+            self.assertFalse(Path(temp_dir, "details", "RX001.json").exists())
 
 
 if __name__ == "__main__":
