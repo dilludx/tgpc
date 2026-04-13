@@ -1,0 +1,472 @@
+name: ♻️ Rx Sync
+
+on:
+  schedule:
+    # Run 2 times daily
+    - cron: '30 2 * * *'   # 8:00 AM IST
+    - cron: '30 14 * * *'  # 8:00 PM IST
+  workflow_dispatch:  # Allow manual triggering
+    inputs:
+      force_sync:
+        description: 'Force Sync to Supabase'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  rx-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+      env:
+        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 2
+    
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      env:
+        FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .
+        pip install supabase
+    
+    - name: Create data directory
+      run: |
+        mkdir -p data/backups
+    
+    - name: Run data update
+      id: update
+      env:
+        TGPC_USE_TOR: false
+      run: |
+        if [[ "${{ github.event.inputs.force_sync }}" == "true" ]]; then
+          echo "⚡ FORCE SYNC MODE - Skipping data update, using existing data"
+          {
+            echo "success=True"
+            echo "total_records=$(python -c 'import json; print(len(json.load(open("data/rx.json"))))')"
+            echo "new_records=0"
+            echo "modified_records=0"
+            echo "removed_records=0"
+            echo "integrity_score=1.0"
+          } >> "$GITHUB_OUTPUT"
+        else
+          echo "♻️ STARTING TGPC DATA UPDATE..."
+          
+          # Run the update via CLI (outputs stats to GITHUB_OUTPUT automatically)
+          python -m tgpc update
+        fi
+
+
+    - name: Check for changes and save new records
+      id: changes
+      if: ${{ steps.update.outputs.success == 'True' }}
+      run: |
+        rm -f /tmp/new_records.json
+
+        if git diff --quiet data/rx.json; then
+          echo "changes=false" >> "$GITHUB_OUTPUT"
+          echo "NO CHANGES DETECTED IN RX.JSON"
+        else
+          echo "changes=true" >> "$GITHUB_OUTPUT"
+          echo "CHANGES DETECTED IN RX.JSON"
+          echo ""
+          echo "🌱 RECORDS ADDED:"
+          echo "===================="
+          
+          # Save only truly new registration numbers (JSON-aware, not line-diff based)
+          python3 << 'PYEOF'
+        import json
+        import subprocess
+        from pathlib import Path
+
+        current_path = Path("data/rx.json")
+        current_records = json.loads(current_path.read_text(encoding="utf-8"))
+
+        base_records = []
+        show = subprocess.run(
+            ["git", "show", "HEAD:data/rx.json"],
+            capture_output=True,
+            text=True
+        )
+        if show.returncode == 0 and show.stdout.strip():
+            base_records = json.loads(show.stdout)
+
+        base_ids = {r.get("registration_number") for r in base_records}
+        new_records = [
+            r for r in current_records
+            if r.get("registration_number") and r.get("registration_number") not in base_ids
+        ]
+
+        with open("/tmp/new_records.json", "w", encoding="utf-8") as f:
+            json.dump(new_records, f, ensure_ascii=False)
+
+        if new_records:
+            for i, record in enumerate(new_records, 1):
+                print(
+                    f"{i}. {record.get('registration_number', 'N/A')} - "
+                    f"{record.get('name', 'N/A')} ({record.get('category', 'N/A')})"
+                )
+        else:
+            print("No new records detected")
+        PYEOF
+        fi
+    
+    - name: Sync to Supabase
+      if: ${{ steps.update.outputs.success == 'True' }}
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      run: |
+        echo "♻️ SYNCING DATA TO SUPABASE CLOUD DATABASE..."
+        python -m tgpc sync
+    
+    - name: Commit and push changes
+      if: ${{ steps.update.outputs.success == 'True' }}
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Add data files (JSON only)
+        git add data/rx.json
+        
+        # Format category stats for commit message
+        NEW_CATS='${{ steps.update.outputs.new_cat_stats }}'
+        REM_CATS='${{ steps.update.outputs.rem_cat_stats }}'
+        MOD_CATS='${{ steps.update.outputs.mod_cat_stats }}'
+        
+        # Generate commit message using Python
+        COMMIT_MSG=$(python3 << PYEOF
+        import json
+        from datetime import datetime, timezone, timedelta
+        
+        def format_cats(json_str):
+            try:
+                stats = json.loads(json_str) if json_str else {}
+                if stats:
+                    parts = [f'{k}: {v}' for k, v in sorted(stats.items(), key=lambda x: x[1], reverse=True)]
+                    return ', '.join(parts)
+                return '0'
+            except:
+                return '0'
+        
+        # Get IST time (UTC+5:30) using built-in
+        ist = timezone(timedelta(hours=5, minutes=30))
+        now = datetime.now(ist)
+        date_str = now.strftime('%a %d %b %Y').upper()
+        time_str = now.strftime('%H:%M IST')
+        
+        new_cats = format_cats('''${NEW_CATS}''')
+        mod_cats = format_cats('''${MOD_CATS}''')
+        rem_cats = format_cats('''${REM_CATS}''')
+        
+        # Build commit message - single line
+        msg = f"♻️ Rx Sync • {date_str} • {time_str}"
+        
+        if new_cats != '0':
+            msg += f" • 🌱 NEW: {new_cats}"
+        
+        if mod_cats != '0':
+            msg += f" • 🌀 CHANGES: {mod_cats}"
+        
+        if rem_cats != '0':
+            msg += f" • ❌ REMOVALS: {rem_cats}"
+        
+        msg += f" • 📊 Total: ${{ steps.update.outputs.total_records }}"
+        
+        print(msg)
+        PYEOF
+        )
+        
+        if git diff --cached --quiet; then
+          echo "No staged changes to commit."
+          exit 0
+        fi
+
+        git commit -m "$COMMIT_MSG"
+        
+        # Pull latest changes and merge safely
+        git pull origin "${{ github.ref_name }}" --no-rebase
+        
+        git push origin HEAD:"${{ github.ref_name }}"
+    
+    - name: Create update summary
+      if: always()
+      run: |
+        UPDATE_STATUS='${{ steps.update.outputs.update_status }}'
+        SOURCE_ERROR='${{ steps.update.outputs.source_error }}'
+
+        # Parse details JSON
+        NEW_DETAILS='${{ steps.update.outputs.new_details }}'
+        REM_DETAILS='${{ steps.update.outputs.removed_details }}'
+        MOD_DETAILS='${{ steps.update.outputs.modified_details }}'
+        
+        NEW_CATS='${{ steps.update.outputs.new_cat_stats }}'
+        REM_CATS='${{ steps.update.outputs.rem_cat_stats }}'
+        MOD_CATS='${{ steps.update.outputs.mod_cat_stats }}'
+        
+        {
+          echo "### ♻️ Rx Sync • $(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]') • $(TZ='Asia/Kolkata' date '+%H:%M IST')"
+          echo ""
+        } >> "$GITHUB_STEP_SUMMARY"
+
+        if [ "$UPDATE_STATUS" = "source_unavailable" ]; then
+          {
+            echo "⚠️ TGPC source was unreachable during this run."
+            echo ""
+            if [ -n "$SOURCE_ERROR" ]; then
+              echo "Source error: \`$SOURCE_ERROR\`"
+              echo ""
+            fi
+            echo "Existing data was preserved, and Supabase sync / commit steps were skipped."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
+
+        if [ "$UPDATE_STATUS" = "empty_scrape" ]; then
+          {
+            echo "🛑 Update aborted because the scraper returned no records."
+            echo ""
+            echo "Existing data was preserved."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
+
+        if [ "$UPDATE_STATUS" = "safety_abort" ]; then
+          {
+            echo "🛑 Update aborted by the safety guard."
+            echo ""
+            echo "The new scrape dropped below the 90% integrity threshold, so existing data was preserved."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+        fi
+        
+        # Use python to parse JSON and output lists
+        python -c "
+        import json
+        import os
+        
+        def format_cats(json_str):
+            try:
+                stats = json.loads(json_str) if json_str else {}
+                if not stats: return ''
+                # Sort by count desc
+                sorted_stats = sorted(stats.items(), key=lambda item: item[1], reverse=True)
+                parts = [f'{k}: {v}' for k, v in sorted_stats]
+                return ', '.join(parts)
+            except: return ''
+
+        try:
+            # Handle potential empty strings by defaulting to empty list JSON
+            new_json = '$NEW_DETAILS' if '$NEW_DETAILS' else '[]'
+            rem_json = '$REM_DETAILS' if '$REM_DETAILS' else '[]'
+            mod_json = '$MOD_DETAILS' if '$MOD_DETAILS' else '[]'
+
+            new_recs = json.loads(new_json) or []
+            rem_recs = json.loads(rem_json) or []
+            mod_recs = json.loads(mod_json) or []
+            
+            new_cat_str = format_cats('$NEW_CATS')
+            rem_cat_str = format_cats('$REM_CATS')
+            mod_cat_str = format_cats('$MOD_CATS')
+            
+            # Check if there are any changes at all
+            has_changes = new_cat_str or mod_cat_str or rem_cat_str
+            
+            if not has_changes:
+                print('✅ No updates')
+            else:
+                # Additions
+                if new_cat_str:
+                    print(f'#### 🌱 NEW: {new_cat_str}')
+                    for r in new_recs:
+                        print(f'- {r}')
+                    print('')
+                
+                # Modifications
+                if mod_cat_str:
+                    print(f'#### 🌀 CHANGES: {mod_cat_str}')
+                    for r in mod_recs:
+                        print(f'- {r}')
+                    print('')
+                
+                # Removals
+                if rem_cat_str:
+                    print(f'#### ❌ REMOVALS: {rem_cat_str}')
+                    for r in rem_recs:
+                        print(f'- {r}')
+                
+        except Exception as e:
+            print(f'Error parsing details: {e}')
+        " >> "$GITHUB_STEP_SUMMARY"
+    
+    - name: Send email notification
+      if: ${{ steps.update.outputs.success == 'True' }}
+      run: |
+        python3 << 'EOF'
+        import smtplib
+        import json
+        import re
+        from email.mime.text import MIMEText
+        from email.mime.multipart import MIMEMultipart
+        from email.utils import formataddr
+        from datetime import datetime, timezone, timedelta
+        
+        # Email configuration
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+        sender_email = "${{ secrets.GMAIL_USERNAME }}"
+        app_password = "${{ secrets.GMAIL_APP_PASSWORD }}"
+        recipient_email = "${{ secrets.NOTIFICATION_EMAIL }}"
+        
+        # Get IST time
+        ist = timezone(timedelta(hours=5, minutes=30))
+        now = datetime.now(ist)
+        sync_time = now.strftime("%d %B %Y, %A, %H:%M IST")
+        
+        # Format subject timestamp: "05MAR2026 THU 09:53 IST"
+        subject_time = now.strftime("%d%b%Y %a %H:%M IST").upper()
+        
+        # Parse details
+        new_details = json.loads('${{ steps.update.outputs.new_details }}' or '[]')
+        mod_details = json.loads('${{ steps.update.outputs.modified_details }}' or '[]')
+        rem_details = json.loads('${{ steps.update.outputs.removed_details }}' or '[]')
+        
+        # Exit if there is no data to sync
+        if not new_details and not mod_details and not rem_details:
+            print("✅ No new updates to sync. Skipping email notification.")
+            import sys
+            sys.exit(0)
+        
+        def get_reg_no(s):
+            match = re.search(r'(\d+)', s)
+            return int(match.group(1)) if match else 0
+
+        def get_category(s):
+            match = re.search(r'\((.*?)\)', s)
+            if not match: return "Other"
+            cat = match.group(1).upper()
+            mapping = {
+                "BPHARM": "BPharm",
+                "MPHARM": "MPharm",
+                "DPHARM": "DPharm",
+                "PHARMD": "PharmD",
+                "QP": "QP"
+            }
+            return mapping.get(cat, cat.title())
+
+        def format_html_list(title, items, color):
+            if not items: return ""
+            cats = {}
+            for i in items:
+                c = get_category(i)
+                cats.setdefault(c, []).append(i)
+            
+            html = f'<div style="margin-bottom: 35px;">'
+            html += f'<h4 style="margin: 0 0 16px 0; color: {color}; font-size: 14px; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid {color}; padding-bottom: 6px; display: inline-block; letter-spacing: 0.5px;">{title} ({len(items)})</h4>\n'
+            
+            for c in sorted(cats.keys()):
+                recs = cats[c]
+                html += f'<div style="margin-bottom: 18px;">\n'
+                html += f'<div style="font-size: 11px; font-weight: 700; color: #111; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 1px; line-height: 1.4;">{c} ({len(recs)})</div>\n'
+                
+                for r in sorted(recs, key=get_reg_no):
+                    # Split on first " - " to get reg number and the rest
+                    parts = r.split(' - ', 1)
+                    reg = parts[0].strip()
+                    name = parts[1] if len(parts) > 1 else r
+                    # Remove trailing category like (BPharm)
+                    name = re.sub(r"\s*\(.*?\)$", "", name).strip()
+                    
+                    html += f'<div style="font-size: 13px; color: #6b7280; line-height: 1.4; padding: 4px 0;">'
+                    html += f'<span style="font-family: ui-monospace, monospace;">{reg}</span> - {name}</div>\n'
+                    
+                html += f'</div>\n'
+            html += '</div>'
+            return html
+
+        added_html = format_html_list("🌱 NEW", new_details, "#00cc66")
+        mod_html = format_html_list("🌀 CHANGES", mod_details, "#3b82f6")
+        rem_html = format_html_list("❌ REMOVALS", rem_details, "#ef4444")
+        
+        # Text body generation (kept simple)
+        text_body = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
+        sections = [("NEW", new_details), ("CHANGES", mod_details), ("REMOVALS", rem_details)]
+        for label, items in sections:
+            if items:
+                text_body += f"{label} ({len(items)}):\n"
+                sorted_items = sorted(items, key=lambda x: (get_category(x), get_reg_no(x)))
+                text_body += "\n".join(sorted_items) + "\n\n"
+        text_body += "---\nTGPC Rx Registry\nAutomated Data Synchronization System"
+        
+        html_body = (
+            "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head>" +
+            "<body style=\"font-family: -apple-system, sans-serif; background: #ffffff; padding: 15px 20px; color: #333; line-height: 1.3; margin: 0;\">" +
+            "<div style=\"max-width: 600px;\">" +
+            "<h2 style=\"margin: 0; font-size: 17px; line-height: 1.2;\">" +
+            "<span style=\"color: #00cc66;\">TGPC</span> " +
+            "<span style=\"color: #ef4444;\">Rx</span> " +
+            "<span style=\"color: #808080;\">Registry</span> Sync Report</h2>" +
+            "<div style=\"color: #666; font-size: 12px; margin-bottom: 30px; font-weight: 500;\">" + sync_time + "</div>" +
+            
+            added_html + mod_html + rem_html +
+            
+            "<div style=\"margin-top: 15px; font-size: 11px; color: #888; line-height: 1.4; padding-top: 10px;\">" +
+            "<div style=\"font-weight: 700;\">" +
+            "<span style=\"color: #00cc66;\">TGPC</span> " +
+            "<span style=\"color: #ef4444;\">Rx</span> " +
+            "<span style=\"color: #808080;\">Registry</span></div>" +
+            "<div>Automated Data Synchronization System</div>" +
+            "</div>" +
+            "</div></body></html>"
+        )
+        
+        # Build dynamic subject: 🌱 3 | 🌀 1 | 05MAR2026 THU 09:53 IST | Rx Data Sync
+        subject_parts = []
+        if new_details: subject_parts.append(f"🌱 {len(new_details)}")
+        if mod_details: subject_parts.append(f"🌀 {len(mod_details)}")
+        if rem_details: subject_parts.append(f"❌ {len(rem_details)}")
+        
+        subject = " | ".join(subject_parts + ["Rx Data Sync", subject_time])
+        
+        msg = MIMEMultipart('alternative')
+        msg['From'] = formataddr(("Rx Data Sync", sender_email))
+        msg['To'] = recipient_email
+        msg['Subject'] = subject
+        
+        msg.attach(MIMEText(text_body, 'plain'))
+        msg.attach(MIMEText(html_body, 'html'))
+        
+        try:
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            server.starttls()
+            server.login(sender_email, app_password)
+            server.send_message(msg)
+            server.quit()
+            print("✅ Email sent successfully")
+        except Exception as e:
+            print(f"❌ Failed to send email: {e}")
+        EOF
+
+    - name: Notify on failure
+      if: failure()
+      run: |
+        echo "❌ Daily update failed! Check the logs above for details."
+        echo "The rx.json file was not updated due to validation failures or errors."
+
+  # Trigger website status check after rx-sync completes
+  verify-website:
+    name: Verify Website Status
+    needs: rx-sync
+    if: always()  # Run even if rx-sync fails, to check if site is still up
+    uses: ./.github/workflows/website-status.yml
