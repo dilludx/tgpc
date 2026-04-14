@@ -3,7 +3,26 @@ CLI entry point for TGPC system.
 """
 
 import argparse
+import os
+from pathlib import Path
 from tgpc.manager import Manager
+
+def load_credentials():
+    """Load Supabase credentials from file if not set in environment."""
+    if os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_SECRET_KEY"):
+        return
+    
+    creds_file = Path(__file__).parent.parent / "supabase-creds.sh"
+    if creds_file.exists():
+        try:
+            with open(creds_file, 'r') as f:
+                for line in f:
+                    if line.strip().startswith('export '):
+                        var, value = line.strip()[7:].split('=', 1)
+                        value = value.strip('"\'')
+                        os.environ[var] = value
+        except Exception as e:
+            print(f"Warning: Could not load credentials file: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description="TGPC Rx Registry Manager")
@@ -31,10 +50,12 @@ def main():
         status = manager.run_daily_update()
         if status in {"source_unavailable", "updated", "blocked"}:
             if args.sync_supabase:
+                load_credentials()
                 manager.sync_to_supabase()
             return
         raise SystemExit(1)
     elif args.command == 'sync':
+        load_credentials()
         manager.sync_to_supabase()
     elif args.command == 'enrich':
         manager.run_enrichment(batch_size=args.batch_size, start=args.start, stop=args.stop, force=args.force)
