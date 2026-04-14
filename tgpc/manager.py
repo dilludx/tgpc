@@ -9,6 +9,7 @@ import os
 import base64
 import time
 import random
+import subprocess
 import requests
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -561,6 +562,16 @@ class Manager:
                     logger.error(f"Enrichment failed for {reg_no}: {e}")
             
             logger.info(f"Batch {batch_count} complete: {processed_in_batch}/{len(batch_records)} processed")
+            
+            # Sync to Google Drive after each batch
+            logger.info("Syncing to Google Drive...")
+            try:
+                subprocess.run(['rclone', 'copyto', str(self.file_manager.data_dir / 'rx.json'), 'gdrive:tgpc-backup/rx.json'], check=True, capture_output=True)
+                subprocess.run(['rclone', 'sync', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc-backup/details'], check=True, capture_output=True)
+                subprocess.run(['rclone', 'sync', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc-backup/photos'], check=True, capture_output=True)
+                logger.info("✅ Sync to Google Drive complete")
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Google Drive sync failed: {e}")
             
             # Save progress periodically (every batch)
             with open(progress_file, 'w') as f:
