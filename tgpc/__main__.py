@@ -11,6 +11,7 @@ def main():
 
     # Update command
     update_parser = subparsers.add_parser('update', help='Run daily update process')
+    update_parser.add_argument('--sync-supabase', action='store_true', help='Also sync to Supabase after update')
 
     # Sync command
     sync_parser = subparsers.add_parser('sync', help='Sync data to Supabase')
@@ -29,6 +30,8 @@ def main():
     if args.command == 'update':
         status = manager.run_daily_update()
         if status in {"source_unavailable", "updated", "blocked"}:
+            if args.sync_supabase:
+                manager.sync_to_supabase()
             return
         raise SystemExit(1)
     elif args.command == 'sync':
