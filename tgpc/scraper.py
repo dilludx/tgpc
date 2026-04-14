@@ -60,10 +60,10 @@ class PharmacistRecord:
             "status": self.status or "",
             "education": self.education or [],
             "work_experience": self.work_experience or {
-                "address": "",
-                "state": "",
-                "district": "",
-                "pin_code": ""
+                "Address": "",
+                "State": "",
+                "District": "",
+                "Pin code": ""
             }
         }
 
@@ -329,22 +329,22 @@ class Scraper:
                                 for i in range(min(len(headers), len(cols)))
                             }
                             education = {
-                                'category': row_map.get('category') or row_map.get('qualification', ''),
-                                'board_university': row_map.get('board/university') or row_map.get('university', ''),
-                                'college_name': row_map.get('college name', ''),
-                                'college_address': row_map.get('college address', ''),
-                                'from': row_map.get('from', ''),
-                                'to': row_map.get('to', ''),
-                                'ht_no': row_map.get('ht no', ''),
+                                'Category': row_map.get('category') or row_map.get('qualification', ''),
+                                'Board/University': row_map.get('board/university') or row_map.get('university', ''),
+                                'College Name': row_map.get('college name', ''),
+                                'College Address': row_map.get('college address', ''),
+                                'From': row_map.get('from', ''),
+                                'To': row_map.get('to', ''),
+                                'HT No': row_map.get('ht no', ''),
                             }
                             edu_list.append(education)
                     record.education = edu_list
 
             record.work_experience = {
-                "address": "",
-                "state": "",
-                "district": "",
-                "pin_code": ""
+                "Address": "",
+                "State": "",
+                "District": "",
+                "Pin code": ""
             }
 
             for table in tables:
@@ -360,10 +360,10 @@ class Scraper:
                         for i in range(min(len(headers), len(cols)))
                     }
                     work_info = {
-                        'address': row_map.get('address', ''),
-                        'state': row_map.get('state', ''),
-                        'district': row_map.get('district', ''),
-                        'pin_code': row_map.get('pin code', ''),
+                        'Address': row_map.get('address', ''),
+                        'State': row_map.get('state', ''),
+                        'District': row_map.get('district', ''),
+                        'Pin code': row_map.get('pin code', ''),
                     }
                     record.work_experience = work_info
                     break
