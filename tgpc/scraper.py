@@ -50,6 +50,7 @@ class PharmacistRecord:
     def to_detailed_dict(self):
         """Convert to detailed dictionary for individual enrichment JSON files."""
         return {
+            "serial_number": self.serial_number,
             "registration_number": self.registration_number,
             "name": self.name,
             "father_name": self.father_name,
