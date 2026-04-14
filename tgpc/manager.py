@@ -403,7 +403,7 @@ class Manager:
         done_ids = {f.stem for f in details_dir.glob("*.json")}
         
         # Sort by serial number ascending (start from serial 1)
-        pending_records = [r for r in rx_records if str(r.serial_number) not in done_ids]
+        pending_records = [r for r in rx_records if r.registration_number not in done_ids]
         pending_records.sort(key=lambda r: r.serial_number or 0)
         
         if not pending_records:
@@ -431,13 +431,13 @@ class Manager:
                     continue
                 if stop and i+1 > stop:
                     break
-                if not force and str(r.serial_number) in done_ids:
+                if not force and r.registration_number in done_ids:
                     continue
                 filtered.append(r)
             pending_records = filtered
             
             if force:
-                logger.info(f"--force: re-extracting {len([r for r in pending_records if str(r.serial_number) in done_ids])} already done records")
+                logger.info(f"--force: re-extracting {len([r for r in pending_records if r.registration_number in done_ids])} already done records")
             
             start_str = f"serial {start}" if start else "all"
             stop_str = f"serial {stop}" if stop else "end"
@@ -529,14 +529,14 @@ class Manager:
                                 img = rgb_img
                             
                             # Save as WebP with good quality/compression balance
-                            webp_path = photos_dir / f"{serial}.webp"
+                            webp_path = photos_dir / f"{reg_no}.webp"
                             img.save(webp_path, 'WebP', quality=85, method=6)
                             
                         except Exception as e:
                             logger.error(f"Photo save failed for serial {serial}: {e}")
                     
 # Save to individual JSON file
-                    detail_file = details_dir / f"{serial}.json"
+                    detail_file = details_dir / f"{reg_no}.json"
                     with open(detail_file, 'w', encoding='utf-8') as f:
                         json.dump(data, f, indent=2, ensure_ascii=False)
                     
