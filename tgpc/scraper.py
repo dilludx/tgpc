@@ -166,20 +166,10 @@ class Scraper:
 
     @staticmethod
     def _parse_date_value(value: str) -> Optional[str]:
-        """Parse various date formats into ISO format."""
-        if not value or value.strip() == '-':
+        """Return date value as-is from source (no conversion)."""
+        if not value or value.strip() == '-' or value.strip() == '':
             return None
-        
-        cleaned = re.sub(r'[^\d/\\-]', '', value.strip())
-        date_formats = ['%d/%m/%Y', '%d-%m-%Y', '%Y/%m/%d', '%Y-%m-%d']
-        
-        for fmt in date_formats:
-            try:
-                dt = datetime.strptime(cleaned, fmt)
-                return dt.strftime("%Y-%m-%d")
-            except ValueError:
-                continue
-        return None
+        return value.strip()
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10), reraise=True)
     def _request(self, method: str, url: str, **kwargs) -> requests.Response:
@@ -298,9 +288,13 @@ class Scraper:
                 record.gender = basic_values.get('gender', '')
                 record.category = basic_values.get('category', '')
                 record.status = basic_values.get('status', '')
-                validity_date = self._parse_date_value(basic_values.get('validity', ''))
-                if validity_date:
-                    record.validity_date = validity_date
+                # Try multiple possible header names for validity
+                validity_date = None
+                for key in ['validity', 'valid upto', 'valid up to', 'validity date']:
+                    validity_date = self._parse_date_value(basic_values.get(key, ''))
+                    if validity_date:
+                        record.validity_date = validity_date
+                        break
 
             main_text = soup.get_text()
             if not record.validity_date:
