@@ -57,7 +57,6 @@ class PharmacistRecord:
             "validity_date": self.validity_date or "",
             "category": self.category,
             "status": self.status or "",
-            "serial_number": self.serial_number,
             "education": self.education or [],
             "work_experience": self.work_experience or {
                 "address": "",
@@ -329,14 +328,13 @@ class Scraper:
                                 for i in range(min(len(headers), len(cols)))
                             }
                             education = {
-                                'qualification': row_map.get('qualification') or row_map.get('category', ''),
-                                'university': row_map.get('board/university') or row_map.get('university', ''),
-                                'year': row_map.get('year') or row_map.get('to', ''),
+                                'category': row_map.get('category') or row_map.get('qualification', ''),
+                                'board_university': row_map.get('board/university') or row_map.get('university', ''),
                                 'college_name': row_map.get('college name', ''),
                                 'college_address': row_map.get('college address', ''),
                                 'from': row_map.get('from', ''),
                                 'to': row_map.get('to', ''),
-                                'hall_ticket_number': row_map.get('ht no', ''),
+                                'ht_no': row_map.get('ht no', ''),
                             }
                             edu_list.append(education)
                     record.education = edu_list
