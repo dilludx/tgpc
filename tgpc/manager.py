@@ -14,6 +14,7 @@ import requests
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Iterable
+from tqdm import tqdm
 from collections import Counter
 
 from supabase import create_client
@@ -566,12 +567,16 @@ class Manager:
             # Sync to Google Drive after each batch
             logger.info("Syncing to Google Drive...")
             try:
-                logger.info("  → Syncing rx.json...")
-                subprocess.run(['rclone', 'copyto', '--stats', '1s', str(self.file_manager.data_dir / 'rx.json'), 'gdrive:tgpc/rx.json'], check=True)
-                logger.info("  → Syncing details folder...")
-                subprocess.run(['rclone', 'copy', '--stats', '1s', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details'], check=True)
-                logger.info("  → Syncing photos folder...")
-                subprocess.run(['rclone', 'copy', '--stats', '1s', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos'], check=True)
+                with tqdm(total=3, desc="Syncing to Google Drive", unit="item", ncols=80) as pbar:
+                    pbar.set_postfix_str("rx.json...")
+                    subprocess.run(['rclone', 'copyto', str(self.file_manager.data_dir / 'rx.json'), 'gdrive:tgpc/rx.json'], check=True, capture_output=True)
+                    pbar.update(1)
+                    pbar.set_postfix_str("details...")
+                    subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details'], check=True, capture_output=True)
+                    pbar.update(1)
+                    pbar.set_postfix_str("photos...")
+                    subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos'], check=True, capture_output=True)
+                    pbar.update(1)
                 logger.info("✅ Sync to Google Drive complete")
             except subprocess.CalledProcessError as e:
                 logger.error(f"Google Drive sync failed: {e}")
