@@ -568,22 +568,34 @@ class Manager:
             logger.info("Syncing to Google Drive...")
             try:
                 # rx.json
-                sys.stdout.write("  → Syncing rx.json...")
+                sys.stdout.write("  → Syncing rx.json... ")
                 sys.stdout.flush()
+                for i in range(3):
+                    sys.stdout.write("\r  → Syncing rx.json... " + "+" * (i + 1))
+                    sys.stdout.flush()
+                    time.sleep(0.5)
                 subprocess.run(['rclone', 'copyto', str(self.file_manager.data_dir / 'rx.json'), 'gdrive:tgpc/rx.json'], check=True, capture_output=True)
-                sys.stdout.write(" +++\n")
+                sys.stdout.write("\r  → Syncing rx.json... +++\n")
                 sys.stdout.flush()
                 # details
-                sys.stdout.write("  → Syncing details...")
+                sys.stdout.write("  → Syncing details... ")
                 sys.stdout.flush()
+                for i in range(3):
+                    sys.stdout.write("\r  → Syncing details... " + "+" * (i + 1))
+                    sys.stdout.flush()
+                    time.sleep(0.5)
                 subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details'], check=True, capture_output=True)
-                sys.stdout.write(" +++\n")
+                sys.stdout.write("\r  → Syncing details... +++\n")
                 sys.stdout.flush()
                 # photos
-                sys.stdout.write("  → Syncing photos...")
+                sys.stdout.write("  → Syncing photos... ")
                 sys.stdout.flush()
+                for i in range(3):
+                    sys.stdout.write("\r  → Syncing photos... " + "+" * (i + 1))
+                    sys.stdout.flush()
+                    time.sleep(0.5)
                 subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos'], check=True, capture_output=True)
-                sys.stdout.write(" +++\n")
+                sys.stdout.write("\r  → Syncing photos... +++\n")
                 sys.stdout.flush()
                 logger.info("✅ Sync to Google Drive complete")
             except subprocess.CalledProcessError as e:
