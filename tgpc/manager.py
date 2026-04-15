@@ -570,32 +570,45 @@ class Manager:
                 # rx.json
                 sys.stdout.write("  → Syncing rx.json... ")
                 sys.stdout.flush()
-                for i in range(3):
-                    sys.stdout.write("\r  → Syncing rx.json... " + "+" * (i + 1))
+                process = subprocess.Popen(['rclone', 'copyto', str(self.file_manager.data_dir / 'rx.json'), 'gdrive:tgpc/rx.json'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                pluses = 0
+                max_pluses = 20
+                while process.poll() is None:
+                    if pluses < max_pluses:
+                        pluses += 1
+                    sys.stdout.write("\r  → Syncing rx.json... " + "+" * pluses)
                     sys.stdout.flush()
-                    time.sleep(0.5)
-                subprocess.run(['rclone', 'copyto', str(self.file_manager.data_dir / 'rx.json'), 'gdrive:tgpc/rx.json'], check=True, capture_output=True)
-                sys.stdout.write("\r  → Syncing rx.json... +++\n")
+                    time.sleep(0.2)
+                process.wait()
+                sys.stdout.write("\r  → Syncing rx.json... " + "+" * max_pluses + "\n")
                 sys.stdout.flush()
                 # details
                 sys.stdout.write("  → Syncing details... ")
                 sys.stdout.flush()
-                for i in range(3):
-                    sys.stdout.write("\r  → Syncing details... " + "+" * (i + 1))
+                process = subprocess.Popen(['rclone', 'copy', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                pluses = 0
+                while process.poll() is None:
+                    if pluses < max_pluses:
+                        pluses += 1
+                    sys.stdout.write("\r  → Syncing details... " + "+" * pluses)
                     sys.stdout.flush()
-                    time.sleep(0.5)
-                subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details'], check=True, capture_output=True)
-                sys.stdout.write("\r  → Syncing details... +++\n")
+                    time.sleep(0.2)
+                process.wait()
+                sys.stdout.write("\r  → Syncing details... " + "+" * max_pluses + "\n")
                 sys.stdout.flush()
                 # photos
                 sys.stdout.write("  → Syncing photos... ")
                 sys.stdout.flush()
-                for i in range(3):
-                    sys.stdout.write("\r  → Syncing photos... " + "+" * (i + 1))
+                process = subprocess.Popen(['rclone', 'copy', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                pluses = 0
+                while process.poll() is None:
+                    if pluses < max_pluses:
+                        pluses += 1
+                    sys.stdout.write("\r  → Syncing photos... " + "+" * pluses)
                     sys.stdout.flush()
-                    time.sleep(0.5)
-                subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos'], check=True, capture_output=True)
-                sys.stdout.write("\r  → Syncing photos... +++\n")
+                    time.sleep(0.2)
+                process.wait()
+                sys.stdout.write("\r  → Syncing photos... " + "+" * max_pluses + "\n")
                 sys.stdout.flush()
                 logger.info("✅ Sync to Google Drive complete")
             except subprocess.CalledProcessError as e:
