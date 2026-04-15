@@ -567,11 +567,11 @@ class Manager:
             logger.info("Syncing to Google Drive...")
             try:
                 logger.info("  → Syncing rx.json...")
-                subprocess.run(['rclone', 'copyto', '--progress', str(self.file_manager.data_dir / 'rx.json'), 'gdrive:tgpc/rx.json'], check=True)
+                subprocess.run(['rclone', 'copyto', str(self.file_manager.data_dir / 'rx.json'), 'gdrive:tgpc/rx.json'], check=True, capture_output=True)
                 logger.info("  → Syncing details folder...")
-                subprocess.run(['rclone', 'copy', '--progress', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details'], check=True)
+                subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details'], check=True, capture_output=True)
                 logger.info("  → Syncing photos folder...")
-                subprocess.run(['rclone', 'copy', '--progress', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos'], check=True)
+                subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos'], check=True, capture_output=True)
                 logger.info("✅ Sync to Google Drive complete")
             except subprocess.CalledProcessError as e:
                 logger.error(f"Google Drive sync failed: {e}")
