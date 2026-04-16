@@ -592,10 +592,8 @@ class Manager:
                     "remaining": len(pending_records)
                 }, f)
         
-        # Clear progress file when done
+        # Keep progress file for tracking across batches
         if not pending_records:
-            logger.info("All enrichment complete!")
-            if progress_file.exists():
-                progress_file.unlink()
+            logger.info("All enrichment complete! Progress saved for tracking.")
         else:
             logger.info(f"Enrichment paused: {len(pending_records)} records remaining, {total_processed} processed")
