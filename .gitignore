@@ -28,7 +28,7 @@ data/details/
 data/metadata/
 data/rxdetails.json
 data/photos/
-data/enrichpro.json
+data/progress/
 *.backup
 *.bak
 *.tmp

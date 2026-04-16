@@ -378,7 +378,9 @@ class Manager:
             return
         
         # Progress file for resume capability
-        progress_file = Path(self.config.data_directory) / "enrichpro.json"
+        progress_dir = Path(self.config.data_directory) / "progress"
+        progress_dir.mkdir(exist_ok=True)
+        progress_file = progress_dir / "enrichpro.json"
         
         # Load previous progress if exists
         batch_count = 0
