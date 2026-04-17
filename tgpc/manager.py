@@ -26,11 +26,24 @@ logger = setup_logging("tgpc.manager")
 
 
 def connect_warp():
-    """Connect to Cloudflare Warp VPN."""
+    """Connect to Cloudflare Warp VPN with IP rotation."""
     try:
+        # Disconnect first to ensure IP changes
+        subprocess.run(['warp-cli', 'disconnect'], capture_output=True, text=True, timeout=30)
+        time.sleep(2)  # Wait for disconnection to complete
+        
+        # Connect to get new IP
         result = subprocess.run(['warp-cli', 'connect'], capture_output=True, text=True, timeout=30)
         if result.returncode == 0:
             logger.info("Cloudflare Warp connected successfully")
+            time.sleep(3)  # Wait for connection to stabilize
+            
+            # Get and display current IP
+            ip = get_current_ip()
+            if ip:
+                logger.info(f"Current IP address: {ip}")
+            else:
+                logger.warning("Could not retrieve current IP address")
             return True
         else:
             logger.error(f"Failed to connect Warp: {result.stderr}")
@@ -65,6 +78,21 @@ def disconnect_warp():
     except Exception as e:
         logger.error(f"Error disconnecting Warp: {e}")
         return False
+
+
+def get_current_ip():
+    """Get current public IP address."""
+    try:
+        response = requests.get('https://api.ipify.org?format=json', timeout=10)
+        if response.status_code == 200:
+            ip = response.json().get('ip')
+            return ip
+        else:
+            logger.error(f"Failed to get IP: HTTP {response.status_code}")
+            return None
+    except Exception as e:
+        logger.error(f"Error getting IP address: {e}")
+        return None
 
 
 class DataIntegrityError(RuntimeError):
