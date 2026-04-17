@@ -643,25 +643,6 @@ class Manager:
             
             logger.info(f"Batch {batch_count} complete: {processed_in_batch}/{len(batch_records)} processed")
             
-            # Sync to Google Drive after each batch
-            logger.info("Syncing to Google Drive...")
-            try:
-                # rx.json
-                logger.info("  → Syncing rx.json...")
-                subprocess.run(['rclone', 'copyto', str(self.file_manager.data_dir / 'rx.json'), 'gdrive:tgpc/rx.json'], check=True, capture_output=True)
-                logger.info("  → rx.json: 100% ✓")
-                # details
-                logger.info("  → Syncing details...")
-                subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details'], check=True, capture_output=True)
-                logger.info("  → details: 100% ✓")
-                # photos
-                logger.info("  → Syncing photos...")
-                subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos'], check=True, capture_output=True)
-                logger.info("  → photos: 100% ✓")
-                logger.info("✅ Sync to Google Drive complete")
-            except subprocess.CalledProcessError as e:
-                logger.error(f"Google Drive sync failed: {e}")
-            
             # Save progress periodically (every batch)
             with open(progress_file, 'w') as f:
                 json.dump({
@@ -670,6 +651,25 @@ class Manager:
                     "last_serial": serial_end,
                     "remaining": len(pending_records)
                 }, f)
+        
+        # Sync to Google Drive after all records are extracted
+        logger.info("Syncing to Google Drive...")
+        try:
+            # rx.json
+            logger.info("  → Syncing rx.json...")
+            subprocess.run(['rclone', 'copyto', str(self.file_manager.data_dir / 'rx.json'), 'gdrive:tgpc/rx.json'], check=True, capture_output=True)
+            logger.info("  → rx.json: 100% ✓")
+            # details
+            logger.info("  → Syncing details...")
+            subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details'], check=True, capture_output=True)
+            logger.info("  → details: 100% ✓")
+            # photos
+            logger.info("  → Syncing photos...")
+            subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos'], check=True, capture_output=True)
+            logger.info("  → photos: 100% ✓")
+            logger.info("✅ Sync to Google Drive complete")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Google Drive sync failed: {e}")
         
         # Keep progress file for tracking across batches
         if not pending_records:
