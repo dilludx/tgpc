@@ -96,8 +96,18 @@ class Scraper:
         self.config = Config.load()
         self.rate_limiter = RateLimiter(self.config)
 
-        # Simple browser session
+        # Simple browser session with connection pooling
         self.session = requests.Session()
+        
+        # Configure adapter with connection pooling and faster DNS via Cloudflare
+        adapter = requests.adapters.HTTPAdapter(
+            pool_connections=10,  # Number of connection pools to cache
+            pool_maxsize=10,      # Maximum number of connections in pool
+            max_retries=3
+        )
+        self.session.mount('http://', adapter)
+        self.session.mount('https://', adapter)
+        
         self.session.headers.update({
             "User-Agent": random.choice([
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",

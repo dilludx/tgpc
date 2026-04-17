@@ -633,8 +633,8 @@ class Manager:
                             "remaining": len(pending_records) + len(batch_records) - processed_in_batch
                         }, f)
                     
-                    # Rate limit - 2-3 seconds between requests (balanced)
-                    time.sleep(random.uniform(2, 3))
+                    # Rate limit - 1.5-2.5 seconds between requests (optimized for speed)
+                    time.sleep(random.uniform(1.5, 2.5))
                 
                 except DataIntegrityError:
                     raise
