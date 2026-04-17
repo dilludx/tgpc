@@ -432,11 +432,12 @@ class Manager:
         except Exception as e:
             logger.error(f"Sync failed: {e}")
 
-    def run_enrichment(self, batch_size: int = 50, start: int = 1, stop: int = None, force: bool = False):
-        """Run enrichment pipeline with resume capability.
+    def run_enrichment(self, batch_size: int = 200, start: int = 1, stop: int = None, force: bool = False):
+        """
+        Run enrichment in batches.
         
         Args:
-            batch_size: Records per batch (default 50)
+            batch_size: Records per batch (default 200)
             start: Start from serial number (default: 1)
             stop: Stop at serial number (default: all)
             force: Re-extract even if already done
