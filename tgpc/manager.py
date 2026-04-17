@@ -673,13 +673,14 @@ class Manager:
                     "remaining": len(pending_records)
                 }, f)
         
-        # Sync to Google Drive after all records are extracted
+        # Disconnect from Cloudflare Warp before sync (Warp slows down upload)
+        if warp_connected:
+            logger.info("Disconnecting from Cloudflare Warp...")
+            disconnect_warp()
+        
+        # Sync to Google Drive after all records are extracted (excluding rx.json)
         logger.info("Syncing to Google Drive...")
         try:
-            # rx.json
-            logger.info("  → Syncing rx.json...")
-            subprocess.run(['rclone', 'copyto', str(self.file_manager.data_dir / 'rx.json'), 'gdrive:tgpc/rx.json'], check=True, capture_output=True)
-            logger.info("  → rx.json: 100% ✓")
             # details
             logger.info("  → Syncing details...")
             subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details'], check=True, capture_output=True)
@@ -697,8 +698,3 @@ class Manager:
             logger.info("All enrichment complete! Progress saved for tracking.")
         else:
             logger.info(f"Enrichment paused: {len(pending_records)} records remaining, {total_processed} processed")
-        
-        # Disconnect from Cloudflare Warp
-        if warp_connected:
-            logger.info("Disconnecting from Cloudflare Warp...")
-            disconnect_warp()
