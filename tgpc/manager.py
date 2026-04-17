@@ -443,6 +443,13 @@ class Manager:
             force: Re-extract even if already done
         """
         
+        # Get current IP before disconnecting Warp
+        old_ip = get_current_ip()
+        if old_ip:
+            logger.info(f"Current IP before Warp rotation: {old_ip}")
+        else:
+            logger.warning("Could not get current IP before Warp rotation")
+        
         # Always disconnect Warp first to ensure IP rotation
         logger.info("Disconnecting Warp to ensure IP rotation...")
         disconnect_warp()
@@ -453,6 +460,26 @@ class Manager:
         warp_connected = connect_warp()
         if not warp_connected:
             logger.warning("Failed to connect to Warp. Proceeding without VPN.")
+        
+        # Verify IP changed
+        new_ip = get_current_ip()
+        if new_ip:
+            logger.info(f"New IP after Warp rotation: {new_ip}")
+            if old_ip and new_ip == old_ip:
+                logger.warning(f"IP did not change (still {new_ip}). Attempting again...")
+                # Retry IP rotation
+                disconnect_warp()
+                time.sleep(2)
+                warp_connected = connect_warp()
+                new_ip = get_current_ip()
+                if new_ip:
+                    logger.info(f"IP after retry: {new_ip}")
+                    if new_ip == old_ip:
+                        logger.error("IP still did not change after retry. Proceeding with current IP.")
+                    else:
+                        logger.info("IP successfully changed after retry.")
+        else:
+            logger.warning("Could not get new IP after Warp rotation")
         
         # Health check with automatic Warp retry on blocking
         max_retries = 3
