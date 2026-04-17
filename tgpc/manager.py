@@ -443,16 +443,37 @@ class Manager:
             force: Re-extract even if already done
         """
         
-        # Health check - abort if blocked
-        if not self.scraper.health_check():
-            logger.error("Health check failed - connection is blocked. Aborting.")
-            return
+        # Health check with automatic Warp retry on blocking
+        max_retries = 3
+        health_passed = False
+        warp_connected = False
         
-        # Connect to Cloudflare Warp
-        logger.info("Connecting to Cloudflare Warp...")
-        warp_connected = connect_warp()
+        for attempt in range(max_retries):
+            if self.scraper.health_check():
+                health_passed = True
+                logger.info("Health check passed")
+                break
+            else:
+                logger.warning(f"Health check failed (attempt {attempt + 1}/{max_retries})")
+                if attempt < max_retries - 1:
+                    logger.info("Attempting to change IP via Warp...")
+                    # Disconnect and reconnect to get new IP
+                    disconnect_warp()
+                    time.sleep(2)
+                    warp_connected = connect_warp()
+                    if not warp_connected:
+                        logger.warning("Failed to reconnect Warp. Proceeding without VPN.")
+                    time.sleep(3)  # Wait for connection to stabilize
+                else:
+                    logger.error("Health check failed after all retry attempts. Aborting.")
+                    return
+        
+        # Connect to Cloudflare Warp if not already connected
         if not warp_connected:
-            logger.warning("Failed to connect to Warp. Proceeding without VPN.")
+            logger.info("Connecting to Cloudflare Warp...")
+            warp_connected = connect_warp()
+            if not warp_connected:
+                logger.warning("Failed to connect to Warp. Proceeding without VPN.")
         
         # Progress file for resume capability
         progress_dir = Path(self.config.data_directory) / "progress"
