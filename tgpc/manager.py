@@ -25,6 +25,48 @@ from tgpc.scraper import Scraper, PharmacistRecord
 logger = setup_logging("tgpc.manager")
 
 
+def connect_warp():
+    """Connect to Cloudflare Warp VPN."""
+    try:
+        result = subprocess.run(['warp-cli', 'connect'], capture_output=True, text=True, timeout=30)
+        if result.returncode == 0:
+            logger.info("Cloudflare Warp connected successfully")
+            return True
+        else:
+            logger.error(f"Failed to connect Warp: {result.stderr}")
+            return False
+    except FileNotFoundError:
+        logger.warning("warp-cli not found. Skipping Warp connection.")
+        return False
+    except subprocess.TimeoutExpired:
+        logger.error("Warp connection timed out")
+        return False
+    except Exception as e:
+        logger.error(f"Error connecting Warp: {e}")
+        return False
+
+
+def disconnect_warp():
+    """Disconnect from Cloudflare Warp VPN."""
+    try:
+        result = subprocess.run(['warp-cli', 'disconnect'], capture_output=True, text=True, timeout=30)
+        if result.returncode == 0:
+            logger.info("Cloudflare Warp disconnected successfully")
+            return True
+        else:
+            logger.error(f"Failed to disconnect Warp: {result.stderr}")
+            return False
+    except FileNotFoundError:
+        logger.warning("warp-cli not found. Skipping Warp disconnection.")
+        return False
+    except subprocess.TimeoutExpired:
+        logger.error("Warp disconnection timed out")
+        return False
+    except Exception as e:
+        logger.error(f"Error disconnecting Warp: {e}")
+        return False
+
+
 class DataIntegrityError(RuntimeError):
     """Raised when scraped detail data does not match the requested record."""
 
@@ -377,6 +419,12 @@ class Manager:
             logger.error("Health check failed - connection is blocked. Aborting.")
             return
         
+        # Connect to Cloudflare Warp
+        logger.info("Connecting to Cloudflare Warp...")
+        warp_connected = connect_warp()
+        if not warp_connected:
+            logger.warning("Failed to connect to Warp. Proceeding without VPN.")
+        
         # Progress file for resume capability
         progress_dir = Path(self.config.data_directory) / "progress"
         progress_dir.mkdir(exist_ok=True)
@@ -599,3 +647,8 @@ class Manager:
             logger.info("All enrichment complete! Progress saved for tracking.")
         else:
             logger.info(f"Enrichment paused: {len(pending_records)} records remaining, {total_processed} processed")
+        
+        # Disconnect from Cloudflare Warp
+        if warp_connected:
+            logger.info("Disconnecting from Cloudflare Warp...")
+            disconnect_warp()
