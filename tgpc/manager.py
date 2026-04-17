@@ -443,10 +443,20 @@ class Manager:
             force: Re-extract even if already done
         """
         
+        # Always disconnect Warp first to ensure IP rotation
+        logger.info("Disconnecting Warp to ensure IP rotation...")
+        disconnect_warp()
+        time.sleep(2)
+        
+        # Connect to Cloudflare Warp with IP rotation
+        logger.info("Connecting to Cloudflare Warp with new IP...")
+        warp_connected = connect_warp()
+        if not warp_connected:
+            logger.warning("Failed to connect to Warp. Proceeding without VPN.")
+        
         # Health check with automatic Warp retry on blocking
         max_retries = 3
         health_passed = False
-        warp_connected = False
         
         for attempt in range(max_retries):
             if self.scraper.health_check():
@@ -467,13 +477,6 @@ class Manager:
                 else:
                     logger.error("Health check failed after all retry attempts. Aborting.")
                     return
-        
-        # Connect to Cloudflare Warp if not already connected
-        if not warp_connected:
-            logger.info("Connecting to Cloudflare Warp...")
-            warp_connected = connect_warp()
-            if not warp_connected:
-                logger.warning("Failed to connect to Warp. Proceeding without VPN.")
         
         # Progress file for resume capability
         progress_dir = Path(self.config.data_directory) / "progress"
