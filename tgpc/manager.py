@@ -713,11 +713,15 @@ class Manager:
         try:
             # details
             logger.info("  → Syncing details...")
-            subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details'], check=True, capture_output=True)
+            subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details', 
+                          '--transfers', '16', '--checkers', '16', '--drive-chunk-size', '32M'], 
+                          check=True, capture_output=True)
             logger.info("  → details: 100% ✓")
             # photos
             logger.info("  → Syncing photos...")
-            subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos'], check=True, capture_output=True)
+            subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos',
+                          '--transfers', '16', '--checkers', '16', '--drive-chunk-size', '32M'],
+                          check=True, capture_output=True)
             logger.info("  → photos: 100% ✓")
             logger.info("✅ Sync to Google Drive complete")
         except subprocess.CalledProcessError as e:
