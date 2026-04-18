@@ -713,15 +713,21 @@ class Manager:
         try:
             # details
             logger.info("  → Syncing details...")
-            subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details', 
+            result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details', 
                           '--transfers', '16', '--checkers', '16', '--drive-chunk-size', '32M'], 
-                          check=True, capture_output=True)
+                          capture_output=True, text=True)
+            if result.returncode != 0:
+                logger.error(f"rclone details sync failed: {result.stderr}")
+                raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
             logger.info("  → details: 100% ✓")
             # photos
             logger.info("  → Syncing photos...")
-            subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos',
+            result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos',
                           '--transfers', '16', '--checkers', '16', '--drive-chunk-size', '32M'],
-                          check=True, capture_output=True)
+                          capture_output=True, text=True)
+            if result.returncode != 0:
+                logger.error(f"rclone photos sync failed: {result.stderr}")
+                raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
             logger.info("  → photos: 100% ✓")
             logger.info("✅ Sync to Google Drive complete")
         except subprocess.CalledProcessError as e:
