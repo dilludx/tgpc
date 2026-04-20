@@ -596,6 +596,9 @@ class Manager:
             logger.warning(f"Progress file validation failed, starting fresh: {e}")
             batch_count = 0
         
+        # Track validation errors across batches
+        validation_errors = []
+        
         logger.info(f"Starting enrichment (batch_size={batch_size})...")
         
         # Load Data
@@ -798,6 +801,8 @@ class Manager:
                 if len(validation_results['errors']) > 10:
                     logger.warning(f"  ... and {len(validation_results['errors']) - 10} more")
                 logger.info(f"Validation summary: {validation_results['json_valid']} valid JSON, {validation_results['photo_valid']} valid photos, {validation_results['json_missing']} missing JSON, {validation_results['photo_missing']} missing photos")
+                # Collect errors for pre-sync check
+                validation_errors.extend(validation_results['errors'])
             else:
                 logger.info(f"Batch {batch_count} validation passed: All {validation_results['json_valid']} JSON and {validation_results['photo_valid']} photos valid")
             
@@ -812,6 +817,17 @@ class Manager:
         if warp_connected:
             logger.info("Disconnecting from Cloudflare Warp...")
             disconnect_warp()
+        
+        # Check validation errors before GDrive sync
+        if validation_errors:
+            logger.error(f"CRITICAL: {len(validation_errors)} validation errors found across all batches. GDrive sync aborted to prevent uploading corrupted data.")
+            logger.error("Validation errors:")
+            for error in validation_errors[:20]:
+                logger.error(f"  - {error}")
+            if len(validation_errors) > 20:
+                logger.error(f"  ... and {len(validation_errors) - 20} more")
+            logger.error("Please fix validation errors before syncing. Use --force to re-enrich affected records.")
+            raise TGPCError(f"Validation errors detected. GDrive sync aborted. {len(validation_errors)} errors found.")
         
         # Sync to Google Drive after all records are extracted (excluding rx.json)
         logger.info("Syncing to Google Drive...")
