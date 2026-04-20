@@ -509,7 +509,7 @@ class Manager:
         # Progress file for resume capability
         progress_dir = Path(self.config.data_directory) / "progress"
         progress_dir.mkdir(exist_ok=True)
-        progress_file = Path(self.config.data_directory) / "progress" / "enrichpro.json"
+        progress_file = Path(self.config.data_directory) / "progress" / "prog"
         progress_file.parent.mkdir(parents=True, exist_ok=True)
         
         # Initialize sophisticated progress tracker
