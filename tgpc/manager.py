@@ -669,9 +669,9 @@ class Manager:
                                 rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
                                 img = rgb_img
                             
-                            # Smart optimization: resize to uniform 400x512 based on original resolution
-                            target_width, target_height = 400, 512
-                            target_pixels = target_width * target_height  # 204,800 pixels
+                            # Smart optimization: resize to uniform 800x1024 based on original resolution
+                            target_width, target_height = 800, 1024
+                            target_pixels = target_width * target_height  # 819,200 pixels
                             
                             if original_pixels < target_pixels:
                                 # Low resolution: upscale with maximum quality to preserve detail
