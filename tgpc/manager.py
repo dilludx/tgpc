@@ -650,7 +650,7 @@ class Manager:
                     # Merge: use basic_data for core fields, extracted_data for extra fields (education, work_experience)
                     data = {**extracted_data, **basic_data}
 
-                    # Save Photo Locally with WebP conversion only
+                    # Save Photo Locally with smart optimization based on original resolution
                     if details.photo_base64:
                         try:
                             from PIL import Image
@@ -659,15 +659,34 @@ class Manager:
                             file_data = base64.b64decode(details.photo_base64)
                             img = Image.open(io.BytesIO(file_data))
                             
+                            # Get original resolution
+                            original_width, original_height = img.size
+                            original_pixels = original_width * original_height
+                            
                             # Convert to RGB if necessary (for PNG with transparency)
                             if img.mode in ('RGBA', 'LA', 'P'):
                                 rgb_img = Image.new('RGB', img.size, (255, 255, 255))
                                 rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
                                 img = rgb_img
                             
-                            # Save as WebP with good quality/compression balance
+                            # Smart optimization: resize to uniform 800x1024 based on original resolution
+                            target_width, target_height = 800, 1024
+                            target_pixels = target_width * target_height  # 819,200 pixels
+                            
+                            if original_pixels < target_pixels:
+                                # Low resolution: upscale with standard quality
+                                resized = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
+                                quality = 85
+                                method = 6
+                            else:
+                                # High resolution: downscale with quality preservation
+                                resized = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
+                                quality = 92
+                                method = 5
+                            
+                            # Save as WebP with smart quality settings
                             webp_path = photos_dir / f"{reg_no}.webp"
-                            img.save(webp_path, 'WebP', quality=85, method=6)
+                            resized.save(webp_path, 'WebP', quality=quality, method=method)
                             
                         except Exception as e:
                             logger.error(f"Photo save failed for serial {serial}: {e}")
