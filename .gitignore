@@ -24,7 +24,7 @@ env/
 # Data files (keep main data, ignore backups and temp)
 data/backups/
 data/detailed/
-data/details/
+data/src/
 data/metadata/
 data/rxdetails.json
 data/img/

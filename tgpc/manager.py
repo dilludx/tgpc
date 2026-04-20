@@ -26,12 +26,12 @@ from tgpc.scraper import Scraper, PharmacistRecord
 logger = setup_logging("tgpc.manager")
 
 
-def validate_batch_files(details_dir: Path, img_dir: Path, registration_numbers: List[str]) -> dict:
+def validate_batch_files(src_dir: Path, img_dir: Path, registration_numbers: List[str]) -> dict:
     """
     Validate files for a batch of records.
     
     Args:
-        details_dir: Path to details directory
+        src_dir: Path to src directory
         img_dir: Path to img directory
         registration_numbers: List of registration numbers to validate
     
@@ -53,7 +53,7 @@ def validate_batch_files(details_dir: Path, img_dir: Path, registration_numbers:
     
     for reg_no in registration_numbers:
         # Validate JSON file
-        json_file = details_dir / f"{reg_no}.json"
+        json_file = src_dir / f"{reg_no}.json"
         if not json_file.exists():
             results['json_missing'] += 1
             results['errors'].append(f"JSON missing: {reg_no}")
@@ -603,14 +603,14 @@ class Manager:
         
         # Load Data
         rx_records = self.file_manager.load("rx.json")
-        details_dir = Path(self.config.data_directory) / "details"
-        details_dir.mkdir(parents=True, exist_ok=True)
+        src_dir = Path(self.config.data_directory) / "src"
+        src_dir.mkdir(parents=True, exist_ok=True)
         
         # Create lookup by registration number
         rx_lookup = {r.serial_number: r for r in rx_records}
         
         # Identify Pending - check for existing individual detail files
-        done_ids = {f.stem for f in details_dir.glob("*.json")}
+        done_ids = {f.stem for f in src_dir.glob("*.json")}
         
         # Sort by serial number ascending (start from serial 1)
         pending_records = [r for r in rx_records if r.registration_number not in done_ids]
@@ -766,7 +766,7 @@ class Manager:
                             logger.error(f"Photo save failed for serial {serial}: {e}")
                     
 # Save to individual JSON file
-                    detail_file = details_dir / f"{reg_no}.json"
+                    detail_file = src_dir / f"{reg_no}.json"
                     with open(detail_file, 'w', encoding='utf-8') as f:
                         json.dump(data, f, indent=2, ensure_ascii=False)
                     
@@ -792,7 +792,7 @@ class Manager:
             
             # Validate batch files (JSON validity, photo corruption, resolution, format)
             batch_registration_numbers = [record.registration_number for record in batch_records]
-            validation_results = validate_batch_files(details_dir, img_dir, batch_registration_numbers)
+            validation_results = validate_batch_files(src_dir, img_dir, batch_registration_numbers)
             
             if validation_results['errors']:
                 logger.warning(f"Batch {batch_count} validation found {len(validation_results['errors'])} issues:")
@@ -834,7 +834,7 @@ class Manager:
         try:
             # details
             logger.info("  → Syncing details...")
-            result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'details'), 'gdrive:tgpc/details', 
+            result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'src'), 'gdrive:tgpc/src', 
                           '--transfers', '16', '--checkers', '16', '--drive-chunk-size', '32M'], 
                           capture_output=True, text=True)
             if result.returncode != 0:
