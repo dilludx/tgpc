@@ -277,6 +277,16 @@ class Scraper:
                 src = img['src']
                 if 'base64' in src:
                     record.photo_base64 = src.split(',')[-1]
+                elif src.startswith('/') or src.startswith('http'):
+                    # Download photo from relative or absolute URL
+                    try:
+                        photo_url = src if src.startswith('http') else f"{self.config.base_url}{src}"
+                        photo_response = self._request("GET", photo_url)
+                        if photo_response.status_code == 200:
+                            import base64
+                            record.photo_base64 = base64.b64encode(photo_response.content).decode('utf-8')
+                    except Exception as e:
+                        logger.warning(f"Failed to download photo from {src}: {e}")
 
             for table in tables:
                 headers = [self._normalize_header(th.get_text(" ", strip=True)) for th in table.find_all('th')]
