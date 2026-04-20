@@ -737,11 +737,5 @@ class Manager:
         # Keep progress file for tracking across batches
         if not pending_records:
             logger.info("All enrichment complete! Progress saved for tracking.")
-            # Mark progress as validated after successful completion
-            try:
-                progress_tracker.set_validated(True)
-                logger.info("Progress validated successfully")
-            except Exception as e:
-                logger.warning(f"Failed to validate progress: {e}")
         else:
             logger.info(f"Enrichment paused: {len(pending_records)} records remaining, {total_processed} processed")
