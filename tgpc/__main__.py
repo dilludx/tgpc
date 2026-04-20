@@ -37,7 +37,7 @@ def main():
 
     # Enrich command
     enrich_parser = subparsers.add_parser('enrich', help='Run enrichment pipeline')
-    enrich_parser.add_argument('--batch-size', type=int, default=300, help='Number of records per batch')
+    enrich_parser.add_argument('--batch-size', type=int, default=500, help='Number of records per batch')
     enrich_parser.add_argument('--start', type=int, default=1, help='Start from serial number (default: 1)')
     enrich_parser.add_argument('--stop', type=int, default=None, help='Stop at serial number (default: all)')
     enrich_parser.add_argument('--force', action='store_true', help='Re-extract even if already done')
