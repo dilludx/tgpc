@@ -660,14 +660,9 @@ class Manager:
                                 rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
                                 img = rgb_img
                             
-                            # Try WebP first, fall back to JPEG if not supported
+                            # Save as WebP with good quality/compression balance
                             webp_path = photos_dir / f"{reg_no}.webp"
-                            try:
-                                img.save(webp_path, 'WebP', quality=85, method=6)
-                            except Exception as webp_error:
-                                logger.warning(f"WebP save failed for {reg_no}, falling back to JPEG: {webp_error}")
-                                jpeg_path = photos_dir / f"{reg_no}.jpg"
-                                img.save(jpeg_path, 'JPEG', quality=85)
+                            img.save(webp_path, 'WebP', quality=85, method=6)
                             
                         except Exception as e:
                             logger.error(f"Photo save failed for serial {serial}: {e}")
