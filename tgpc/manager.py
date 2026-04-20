@@ -588,16 +588,6 @@ class Manager:
         # Initialize sophisticated progress tracker
         progress_tracker = ProgressTracker(progress_file)
         
-        batch_count = 0
-        try:
-            progress = progress_tracker.load()
-            if progress:
-                batch_count = progress.get("batch_count", 0)
-                logger.info(f"Resuming from batch {batch_count}")
-        except ValueError as e:
-            logger.warning(f"Progress file validation failed, starting fresh: {e}")
-            batch_count = 0
-        
         # Track validation errors across batches
         validation_errors = []
         
@@ -667,14 +657,13 @@ class Manager:
             
             batch_num += 1
             progress_tracker.increment_batch()
-            batch_count += 1
             
             batch_records = pending_records[:batch_size]
             pending_records = pending_records[batch_size:]
             
             serial_start = batch_records[0].serial_number
             serial_end = batch_records[-1].serial_number
-            logger.info(f"Batch {batch_count}: Processing serial {serial_start}-{serial_end} ({len(batch_records)} records)")
+            logger.info(f"Batch {batch_num}: Processing serial {serial_start}-{serial_end} ({len(batch_records)} records)")
             
             processed_in_batch = 0
             
@@ -790,7 +779,7 @@ class Manager:
                 except Exception as e:
                     logger.error(f"Enrichment failed for {reg_no}: {e}")
             
-            logger.info(f"Batch {batch_count} complete: {processed_in_batch}/{len(batch_records)} processed")
+            logger.info(f"Batch {batch_num} complete: {processed_in_batch}/{len(batch_records)} processed")
             
             # Validate batch files (JSON validity, photo corruption, resolution, format)
             if not skip_validation:
@@ -798,7 +787,7 @@ class Manager:
                 validation_results = validate_batch_files(src_dir, img_dir, batch_registration_numbers)
                 
                 if validation_results['errors']:
-                    logger.warning(f"Batch {batch_count} validation found {len(validation_results['errors'])} issues:")
+                    logger.warning(f"Batch {batch_num} validation found {len(validation_results['errors'])} issues:")
                     for error in validation_results['errors'][:10]:  # Log first 10 errors
                         logger.warning(f"  - {error}")
                     if len(validation_results['errors']) > 10:
@@ -807,7 +796,7 @@ class Manager:
                     # Collect errors for pre-sync check
                     validation_errors.extend(validation_results['errors'])
                 else:
-                    logger.info(f"Batch {batch_count} validation passed: All {validation_results['json_valid']} JSON and {validation_results['photo_valid']} photos valid")
+                    logger.info(f"Batch {batch_num} validation passed: All {validation_results['json_valid']} JSON and {validation_results['photo_valid']} photos valid")
             
             # Save progress periodically (every batch) with integrity checks
             progress_tracker.update_progress(
