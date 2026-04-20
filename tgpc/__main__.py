@@ -4,10 +4,8 @@ CLI entry point for TGPC system.
 
 import argparse
 import os
-import sys
 from pathlib import Path
 from tgpc.manager import Manager
-from tgpc.scheduler import run_scheduler_cli
 
 def load_credentials():
     """Load Supabase credentials from file if not set in environment."""
@@ -27,14 +25,6 @@ def load_credentials():
             print(f"Warning: Could not load credentials file: {e}")
 
 def main():
-    # Check for scheduler command early and delegate
-    if len(sys.argv) > 1 and sys.argv[1] == 'scheduler':
-        # Pass remaining arguments to scheduler CLI
-        scheduler_argv = sys.argv[1:]  # ['scheduler', 'status'] or ['scheduler', 'start', ...]
-        sys.argv = scheduler_argv
-        run_scheduler_cli()
-        return
-    
     parser = argparse.ArgumentParser(description="TGPC Rx Registry Manager")
     subparsers = parser.add_subparsers(dest='command', help='Available commands', required=True)
 
