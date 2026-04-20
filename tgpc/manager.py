@@ -504,7 +504,7 @@ class Manager:
         except Exception as e:
             logger.error(f"Sync failed: {e}")
 
-    def run_enrichment(self, batch_size: int = 500, start: int = 1, stop: int = None, force: bool = False, skip_validation: bool = False):
+    def run_enrichment(self, batch_size: int = 500, start: int = 1, stop: int = None, force: bool = False, skip_validation: bool = False, skip_sync: bool = False):
         """
         Run enrichment in batches.
         
@@ -514,6 +514,7 @@ class Manager:
             stop: Stop at serial number (default: all)
             force: Re-extract even if already done
             skip_validation: Skip file validation checks (default False)
+            skip_sync: Skip Google Drive sync (default False)
         """
         
         # Get current IP before disconnecting Warp
@@ -832,29 +833,30 @@ class Manager:
             raise TGPCError(f"Validation errors detected. GDrive sync aborted. {len(validation_errors)} errors found.")
         
         # Sync to Google Drive after all records are extracted (excluding rx.json)
-        logger.info("Syncing to Google Drive...")
-        try:
-            # details
-            logger.info("  → Syncing details...")
-            result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'src'), 'gdrive:tgpc/src', 
-                          '--transfers', '16', '--checkers', '16', '--drive-chunk-size', '32M'], 
-                          capture_output=True, text=True)
-            if result.returncode != 0:
-                logger.error(f"rclone details sync failed: {result.stderr}")
-                raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
-            logger.info("  → details: 100% ✓")
-            # photos
-            logger.info("  → Syncing photos...")
-            result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'img'), 'gdrive:tgpc/img',
-                          '--transfers', '16', '--checkers', '16', '--drive-chunk-size', '32M'],
-                          capture_output=True, text=True)
-            if result.returncode != 0:
-                logger.error(f"rclone photos sync failed: {result.stderr}")
-                raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
-            logger.info("  → photos: 100% ✓")
-            logger.info("✅ Sync to Google Drive complete")
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Google Drive sync failed: {e}")
+        if not skip_sync:
+            logger.info("Syncing to Google Drive...")
+            try:
+                # details
+                logger.info("  → Syncing details...")
+                result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'src'), 'gdrive:tgpc/src', 
+                              '--transfers', '16', '--checkers', '16', '--drive-chunk-size', '32M'], 
+                              capture_output=True, text=True)
+                if result.returncode != 0:
+                    logger.error(f"rclone details sync failed: {result.stderr}")
+                    raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
+                logger.info("  → details: 100% ✓")
+                # photos
+                logger.info("  → Syncing photos...")
+                result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'img'), 'gdrive:tgpc/img',
+                              '--transfers', '16', '--checkers', '16', '--drive-chunk-size', '32M'],
+                              capture_output=True, text=True)
+                if result.returncode != 0:
+                    logger.error(f"rclone photos sync failed: {result.stderr}")
+                    raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
+                logger.info("  → photos: 100% ✓")
+                logger.info("✅ Sync to Google Drive complete")
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Google Drive sync failed: {e}")
         
         # Keep progress file for tracking across batches
         if not pending_records:
