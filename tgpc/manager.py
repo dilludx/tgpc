@@ -20,6 +20,7 @@ from collections import Counter
 from supabase import create_client
 
 from tgpc.utils import Config, TGPCError, setup_logging
+from tgpc.progress import ProgressTracker
 from tgpc.scraper import Scraper, PharmacistRecord
 
 logger = setup_logging("tgpc.manager")
@@ -508,18 +509,21 @@ class Manager:
         # Progress file for resume capability
         progress_dir = Path(self.config.data_directory) / "progress"
         progress_dir.mkdir(exist_ok=True)
-        progress_file = progress_dir / "enrichpro.json"
+        progress_file = Path(self.config.data_directory) / "progress" / "enrichpro.json"
+        progress_file.parent.mkdir(parents=True, exist_ok=True)
         
-        # Load previous progress if exists
+        # Initialize sophisticated progress tracker
+        progress_tracker = ProgressTracker(progress_file)
+        
         batch_count = 0
-        if progress_file.exists():
-            try:
-                with open(progress_file) as f:
-                    progress = json.load(f)
-                    batch_count = progress.get("batch_count", 0)
-                    logger.info(f"Resuming from batch {batch_count}")
-            except:
-                batch_count = 0
+        try:
+            progress = progress_tracker.load()
+            if progress:
+                batch_count = progress.get("batch_count", 0)
+                logger.info(f"Resuming from batch {batch_count}")
+        except ValueError as e:
+            logger.warning(f"Progress file validation failed, starting fresh: {e}")
+            batch_count = 0
         
         logger.info(f"Starting enrichment (batch_size={batch_size})...")
         
@@ -586,6 +590,7 @@ class Manager:
         while pending_records:
             
             batch_num += 1
+            progress_tracker.increment_batch()
             batch_count += 1
             
             batch_records = pending_records[:batch_size]
@@ -675,14 +680,12 @@ class Manager:
                     processed_in_batch += 1
                     total_processed += 1
                     
-                    # Save progress after each record (in case of abrupt stop)
-                    with open(progress_file, 'w') as f:
-                        json.dump({
-                            "batch_count": batch_count,
-                            "total_processed": total_processed,
-                            "last_serial": record.serial_number,
-                            "remaining": len(pending_records) + len(batch_records) - processed_in_batch
-                        }, f)
+                    # Save progress after each record with integrity checks
+                    progress_tracker.update_progress(
+                        total_processed=total_processed,
+                        last_serial=record.serial_number,
+                        remaining=len(pending_records) + len(batch_records) - processed_in_batch
+                    )
                     
                     # Rate limit - 1.5-2.5 seconds between requests (optimized for speed)
                     time.sleep(random.uniform(1.5, 2.5))
@@ -694,14 +697,12 @@ class Manager:
             
             logger.info(f"Batch {batch_count} complete: {processed_in_batch}/{len(batch_records)} processed")
             
-            # Save progress periodically (every batch)
-            with open(progress_file, 'w') as f:
-                json.dump({
-                    "batch_count": batch_count,
-                    "total_processed": total_processed,
-                    "last_serial": serial_end,
-                    "remaining": len(pending_records)
-                }, f)
+            # Save progress periodically (every batch) with integrity checks
+            progress_tracker.update_progress(
+                total_processed=total_processed,
+                last_serial=serial_end,
+                remaining=len(pending_records)
+            )
         
         # Disconnect from Cloudflare Warp before sync (Warp slows down upload)
         if warp_connected:
@@ -736,5 +737,11 @@ class Manager:
         # Keep progress file for tracking across batches
         if not pending_records:
             logger.info("All enrichment complete! Progress saved for tracking.")
+            # Mark progress as validated after successful completion
+            try:
+                progress_tracker.set_validated(True)
+                logger.info("Progress validated successfully")
+            except Exception as e:
+                logger.warning(f"Failed to validate progress: {e}")
         else:
             logger.info(f"Enrichment paused: {len(pending_records)} records remaining, {total_processed} processed")
