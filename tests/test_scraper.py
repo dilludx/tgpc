@@ -143,14 +143,14 @@ class ScraperParsingTests(unittest.TestCase):
         self.assertEqual(record.name, "Jane Pharmacist")
         self.assertEqual(record.father_name, "Parent Name")
         self.assertEqual(record.category, "BPharm")
-        self.assertEqual(record.validity_date, "2026-12-31")
+        self.assertEqual(record.validity_date, "31/12/2026")
         self.assertEqual(record.photo_base64, "QUJDREVGRw==")
         self.assertEqual(
             record.education,
             [
                 {
-                    "qualification": "BPharm",
-                    "university": "Osmania University",
+                    "Category": "BPharm",
+                    "Board/University": "Osmania University",
                     "year": "2018",
                     "college_name": "City College",
                     "college_address": "Hyderabad",
@@ -159,8 +159,8 @@ class ScraperParsingTests(unittest.TestCase):
                     "hall_ticket_number": "HT123",
                 },
                 {
-                    "qualification": "MPharm",
-                    "university": "Kakatiya University",
+                    "Category": "MPharm",
+                    "Board/University": "Kakatiya University",
                     "year": "",
                     "college_name": "North Campus",
                     "college_address": "Warangal",
@@ -208,8 +208,8 @@ class ScraperParsingTests(unittest.TestCase):
             record.education,
             [
                 {
-                    "qualification": "B.Pharm",
-                    "university": "Osmania University",
+                    "Category": "B.Pharm",
+                    "Board/University": "Osmania University",
                     "year": "2018",
                     "college_name": "",
                     "college_address": "",
@@ -218,8 +218,8 @@ class ScraperParsingTests(unittest.TestCase):
                     "hall_ticket_number": "",
                 },
                 {
-                    "qualification": "M.Pharm",
-                    "university": "Kakatiya University",
+                    "Category": "M.Pharm",
+                    "Board/University": "Kakatiya University",
                     "year": "",
                     "college_name": "",
                     "college_address": "",
