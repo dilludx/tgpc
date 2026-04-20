@@ -27,7 +27,7 @@ data/detailed/
 data/details/
 data/metadata/
 data/rxdetails.json
-data/photos/
+data/img/
 data/progress/
 *.backup
 *.bak

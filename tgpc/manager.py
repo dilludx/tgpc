@@ -26,13 +26,13 @@ from tgpc.scraper import Scraper, PharmacistRecord
 logger = setup_logging("tgpc.manager")
 
 
-def validate_batch_files(details_dir: Path, photos_dir: Path, registration_numbers: List[str]) -> dict:
+def validate_batch_files(details_dir: Path, img_dir: Path, registration_numbers: List[str]) -> dict:
     """
     Validate files for a batch of records.
     
     Args:
         details_dir: Path to details directory
-        photos_dir: Path to photos directory
+        img_dir: Path to img directory
         registration_numbers: List of registration numbers to validate
     
     Returns:
@@ -68,7 +68,7 @@ def validate_batch_files(details_dir: Path, photos_dir: Path, registration_numbe
             results['errors'].append(f"JSON invalid: {reg_no} - {e}")
         
         # Validate photo file
-        photo_file = photos_dir / f"{reg_no}.webp"
+        photo_file = img_dir / f"{reg_no}.webp"
         if not photo_file.exists():
             results['photo_missing'] += 1
             results['errors'].append(f"Photo missing: {reg_no}")
@@ -627,8 +627,8 @@ class Manager:
         logger.info(f"Total pending: {total_pending} records")
         
         # Setup Photos Directory
-        photos_dir = Path(self.config.data_directory) / "photos"
-        photos_dir.mkdir(parents=True, exist_ok=True)
+        img_dir = Path(self.config.data_directory) / "img"
+        img_dir.mkdir(parents=True, exist_ok=True)
         
         # Filter by start/stop range - use serial_number from rx.json as position
         if start or stop:
@@ -759,7 +759,7 @@ class Manager:
                                 method = 5
                             
                             # Save as WebP with smart quality settings
-                            webp_path = photos_dir / f"{reg_no}.webp"
+                            webp_path = img_dir / f"{reg_no}.webp"
                             resized.save(webp_path, 'WebP', quality=quality, method=method)
                             
                         except Exception as e:
@@ -792,7 +792,7 @@ class Manager:
             
             # Validate batch files (JSON validity, photo corruption, resolution, format)
             batch_registration_numbers = [record.registration_number for record in batch_records]
-            validation_results = validate_batch_files(details_dir, photos_dir, batch_registration_numbers)
+            validation_results = validate_batch_files(details_dir, img_dir, batch_registration_numbers)
             
             if validation_results['errors']:
                 logger.warning(f"Batch {batch_count} validation found {len(validation_results['errors'])} issues:")
@@ -843,7 +843,7 @@ class Manager:
             logger.info("  → details: 100% ✓")
             # photos
             logger.info("  → Syncing photos...")
-            result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'photos'), 'gdrive:tgpc/photos',
+            result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'img'), 'gdrive:tgpc/img',
                           '--transfers', '16', '--checkers', '16', '--drive-chunk-size', '32M'],
                           capture_output=True, text=True)
             if result.returncode != 0:
