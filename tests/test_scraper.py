@@ -171,10 +171,10 @@ class ScraperParsingTests(unittest.TestCase):
         self.assertEqual(
             record.work_experience,
             {
-                "address": "Clinic Street",
-                "state": "Telangana",
-                "district": "Hyderabad",
-                "pin_code": "500001",
+                "Address": "Clinic Street",
+                "State": "Telangana",
+                "District": "Hyderabad",
+                "Pin code": "500001",
             },
         )
 
