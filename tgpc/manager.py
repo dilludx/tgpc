@@ -504,7 +504,7 @@ class Manager:
         except Exception as e:
             logger.error(f"Sync failed: {e}")
 
-    def run_enrichment(self, batch_size: int = 500, start: int = 1, stop: int = None, force: bool = False):
+    def run_enrichment(self, batch_size: int = 500, start: int = 1, stop: int = None, force: bool = False, skip_validation: bool = False):
         """
         Run enrichment in batches.
         
@@ -513,6 +513,7 @@ class Manager:
             start: Start from serial number (default: 1)
             stop: Stop at serial number (default: all)
             force: Re-extract even if already done
+            skip_validation: Skip file validation checks (default False)
         """
         
         # Get current IP before disconnecting Warp
@@ -791,20 +792,21 @@ class Manager:
             logger.info(f"Batch {batch_count} complete: {processed_in_batch}/{len(batch_records)} processed")
             
             # Validate batch files (JSON validity, photo corruption, resolution, format)
-            batch_registration_numbers = [record.registration_number for record in batch_records]
-            validation_results = validate_batch_files(src_dir, img_dir, batch_registration_numbers)
-            
-            if validation_results['errors']:
-                logger.warning(f"Batch {batch_count} validation found {len(validation_results['errors'])} issues:")
-                for error in validation_results['errors'][:10]:  # Log first 10 errors
-                    logger.warning(f"  - {error}")
-                if len(validation_results['errors']) > 10:
-                    logger.warning(f"  ... and {len(validation_results['errors']) - 10} more")
-                logger.info(f"Validation summary: {validation_results['json_valid']} valid JSON, {validation_results['photo_valid']} valid photos, {validation_results['json_missing']} missing JSON, {validation_results['photo_missing']} missing photos")
-                # Collect errors for pre-sync check
-                validation_errors.extend(validation_results['errors'])
-            else:
-                logger.info(f"Batch {batch_count} validation passed: All {validation_results['json_valid']} JSON and {validation_results['photo_valid']} photos valid")
+            if not skip_validation:
+                batch_registration_numbers = [record.registration_number for record in batch_records]
+                validation_results = validate_batch_files(src_dir, img_dir, batch_registration_numbers)
+                
+                if validation_results['errors']:
+                    logger.warning(f"Batch {batch_count} validation found {len(validation_results['errors'])} issues:")
+                    for error in validation_results['errors'][:10]:  # Log first 10 errors
+                        logger.warning(f"  - {error}")
+                    if len(validation_results['errors']) > 10:
+                        logger.warning(f"  ... and {len(validation_results['errors']) - 10} more")
+                    logger.info(f"Validation summary: {validation_results['json_valid']} valid JSON, {validation_results['photo_valid']} valid photos, {validation_results['json_missing']} missing JSON, {validation_results['photo_missing']} missing photos")
+                    # Collect errors for pre-sync check
+                    validation_errors.extend(validation_results['errors'])
+                else:
+                    logger.info(f"Batch {batch_count} validation passed: All {validation_results['json_valid']} JSON and {validation_results['photo_valid']} photos valid")
             
             # Save progress periodically (every batch) with integrity checks
             progress_tracker.update_progress(
@@ -818,8 +820,8 @@ class Manager:
             logger.info("Disconnecting from Cloudflare Warp...")
             disconnect_warp()
         
-        # Check validation errors before GDrive sync
-        if validation_errors:
+        # Check validation errors before GDrive sync (only if validation was enabled)
+        if not skip_validation and validation_errors:
             logger.error(f"CRITICAL: {len(validation_errors)} validation errors found across all batches. GDrive sync aborted to prevent uploading corrupted data.")
             logger.error("Validation errors:")
             for error in validation_errors[:20]:
