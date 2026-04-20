@@ -676,7 +676,7 @@ class Manager:
                             if original_pixels < target_pixels:
                                 # Low resolution: upscale with maximum quality to preserve detail
                                 resized = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
-                                quality = 95
+                                quality = 100
                                 method = 6
                             else:
                                 # High resolution: downscale with quality preservation
