@@ -26,6 +26,77 @@ from tgpc.scraper import Scraper, PharmacistRecord
 logger = setup_logging("tgpc.manager")
 
 
+def validate_batch_files(details_dir: Path, photos_dir: Path, registration_numbers: List[str]) -> dict:
+    """
+    Validate files for a batch of records.
+    
+    Args:
+        details_dir: Path to details directory
+        photos_dir: Path to photos directory
+        registration_numbers: List of registration numbers to validate
+    
+    Returns:
+        dict with validation results
+    """
+    results = {
+        'total': len(registration_numbers),
+        'json_valid': 0,
+        'json_invalid': 0,
+        'json_missing': 0,
+        'photo_valid': 0,
+        'photo_invalid': 0,
+        'photo_missing': 0,
+        'photo_wrong_resolution': 0,
+        'photo_wrong_format': 0,
+        'errors': []
+    }
+    
+    for reg_no in registration_numbers:
+        # Validate JSON file
+        json_file = details_dir / f"{reg_no}.json"
+        if not json_file.exists():
+            results['json_missing'] += 1
+            results['errors'].append(f"JSON missing: {reg_no}")
+            continue
+        
+        try:
+            with open(json_file, 'r', encoding='utf-8') as f:
+                json.load(f)
+            results['json_valid'] += 1
+        except Exception as e:
+            results['json_invalid'] += 1
+            results['errors'].append(f"JSON invalid: {reg_no} - {e}")
+        
+        # Validate photo file
+        photo_file = photos_dir / f"{reg_no}.webp"
+        if not photo_file.exists():
+            results['photo_missing'] += 1
+            results['errors'].append(f"Photo missing: {reg_no}")
+            continue
+        
+        try:
+            from PIL import Image
+            img = Image.open(photo_file)
+            
+            # Check format
+            if img.format != 'WEBP':
+                results['photo_wrong_format'] += 1
+                results['errors'].append(f"Photo wrong format: {reg_no} - {img.format}")
+            
+            # Check resolution
+            width, height = img.size
+            if width != 800 or height != 1024:
+                results['photo_wrong_resolution'] += 1
+                results['errors'].append(f"Photo wrong resolution: {reg_no} - {width}x{height}")
+            
+            results['photo_valid'] += 1
+        except Exception as e:
+            results['photo_invalid'] += 1
+            results['errors'].append(f"Photo invalid: {reg_no} - {e}")
+    
+    return results
+
+
 def connect_warp():
     """Connect to Cloudflare Warp VPN with IP rotation."""
     try:
@@ -715,6 +786,20 @@ class Manager:
                     logger.error(f"Enrichment failed for {reg_no}: {e}")
             
             logger.info(f"Batch {batch_count} complete: {processed_in_batch}/{len(batch_records)} processed")
+            
+            # Validate batch files (JSON validity, photo corruption, resolution, format)
+            batch_registration_numbers = [record.registration_number for record in batch_records]
+            validation_results = validate_batch_files(details_dir, photos_dir, batch_registration_numbers)
+            
+            if validation_results['errors']:
+                logger.warning(f"Batch {batch_count} validation found {len(validation_results['errors'])} issues:")
+                for error in validation_results['errors'][:10]:  # Log first 10 errors
+                    logger.warning(f"  - {error}")
+                if len(validation_results['errors']) > 10:
+                    logger.warning(f"  ... and {len(validation_results['errors']) - 10} more")
+                logger.info(f"Validation summary: {validation_results['json_valid']} valid JSON, {validation_results['photo_valid']} valid photos, {validation_results['json_missing']} missing JSON, {validation_results['photo_missing']} missing photos")
+            else:
+                logger.info(f"Batch {batch_count} validation passed: All {validation_results['json_valid']} JSON and {validation_results['photo_valid']} photos valid")
             
             # Save progress periodically (every batch) with integrity checks
             progress_tracker.update_progress(
