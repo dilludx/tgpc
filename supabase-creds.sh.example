@@ -1,8 +1,7 @@
 #!/bin/bash
+#
+# Copy this file to supabase-creds.sh and set real values.
+# Do not commit supabase-creds.sh.
 
-# Supabase Credentials Template
-# Copy this file to supabase-creds.sh and add your actual credentials
-# DO NOT commit the actual credentials file
-
-export SUPABASE_URL="https://your-project.supabase.co"
-export SUPABASE_SECRET_KEY="your_service_role_key_here"
+export SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
+export SUPABASE_SECRET_KEY="YOUR_SUPABASE_SERVICE_ROLE_OR_SECRET_KEY"
