@@ -3,6 +3,13 @@ export default {
         const url = new URL(request.url);
         const path = url.pathname;
 
+        // Handle dispatch route
+        if (path === '/dispatch' || path === '/dispatch/') {
+            const newUrl = new URL(request.url);
+            newUrl.pathname = '/dispatch-list.html';
+            return env.ASSETS.fetch(newUrl.toString());
+        }
+
         // For root path, detect device and serve appropriate HTML
         if (path === '/' || path === '') {
             const ua = request.headers.get('User-Agent') || '';

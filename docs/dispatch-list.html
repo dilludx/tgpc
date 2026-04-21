@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGPC Dispatch PDFs</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f8f9fa; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #00cc66; margin-bottom: 10px; }
+        .search-box { margin-bottom: 20px; }
+        .search-box input { width: 300px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .stats { color: #666; margin-bottom: 20px; }
+        .pdf-list { list-style: none; padding: 0; margin: 0; }
+        .pdf-item { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; transition: transform 0.2s; }
+        .pdf-item:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .pdf-info { flex: 1; }
+        .pdf-date { font-weight: bold; color: #00cc66; margin-bottom: 5px; font-size: 1.1rem; }
+        .pdf-filename { font-family: monospace; color: #666; margin-bottom: 5px; word-break: break-all; }
+        .pdf-meta { color: #999; font-size: 0.9rem; }
+        .btn { background: #00cc66; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; display: inline-block; margin-left: 15px; }
+        .btn:hover { background: #00a86b; }
+        .no-results { text-align: center; padding: 40px; color: #666; }
+        .nav-link { color: #00cc66; text-decoration: none; margin: 0 10px; }
+        .nav-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>TGPC Dispatch PDFs</h1>
+        <p>Download and browse Telangana Pharmacy Council dispatch list PDFs</p>
+        <div>
+            <a href="/" class="nav-link">Home</a>
+            <a href="mobile.html" class="nav-link">Mobile</a>
+        </div>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search by date or filename..." onkeyup="filterFiles()">
+    </div>
+
+    <div class="stats" id="stats">Loading PDF files...</div>
+
+    <ul class="pdf-list" id="pdfList">
+        <!-- Files will be loaded here -->
+    </ul>
+
+    <div class="no-results" id="noResults" style="display: none;">
+        <h3>No PDF files found</h3>
+        <p>Try adjusting your search terms.</p>
+    </div>
+
+    <script>
+        // All PDF files sorted by date (newest first)
+        const allFiles = [
+            'DL-2026JAN30.pdf', 'DL-2026JAN22.pdf', 'DL-2026JAN07.pdf',
+            'DL-2025DEC31.pdf', 'DL-2025DEC18.pdf', 'DL-2025DEC12.pdf', 'DL-2025DEC08.pdf',
+            'DL-2025NOV27.pdf', 'DL-2025NOV14.pdf', 'DL-2025SEP30.pdf', 'DL-2025SEP29.pdf', 'DL-2025SEP27.pdf',
+            'DL-2025SEP16.pdf', 'DL-2025SEP02.pdf', 'DL-2025MAY22.pdf', 'DL-2025MAY13.pdf', 'DL-2025MAY05.pdf',
+            'DL-2025MAR29.pdf', 'DL-2025MAR25.pdf', 'DL-2025MAR17.pdf', 'DL-2025MAR10.pdf', 'DL-2025MAR03.pdf',
+            'DL-2025JUN24.pdf', 'DL-2025JUN17.pdf', 'DL-2025JUN03.pdf', 'DL-2025JUL29.pdf', 'DL-2025JUL15.pdf', 'DL-2025JUL04.pdf',
+            'DL-2025JAN30.pdf', 'DL-2025JAN22.pdf', 'DL-2025JAN17.pdf', 'DL-2025JAN03.pdf',
+            'DL-2025FEB22.pdf', 'DL-2025FEB11.pdf',
+            'DL-2025APR28.pdf', 'DL-2025APR21_1.pdf', 'DL-2025APR21.pdf', 'DL-2025APR15.pdf',
+            'DL-2025AUG19.pdf', 'DL-2025AUG04.pdf',
+            'DL-2024SEP30.pdf', 'DL-2024SEP26.pdf', 'DL-2024SEP13.pdf',
+            'DL-2024OCT29.pdf', 'DL-2024OCT15.pdf', 'DL-2024OCT11.pdf', 'DL-2024OCT09.pdf',
+            'DL-2024NOV28.pdf', 'DL-2024NOV21.pdf', 'DL-2024NOV12.pdf', 'DL-2024NOV05.pdf',
+            'DL-2024MAY20.pdf', 'DL-2024MAY04.pdf', 'DL-2024MAR20.pdf', 'DL-2024MAR05.pdf',
+            'DL-2024JUN28.pdf', 'DL-2024JUN03.pdf', 'DL-2024JUN01.pdf',
+            'DL-2024JUL31.pdf', 'DL-2024JUL15.pdf', 'DL-2024JAN13.pdf',
+            'DL-2024FEB22.pdf', 'DL-2024FEB08.pdf',
+            'DL-2024DEC19.pdf', 'DL-2024AUG31.pdf', 'DL-2024AUG13.pdf',
+            'DL-2024APR24.pdf', 'DL-2024APR02.pdf',
+            'DL-2023SEP26.pdf', 'DL-2023SEP16.pdf', 'DL-2023SEP12.pdf', 'DL-2023SEP11_1.pdf', 'DL-2023SEP11.pdf', 'DL-2023SEP07.pdf',
+            'DL-2023OCT28.pdf', 'DL-2023NOV22.pdf', 'DL-2023NOV16.pdf', 'DL-2023NOV15.pdf', 'DL-2023NOV04.pdf', 'DL-2023NOV01.pdf',
+            'DL-2023MAY23.pdf', 'DL-2023MAY12.pdf', 'DL-2023MAY03.pdf', 'DL-2023MAY01.pdf',
+            'DL-2023MAR25.pdf', 'DL-2023MAR14.pdf',
+            'DL-2023JUN20.pdf', 'DL-2023JUN07.pdf', 'DL-2023JUL04.pdf',
+            'DL-2023JAN31.pdf', 'DL-2023JAN21.pdf', 'DL-2023JAN10.pdf',
+            'DL-2023FEB25.pdf', 'DL-2023FEB20.pdf', 'DL-2023FEB09.pdf',
+            'DL-2023DEC16.pdf', 'DL-2023DEC02.pdf',
+            'DL-2023AUG24.pdf', 'DL-2023AUG23.pdf', 'DL-2023AUG18.pdf', 'DL-2023AUG08.pdf', 'DL-2023AUG03.pdf',
+            'DL-2023APR26.pdf', 'DL-2023APR06.pdf',
+            'DL-2022SEP30.pdf', 'DL-2022SEP21.pdf', 'DL-2022SEP10.pdf',
+            'DL-2022OCT29.pdf', 'DL-2022OCT20_2.pdf', 'DL-2022OCT20_1.pdf', 'DL-2022OCT20.pdf', 'DL-2022OCT12.pdf',
+            'DL-2022NOV29.pdf', 'DL-2022NOV23.pdf', 'DL-2022NOV04.pdf',
+            'DL-2022MAY28.pdf', 'DL-2022MAY20.pdf', 'DL-2022MAY13.pdf',
+            'DL-2022MAR08.pdf', 'DL-2022JUN27.pdf', 'DL-2022JUN10.pdf',
+            'DL-2022JUL20.pdf', 'DL-2022JUL16.pdf',
+            'DL-2022FEB05.pdf', 'DL-2022DEC21.pdf', 'DL-2022DEC13.pdf',
+            'DL-2022AUG23.pdf', 'DL-2022APR16.pdf',
+            'DL-2021SEP30.pdf', 'DL-2021SEP03.pdf',
+            'DL-2021OCT30.pdf', 'DL-2021OCT20.pdf', 'DL-2021OCT11_1.pdf', 'DL-2021OCT11.pdf',
+            'DL-2021NOV22.pdf', 'DL-2021NOV03.pdf',
+            'DL-2021MAY31.pdf', 'DL-2021MAY29.pdf',
+            'DL-2021MAR20.pdf', 'DL-2021MAR17.pdf', 'DL-2021MAR10.pdf',
+            'DL-2021JUN18.pdf', 'DL-2021JUN07.pdf', 'DL-2021JUN01.pdf',
+            'DL-2021JUL22.pdf', 'DL-2021JAN22.pdf',
+            'DL-2021FEB27.pdf', 'DL-2021FEB19.pdf', 'DL-2021FEB13.pdf', 'DL-2021FEB06.pdf',
+            'DL-2021DEC30.pdf', 'DL-2021DEC20.pdf', 'DL-2021DEC11.pdf', 'DL-2021DEC01.pdf',
+            'DL-2021AUG25.pdf', 'DL-2021AUG11.pdf', 'DL-2021AUG03.pdf',
+            'DL-2021APR28.pdf', 'DL-2021APR10.pdf', 'DL-2021APR03.pdf',
+            'DL-2020SEP23.pdf', 'DL-2020SEP08.pdf',
+            'DL-2020OCT28.pdf', 'DL-2020OCT07.pdf',
+            'DL-2020NOV12.pdf',
+            'DL-2020MAY29.pdf', 'DL-2020MAY28.pdf',
+            'DL-2020MAR14.pdf',
+            'DL-2020JUN30.pdf', 'DL-2020JUN15.pdf', 'DL-2020JUN09.pdf',
+            'DL-2020JUN03_2.pdf', 'DL-2020JUN03_1.pdf', 'DL-2020JUN03.pdf', 'DL-2020JUN02.pdf',
+            'DL-2020JUL21.pdf', 'DL-2020JUL13.pdf', 'DL-2020JUL04.pdf',
+            'DL-2020JAN20.pdf',
+            'DL-2020FEB29.pdf', 'DL-2020FEB15.pdf',
+            'DL-2020DEC19.pdf', 'DL-2020DEC09.pdf',
+            'DL-2020AUG31.pdf', 'DL-2020AUG03.pdf',
+            'DL-2019SEP21.pdf', 'DL-2019SEP07.pdf',
+            'DL-2019OCT21.pdf', 'DL-2019OCT05.pdf',
+            'DL-2019NOV30.pdf', 'DL-2019NOV23.pdf', 'DL-2019NOV01.pdf',
+            'DL-2019MAY31.pdf', 'DL-2019MAY30.pdf', 'DL-2019MAY10.pdf',
+            'DL-2019MAR30.pdf', 'DL-2019MAR16.pdf', 'DL-2019MAR02.pdf',
+            'DL-2019JUL18.pdf', 'DL-2019JUL01.pdf',
+            'DL-2019FEB21.pdf', 'DL-2019FEB16.pdf', 'DL-2019FEB09.pdf', 'DL-2019FEB02.pdf', 'DL-2019FEB01.pdf',
+            'DL-2019DEC16.pdf',
+            'DL-2019AUG22.pdf', 'DL-2019AUG02.pdf',
+            'DL-2019APR30.pdf', 'DL-2019APR26.pdf'
+        ];
+
+        let filteredFiles = [];
+
+        function loadFiles() {
+            console.log('Loading', allFiles.length, 'files');
+            
+            // Create file objects with date parsing
+            filteredFiles = allFiles.map(filename => {
+                const dateMatch = filename.match(/DL-(\d{4})([A-Z]{3})(\d{2})/);
+                if (dateMatch) {
+                    const [, year, month, day] = dateMatch;
+                    const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                    const monthIndex = monthNames.indexOf(month);
+                    const date = new Date(parseInt(year), monthIndex, parseInt(day));
+                    const formattedDate = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                    
+                    return {
+                        filename: filename,
+                        url: `dispatch/${filename}`,
+                        date: formattedDate,
+                        sortDate: date.getTime()
+                    };
+                }
+                return {
+                    filename: filename,
+                    url: `dispatch/${filename}`,
+                    date: 'Unknown',
+                    sortDate: 0
+                };
+            });
+            
+            // Update stats
+            document.getElementById('stats').textContent = `${filteredFiles.length} PDF files found (2019-2026)`;
+            
+            // Display files (already sorted in array)
+            displayFiles();
+        }
+
+        function filterFiles() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                filteredFiles = allFiles.map(filename => {
+                    const dateMatch = filename.match(/DL-(\d{4})([A-Z]{3})(\d{2})/);
+                    if (dateMatch) {
+                        const [, year, month, day] = dateMatch;
+                        const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+                        const monthIndex = monthNames.indexOf(month);
+                        const date = new Date(parseInt(year), monthIndex, parseInt(day));
+                        const formattedDate = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                        
+                        return {
+                            filename: filename,
+                            url: `dispatch/${filename}`,
+                            date: formattedDate,
+                            sortDate: date.getTime()
+                        };
+                    }
+                    return {
+                        filename: filename,
+                        url: `dispatch/${filename}`,
+                        date: 'Unknown',
+                        sortDate: 0
+                    };
+                });
+            } else {
+                filteredFiles = filteredFiles.filter(file => 
+                    file.filename.toLowerCase().includes(searchTerm) ||
+                    file.date.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            displayFiles();
+        }
+
+        function displayFiles() {
+            const list = document.getElementById('pdfList');
+            const noResults = document.getElementById('noResults');
+            
+            if (filteredFiles.length === 0) {
+                list.style.display = 'none';
+                noResults.style.display = 'block';
+                return;
+            }
+            
+            list.style.display = 'block';
+            noResults.style.display = 'none';
+            
+            list.innerHTML = filteredFiles.map(file => `
+                <li class="pdf-item">
+                    <div class="pdf-info">
+                        <div class="pdf-date">${file.date}</div>
+                        <div class="pdf-filename">${file.filename}</div>
+                        <div class="pdf-meta">Click to open TGPC dispatch PDF</div>
+                    </div>
+                    <a href="${file.url}" class="btn" target="_blank">Open</a>
+                </li>
+            `).join('');
+            
+            console.log('Displayed', filteredFiles.length, 'files');
+        }
+
+        // Load files when page loads
+        window.onload = loadFiles;
+    </script>
+</body>
+</html>
