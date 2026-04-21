@@ -272,6 +272,7 @@
         });
 
         function loadPDFFiles() {
+            console.log('Starting loadPDFFiles...');
             // Generate PDF file list from dispatch directory
             const dispatchFiles = [
                 'DL-2019APR26.pdf', 'DL-2019APR30.pdf', 'DL-2019AUG02.pdf', 'DL-2019AUG22.pdf',
@@ -357,12 +358,15 @@
                 };
             }).sort((a, b) => new Date(b.date) - new Date(a.date));
             
+            console.log('Processed files:', pdfFiles.length);
+            
             // For demo purposes, show some sample data
             document.getElementById('loadingMessage').style.display = 'none';
-            document.getElementById('stats').textContent = '210 PDF files found';
+            document.getElementById('stats').textContent = pdfFiles.length + ' PDF files found';
             
             // Show all files initially
             filteredFiles = [...pdfFiles];
+            console.log('About to call displayPDFs with', filteredFiles.length, 'files');
             displayPDFs();
         }
 
@@ -390,15 +394,18 @@
         }
 
         function displayPDFs() {
+            console.log('displayPDFs called with', filteredFiles.length, 'files');
             const grid = document.getElementById('pdfGrid');
             const noResults = document.getElementById('noResults');
             
             if (filteredFiles.length === 0) {
+                console.log('No files to display');
                 grid.style.display = 'none';
                 noResults.style.display = 'block';
                 return;
             }
             
+            console.log('Displaying', filteredFiles.length, 'files');
             grid.style.display = 'grid';
             noResults.style.display = 'none';
             
