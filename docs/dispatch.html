@@ -410,7 +410,7 @@
                         <button class="btn btn-primary" onclick="window.open('${file.url}', '_blank')">
                             📥 Download
                         </button>
-                        <span class="file-size">${formatFileSize(getFileSize(filename))}</span>
+                        <span class="file-size">${formatFileSize(getFileSize(file.filename))}</span>
                     </div>
                 </a>
             `).join('');
