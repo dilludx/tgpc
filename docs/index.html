@@ -170,6 +170,28 @@
             background-clip: text;
         }
 
+        .nav-links {
+            margin-top: 8px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .nav-link {
+            font-size: 0.75rem;
+            color: #00cc66;
+            text-decoration: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(0, 204, 102, 0.1);
+            border-color: #00cc66;
+            color: #00a86b;
+        }
+
         /* ========== STATUS MODULE - CLEAN REBUILD ========== */
 
         .header-status {
@@ -1263,6 +1285,9 @@
                             <span class="status-text">Busy</span>
                         </span>
                     </p>
+                    <div class="nav-links">
+                        <a href="dispatch.html" class="nav-link">📄 Dispatch PDFs</a>
+                    </div>
                 </div>
             </div>
             <!-- Statistics -->
