@@ -5,12 +5,12 @@ Automated TGPC pharmacist registry scraping, local data management, Supabase syn
 ## What This Repo Does
 - Scrapes the public TGPC pharmacist registry into `data/rx.json`
 - Syncs the latest dataset to Supabase for the public search UI
-- Supports local enrichment into `data/rxdetails.json` plus `data/photos/`
+- Supports local enrichment into `data/src/` (per-record JSON) plus `data/img/` (WEBP photos)
 - Serves separate desktop and mobile search pages from `docs/`
-- Runs automated validation and scheduled syncs with GitHub Actions
+- Runs automated validation with GitHub Actions
 
 ## Current Automation
-- `rx-sync.yml`: runs every 4 hours, updates `data/rx.json`, syncs Supabase, and publishes a run summary
+- `rx-sync.yml.disabled`: disabled scheduled sync workflow (contains update/sync/summary pipeline and can be re-enabled by renaming)
 - `ci-validate.yml`: runs compile checks, parser sanity checks, unit tests, frontend JS syntax checks, and workflow linting
 - `website-status.yml`: reusable/manual workflow that checks `https://tgpc.pages.dev/`
 
@@ -48,14 +48,15 @@ The public frontend uses the publishable key from `docs/config.js`, so database 
 
 ## Data Artifacts
 - `data/rx.json`: canonical basic pharmacist registry snapshot
-- `data/rxdetails.json`: optional local enrichment output
-- `data/photos/`: optional local photo cache created by enrichment
+- `data/src/`: optional local enrichment output (`<registration_number>.json`)
+- `data/img/`: optional local photo cache created by enrichment (`<registration_number>.webp`)
 - `data/backups/`: local timestamped snapshots created before update runs
+- `data/progress/prog`: local enrichment resume/progress marker
 
 ## Operational Notes
 - `update` refuses to replace the dataset if the new scrape drops below 90% of the existing record count
 - `enrich` now aborts immediately on registration mismatches so bad detail pages cannot be silently written
-- `rxdetails.json` and `data/photos/` are local working artifacts and are ignored by Git
+- `data/src/` and `data/img/` are local working artifacts and are ignored by Git
 - The desktop and mobile UIs both read from Supabase directly and share the same frontend config
 
 ## Status

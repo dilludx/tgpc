@@ -656,7 +656,6 @@ class Manager:
         while pending_records:
             
             batch_num += 1
-            progress_tracker.increment_batch()
             
             batch_records = pending_records[:batch_size]
             pending_records = pending_records[batch_size:]
