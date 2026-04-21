@@ -6,7 +6,7 @@ export default {
         // Handle dispatch route
         if (path === '/dispatch' || path === '/dispatch/') {
             const newUrl = new URL(request.url);
-            newUrl.pathname = '/dispatch-list.html';
+            newUrl.pathname = '/dispatch.html';
             return env.ASSETS.fetch(newUrl.toString());
         }
 
