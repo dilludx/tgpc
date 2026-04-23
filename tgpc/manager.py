@@ -27,12 +27,12 @@ from tgpc.dispatch import DispatchScraper
 logger = setup_logging("tgpc.manager")
 
 
-def validate_batch_files(src_dir: Path, img_dir: Path, registration_numbers: List[str]) -> dict:
+def validate_batch_files(jsn_dir: Path, img_dir: Path, registration_numbers: List[str]) -> dict:
     """
     Validate files for a batch of records.
     
     Args:
-        src_dir: Path to src directory
+        jsn_dir: Path to jsn directory
         img_dir: Path to img directory
         registration_numbers: List of registration numbers to validate
     
@@ -54,7 +54,7 @@ def validate_batch_files(src_dir: Path, img_dir: Path, registration_numbers: Lis
     
     for reg_no in registration_numbers:
         # Validate JSON file
-        json_file = src_dir / f"{reg_no}.json"
+        json_file = jsn_dir / f"{reg_no}.json"
         if not json_file.exists():
             results['json_missing'] += 1
             results['errors'].append(f"JSON missing: {reg_no}")
@@ -68,28 +68,20 @@ def validate_batch_files(src_dir: Path, img_dir: Path, registration_numbers: Lis
             results['json_invalid'] += 1
             results['errors'].append(f"JSON invalid: {reg_no} - {e}")
         
-        # Validate photo file
-        photo_file = img_dir / f"{reg_no}.webp"
-        if not photo_file.exists():
+        # Validate photo file (check for any image format)
+        photo_files = list(img_dir.glob(f"{reg_no}.*"))
+        if not photo_files:
             results['photo_missing'] += 1
             results['errors'].append(f"Photo missing: {reg_no}")
             continue
+
+        photo_file = photo_files[0]
         
         try:
             from PIL import Image
             img = Image.open(photo_file)
-            
-            # Check format
-            if img.format != 'WEBP':
-                results['photo_wrong_format'] += 1
-                results['errors'].append(f"Photo wrong format: {reg_no} - {img.format}")
-            
-            # Check resolution
-            width, height = img.size
-            if width != 800 or height != 1024:
-                results['photo_wrong_resolution'] += 1
-                results['errors'].append(f"Photo wrong resolution: {reg_no} - {width}x{height}")
-            
+
+            # Just check if image is valid (can be opened)
             results['photo_valid'] += 1
         except Exception as e:
             results['photo_invalid'] += 1
@@ -596,14 +588,14 @@ class Manager:
         
         # Load Data
         rx_records = self.file_manager.load("rx.json")
-        src_dir = Path(self.config.data_directory) / "src"
-        src_dir.mkdir(parents=True, exist_ok=True)
-        
+        jsn_dir = Path(self.config.data_directory) / "jsn"
+        jsn_dir.mkdir(parents=True, exist_ok=True)
+
         # Create lookup by registration number
         rx_lookup = {r.serial_number: r for r in rx_records}
-        
+
         # Identify Pending - check for existing individual detail files
-        done_ids = {f.stem for f in src_dir.glob("*.json")}
+        done_ids = {f.stem for f in jsn_dir.glob("*.json")}
         
         # Sort by serial number ascending (start from serial 1)
         pending_records = [r for r in rx_records if r.registration_number not in done_ids]
@@ -672,8 +664,8 @@ class Manager:
                 reg_no = record.registration_number
                 try:
                     # Scrape
-                    details = self.scraper.extract_detailed_info(reg_no)
-                    if not details: 
+                    details = self.scraper.extract_detailed_info(reg_no, img_dir)
+                    if not details:
                         continue
                     
                     # Get basic info from rx.json lookup FIRST for validation
@@ -715,49 +707,8 @@ class Manager:
                     # Merge: use basic_data for core fields, extracted_data for extra fields (education, work_experience)
                     data = {**extracted_data, **basic_data}
 
-                    # Save Photo Locally with smart optimization based on original resolution
-                    if details.photo_base64:
-                        try:
-                            from PIL import Image
-                            import io
-                            
-                            file_data = base64.b64decode(details.photo_base64)
-                            img = Image.open(io.BytesIO(file_data))
-                            
-                            # Get original resolution
-                            original_width, original_height = img.size
-                            original_pixels = original_width * original_height
-                            
-                            # Convert to RGB if necessary (for PNG with transparency)
-                            if img.mode in ('RGBA', 'LA', 'P'):
-                                rgb_img = Image.new('RGB', img.size, (255, 255, 255))
-                                rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
-                                img = rgb_img
-                            
-                            # Smart optimization: resize to uniform 800x1024 based on original resolution
-                            target_width, target_height = 800, 1024
-                            target_pixels = target_width * target_height  # 819,200 pixels
-                            
-                            if original_pixels < target_pixels:
-                                # Low resolution: upscale with maximum quality to preserve detail
-                                resized = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
-                                quality = 100
-                                method = 6
-                            else:
-                                # High resolution: downscale with maximum quality to preserve detail
-                                resized = img.resize((target_width, target_height), Image.Resampling.LANCZOS)
-                                quality = 100
-                                method = 5
-                            
-                            # Save as WebP with smart quality settings
-                            webp_path = img_dir / f"{reg_no}.webp"
-                            resized.save(webp_path, 'WebP', quality=quality, method=method)
-                            
-                        except Exception as e:
-                            logger.error(f"Photo save failed for serial {serial}: {e}")
-                    
-# Save to individual JSON file
-                    detail_file = src_dir / f"{reg_no}.json"
+                    # Save to individual JSON file
+                    detail_file = jsn_dir / f"{reg_no}.json"
                     with open(detail_file, 'w', encoding='utf-8') as f:
                         json.dump(data, f, indent=2, ensure_ascii=False)
                     
@@ -784,7 +735,7 @@ class Manager:
             # Validate batch files (JSON validity, photo corruption, resolution, format)
             if not skip_validation:
                 batch_registration_numbers = [record.registration_number for record in batch_records]
-                validation_results = validate_batch_files(src_dir, img_dir, batch_registration_numbers)
+                validation_results = validate_batch_files(jsn_dir, img_dir, batch_registration_numbers)
                 
                 if validation_results['errors']:
                     logger.warning(f"Batch {batch_num} validation found {len(validation_results['errors'])} issues:")
@@ -827,7 +778,7 @@ class Manager:
             try:
                 # details
                 logger.info("  → Syncing details...")
-                result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'src'), 'gdrive:tgpc/src', 
+                result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'jsn'), 'gdrive:tgpc/jsn', 
                               '--transfers', '16', '--checkers', '16', '--drive-chunk-size', '32M'], 
                               capture_output=True, text=True)
                 if result.returncode != 0:

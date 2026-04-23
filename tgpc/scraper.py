@@ -27,13 +27,11 @@ class PharmacistRecord:
     father_name: str
     category: str
     serial_number: Optional[int] = None
-    
+
     gender: Optional[str] = None
     validity_date: Optional[str] = None
     status: Optional[str] = None
-    photo_base64: Optional[str] = None
-    photo_path: Optional[str] = None
-    
+
     education: Optional[List[Dict[str, str]]] = None
     work_experience: Optional[Dict[str, str]] = None
 
@@ -240,20 +238,20 @@ class Scraper:
         logger.info(f"Extracted {len(records)} records")
         return records
 
-    def extract_detailed_info(self, reg_no: str) -> Optional[PharmacistRecord]:
+    def extract_detailed_info(self, reg_no: str, img_dir: Path = None) -> Optional[PharmacistRecord]:
         try:
             logger.info(f"Enriching {reg_no}...")
             response = self._request("POST", self.urls['search'], data={
                 'registration_no': reg_no,
                 'submit': 'Submit'
             })
-            
+
             if 'No Records Found' in response.text:
                 return None
 
             soup = BeautifulSoup(response.content, 'html.parser')
             tables = soup.find_all('table')
-            
+
             if not tables:
                 return None
 
@@ -273,18 +271,56 @@ class Scraper:
                 )
                 if info_table:
                     img = info_table.find('img')
-            if img and img.get('src'):
+
+            if img and img.get('src') and img_dir:
                 src = img['src']
+                import base64
+
                 if 'base64' in src:
-                    record.photo_base64 = src.split(',')[-1]
+                    # Extract MIME type from data URI
+                    if src.startswith('data:'):
+                        mime_type = src.split(';')[0].split(':')[1]  # e.g., "image/jpeg"
+                        base64_data = src.split(',')[-1]
+                        image_bytes = base64.b64decode(base64_data)
+
+                        # Get file extension from MIME type
+                        ext_map = {
+                            'image/jpeg': 'jpg',
+                            'image/jpg': 'jpg',
+                            'image/png': 'png',
+                            'image/webp': 'webp',
+                            'image/gif': 'gif'
+                        }
+                        ext = ext_map.get(mime_type.lower(), 'jpg')
+
+                        # Save image with registration number as filename
+                        photo_path = img_dir / f"{reg_no}.{ext}"
+                        with open(photo_path, 'wb') as f:
+                            f.write(image_bytes)
+                        logger.info(f"Saved photo from base64: {photo_path.name}")
+
                 elif src.startswith('/') or src.startswith('http'):
                     # Download photo from relative or absolute URL
                     try:
                         photo_url = src if src.startswith('http') else f"{self.config.base_url}{src}"
                         photo_response = self._request("GET", photo_url)
                         if photo_response.status_code == 200:
-                            import base64
-                            record.photo_base64 = base64.b64encode(photo_response.content).decode('utf-8')
+                            # Get format from Content-Type header
+                            content_type = photo_response.headers.get('Content-Type', 'image/jpeg')
+                            ext_map = {
+                                'image/jpeg': 'jpg',
+                                'image/jpg': 'jpg',
+                                'image/png': 'png',
+                                'image/webp': 'webp',
+                                'image/gif': 'gif'
+                            }
+                            ext = ext_map.get(content_type.lower(), 'jpg')
+
+                            # Save image with registration number as filename
+                            photo_path = img_dir / f"{reg_no}.{ext}"
+                            with open(photo_path, 'wb') as f:
+                                f.write(photo_response.content)
+                            logger.info(f"Saved photo from URL: {photo_path.name}")
                     except Exception as e:
                         logger.warning(f"Failed to download photo from {src}: {e}")
 

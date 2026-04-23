@@ -5,7 +5,7 @@ Automated TGPC pharmacist registry scraping, local data management, Supabase syn
 ## What This Repo Does
 - Scrapes the public TGPC pharmacist registry into `data/rx.json`
 - Syncs the latest dataset to Supabase for the public search UI
-- Supports local enrichment into `data/src/` (per-record JSON) plus `data/img/` (WEBP photos)
+- Supports local enrichment into `data/jsn/` (per-record JSON) plus `data/img/` (photos)
 - Serves separate desktop and mobile search pages from `docs/`
 - Runs automated validation with GitHub Actions
 
@@ -48,15 +48,15 @@ The public frontend uses the publishable key from `docs/config.js`, so database 
 
 ## Data Artifacts
 - `data/rx.json`: canonical basic pharmacist registry snapshot
-- `data/src/`: optional local enrichment output (`<registration_number>.json`)
-- `data/img/`: optional local photo cache created by enrichment (`<registration_number>.webp`)
+- `data/jsn/`: optional local enrichment output (`<registration_number>.json`)
+- `data/img/`: optional local photo cache created by enrichment (`<registration_number>.jpg`/`.png`/`.webp`)
 - `data/backups/`: local timestamped snapshots created before update runs
 - `data/progress/prog`: local enrichment resume/progress marker
 
 ## Operational Notes
 - `update` refuses to replace the dataset if the new scrape drops below 90% of the existing record count
 - `enrich` now aborts immediately on registration mismatches so bad detail pages cannot be silently written
-- `data/src/` and `data/img/` are local working artifacts and are ignored by Git
+- `data/jsn/` and `data/img/` are local working artifacts and are ignored by Git
 - The desktop and mobile UIs both read from Supabase directly and share the same frontend config
 
 ## Status

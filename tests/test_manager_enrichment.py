@@ -20,7 +20,7 @@ class DetailScraper:
     def health_check(self):
         return True
 
-    def extract_detailed_info(self, reg_no):
+    def extract_detailed_info(self, reg_no, img_dir=None):
         return self.details_by_id.get(reg_no)
 
 
@@ -66,7 +66,7 @@ class ManagerEnrichmentTests(unittest.TestCase):
 
             manager.run_enrichment(batch_size=1, skip_validation=True, skip_sync=True)
 
-            detail_file = Path(temp_dir, "src", "RX001.json")
+            detail_file = Path(temp_dir, "jsn", "RX001.json")
             self.assertTrue(detail_file.exists())
             details = json.loads(detail_file.read_text(encoding="utf-8"))
             self.assertEqual(details["validity_date"], "2026-12-31")
@@ -92,7 +92,7 @@ class ManagerEnrichmentTests(unittest.TestCase):
             with self.assertRaises(DataIntegrityError):
                 manager.run_enrichment(batch_size=1, skip_validation=True, skip_sync=True)
 
-            self.assertFalse(Path(temp_dir, "src", "RX001.json").exists())
+            self.assertFalse(Path(temp_dir, "jsn", "RX001.json").exists())
 
 
 if __name__ == "__main__":
