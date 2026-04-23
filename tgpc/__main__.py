@@ -42,6 +42,9 @@ def main():
     enrich_parser.add_argument('--stop', type=int, default=None, help='Stop at serial number (default: all)')
     enrich_parser.add_argument('--force', action='store_true', help='Re-extract even if already done')
 
+    # Dispatch command
+    dispatch_parser = subparsers.add_parser('dispatch', help='Sync dispatch PDFs')
+
     args = parser.parse_args()
     
     manager = Manager()
@@ -59,6 +62,8 @@ def main():
         manager.sync_to_supabase()
     elif args.command == 'enrich':
         manager.run_enrichment(batch_size=args.batch_size, start=args.start, stop=args.stop, force=args.force)
+    elif args.command == 'dispatch':
+        manager.sync_dispatch_pdfs()
     else:
         parser.print_help()
 

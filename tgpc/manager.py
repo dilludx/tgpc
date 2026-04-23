@@ -22,6 +22,7 @@ from supabase import create_client
 from tgpc.utils import Config, TGPCError, setup_logging
 from tgpc.progress import ProgressTracker
 from tgpc.scraper import Scraper, PharmacistRecord
+from tgpc.dispatch import DispatchScraper
 
 logger = setup_logging("tgpc.manager")
 
@@ -851,3 +852,58 @@ class Manager:
             logger.info("All enrichment complete! Progress saved for tracking.")
         else:
             logger.info(f"Enrichment paused: {len(pending_records)} records remaining, {total_processed} processed")
+
+    def sync_dispatch_pdfs(self):
+        """Sync dispatch PDFs from TGPC website."""
+        logger.info("Starting dispatch PDF sync...")
+        
+        # Get docs directory (parent of data directory)
+        docs_dir = Path(self.config.data_directory).parent / "docs"
+        dispatchpdf_dir = docs_dir / "dispatchpdf"
+        
+        # Sync PDFs
+        scraper = DispatchScraper()
+        new_downloaded, total_available = scraper.sync_pdfs(dispatchpdf_dir)
+        
+        # Update dispatch.html
+        self._update_dispatch_html(dispatchpdf_dir)
+        
+        logger.info(f"Dispatch sync complete: {new_downloaded} new PDFs, {total_available} total")
+        return new_downloaded, total_available
+    
+    def _update_dispatch_html(self, dispatchpdf_dir: Path):
+        """Update dispatch.html with current PDF list."""
+        dispatch_html = Path(__file__).parent.parent / "docs" / "dispatch.html"
+        
+        if not dispatch_html.exists():
+            logger.error(f"dispatch.html not found at {dispatch_html}")
+            return
+        
+        # Get all PDF files
+        pdf_files = sorted(dispatchpdf_dir.glob("*.pdf"), reverse=True)
+        
+        # Generate JavaScript array
+        js_array = "        const allFiles = [\n"
+        for pdf_file in pdf_files:
+            js_array += f"            '{pdf_file.name}',\n"
+        js_array += "        ];\n"
+        
+        # Read existing HTML
+        with open(dispatch_html, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        # Replace the allFiles array
+        import re
+        pattern = r"const allFiles = \[.*?\];"
+        replacement = f"const allFiles = [\n"
+        for pdf_file in pdf_files:
+            replacement += f"            '{pdf_file.name}',\n"
+        replacement += "        ];"
+        
+        new_html = re.sub(pattern, replacement, html_content, flags=re.DOTALL)
+        
+        # Write updated HTML
+        with open(dispatch_html, 'w', encoding='utf-8') as f:
+            f.write(new_html)
+        
+        logger.info(f"Updated dispatch.html with {len(pdf_files)} PDF files")
