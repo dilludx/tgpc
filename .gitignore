@@ -26,6 +26,7 @@ data/backups/
 data/detailed/
 data/jsn/
 data/metadata/
+data/rx.json
 data/rxdetails.json
 data/img/
 data/progress/
