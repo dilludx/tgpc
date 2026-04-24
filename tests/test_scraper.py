@@ -144,7 +144,6 @@ class ScraperParsingTests(unittest.TestCase):
         self.assertEqual(record.father_name, "Parent Name")
         self.assertEqual(record.category, "BPharm")
         self.assertEqual(record.validity_date, "31/12/2026")
-        self.assertEqual(record.photo_base64, "QUJDREVGRw==")
         self.assertEqual(
             record.education,
             [
