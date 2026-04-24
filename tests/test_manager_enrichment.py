@@ -41,7 +41,10 @@ class ManagerEnrichmentTests(unittest.TestCase):
                 return Manager()
 
     @patch("tgpc.manager.time.sleep", return_value=None)
-    def test_run_enrichment_saves_first_pending_record_in_sorted_order(self, _sleep):
+    @patch("tgpc.manager.get_current_ip", side_effect=["1.2.3.4", "5.6.7.8"])
+    @patch("tgpc.manager.connect_warp", return_value=True)
+    @patch("tgpc.manager.disconnect_warp", return_value=True)
+    def test_run_enrichment_saves_first_pending_record_in_sorted_order(self, _sleep, _ip, _connect, _disconnect):
         with tempfile.TemporaryDirectory() as temp_dir:
             manager = self._make_manager(
                 temp_dir,
@@ -74,7 +77,10 @@ class ManagerEnrichmentTests(unittest.TestCase):
             self.assertEqual(details["work_experience"]["address"], "Clinic Street")
 
     @patch("tgpc.manager.time.sleep", return_value=None)
-    def test_run_enrichment_raises_on_registration_mismatch(self, _sleep):
+    @patch("tgpc.manager.get_current_ip", side_effect=["1.2.3.4", "5.6.7.8"])
+    @patch("tgpc.manager.connect_warp", return_value=True)
+    @patch("tgpc.manager.disconnect_warp", return_value=True)
+    def test_run_enrichment_raises_on_registration_mismatch(self, _sleep, _ip, _connect, _disconnect):
         with tempfile.TemporaryDirectory() as temp_dir:
             manager = self._make_manager(
                 temp_dir,
