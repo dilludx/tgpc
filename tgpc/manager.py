@@ -694,13 +694,17 @@ class Manager:
                     json.dump(data, f, indent=2, ensure_ascii=False)
                 
                 total_processed += 1
-                
-                # Save progress after each record with integrity checks
-                progress_tracker.update_progress(
-                    total_processed=total_processed,
-                    last_serial=record.serial_number,
-                    remaining=len(pending_records) - total_processed
-                )
+
+                # Only update progress if this is forward progress (serial > current last_serial)
+                # This prevents progress from being affected when re-enriching single records
+                current_progress = progress_tracker.load()
+                current_last_serial = current_progress.get('last_serial', 0) if current_progress else 0
+                if record.serial_number > current_last_serial:
+                    progress_tracker.update_progress(
+                        total_processed=total_processed,
+                        last_serial=record.serial_number,
+                        remaining=len(pending_records) - total_processed
+                    )
                 
                 # Rate limit - 1.5-2.5 seconds between requests (optimized for speed)
                 time.sleep(random.uniform(1.5, 2.5))
