@@ -766,10 +766,6 @@ class Manager:
             logger.info(f"Enrichment complete: {total_processed} records processed")
         else:
             logger.info("No records processed")
-        
-        # Clear progress file when all records are done
-        if progress_file.exists():
-            progress_file.unlink()
 
     def sync_dispatch_pdfs(self):
         """Sync dispatch PDFs from TGPC website."""
