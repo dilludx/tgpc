@@ -739,18 +739,20 @@ class Manager:
             try:
                 # details
                 logger.info("  → Syncing details...")
-                result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'jsn'), 'gdrive:tgpc/jsn', 
-                              '--transfers', '16', '--checkers', '16', '--drive-chunk-size', '32M'], 
-                              capture_output=True, text=True)
+                result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'jsn'), 'gdrive:tgpc/jsn',
+                              '--transfers', '64', '--checkers', '64', '--drive-chunk-size', '128M',
+                              '--fast-list', '--use-mmap', '--no-update-modtime', '--progress'],
+                              capture_output=False)
                 if result.returncode != 0:
-                    logger.error(f"rclone details sync failed: {result.stderr}")
-                    raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
+                    logger.error(f"rclone details sync failed")
+                    raise subprocess.CalledProcessError(result.returncode, result.args)
                 logger.info("  → details: 100% ✓")
                 # photos
                 logger.info("  → Syncing photos...")
                 result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'img'), 'gdrive:tgpc/img',
-                              '--transfers', '16', '--checkers', '16', '--drive-chunk-size', '32M'],
-                              capture_output=True, text=True)
+                              '--transfers', '64', '--checkers', '64', '--drive-chunk-size', '128M',
+                              '--fast-list', '--use-mmap', '--no-update-modtime', '--progress'],
+                              capture_output=False)
                 if result.returncode != 0:
                     logger.error(f"rclone photos sync failed: {result.stderr}")
                     raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
