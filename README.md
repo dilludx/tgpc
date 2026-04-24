@@ -27,7 +27,7 @@ Run the main commands:
 ```bash
 python3 -m tgpc update
 python3 -m tgpc sync
-python3 -m tgpc enrich --batch-size 50
+python3 -m tgpc enrich
 ```
 
 Run validation locally:
