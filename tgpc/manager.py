@@ -726,14 +726,29 @@ class Manager:
             validation_results = validate_batch_files(jsn_dir, img_dir, registration_numbers)
             
             if validation_results['errors']:
-                logger.error(f"CRITICAL: {len(validation_results['errors'])} validation errors found. GDrive sync aborted to prevent uploading corrupted data.")
-                logger.error("Validation errors:")
-                for error in validation_results['errors'][:20]:
-                    logger.error(f"  - {error}")
-                if len(validation_results['errors']) > 20:
-                    logger.error(f"  ... and {len(validation_results['errors']) - 20} more")
-                logger.info(f"Validation summary: {validation_results['json_valid']} valid JSON, {validation_results['photo_valid']} valid photos, {validation_results['json_missing']} missing JSON, {validation_results['photo_missing']} missing photos")
-                raise TGPCError(f"Validation errors detected. GDrive sync aborted. {len(validation_results['errors'])} errors found.")
+                # Separate errors into critical (JSON-related) and minor (photo-related)
+                critical_errors = [e for e in validation_results['errors'] if 'JSON' in e or 'json' in e.lower()]
+                photo_errors = [e for e in validation_results['errors'] if 'Photo' in e or 'photo' in e.lower()]
+                
+                if critical_errors:
+                    # Block sync for critical errors (JSON corruption, data integrity issues)
+                    logger.error(f"CRITICAL: {len(critical_errors)} critical validation errors found. GDrive sync aborted to prevent uploading corrupted data.")
+                    logger.error("Critical errors:")
+                    for error in critical_errors[:20]:
+                        logger.error(f"  - {error}")
+                    if len(critical_errors) > 20:
+                        logger.error(f"  ... and {len(critical_errors) - 20} more")
+                    logger.info(f"Validation summary: {validation_results['json_valid']} valid JSON, {validation_results['photo_valid']} valid photos, {validation_results['json_missing']} missing JSON, {validation_results['photo_missing']} missing photos")
+                    raise TGPCError(f"Critical validation errors detected. GDrive sync aborted. {len(critical_errors)} errors found.")
+                else:
+                    # Allow sync for photo errors only (missing/invalid photos from source)
+                    logger.warning(f"WARNING: {len(photo_errors)} photo validation errors found (missing/invalid photos from source). Proceeding with GDrive sync.")
+                    logger.warning("Photo errors:")
+                    for error in photo_errors[:20]:
+                        logger.warning(f"  - {error}")
+                    if len(photo_errors) > 20:
+                        logger.warning(f"  ... and {len(photo_errors) - 20} more")
+                    logger.info(f"Validation summary: {validation_results['json_valid']} valid JSON, {validation_results['photo_valid']} valid photos, {validation_results['json_missing']} missing JSON, {validation_results['photo_missing']} missing photos")
             else:
                 logger.info(f"Validation passed: All {validation_results['json_valid']} JSON and {validation_results['photo_valid']} photos valid")
         
