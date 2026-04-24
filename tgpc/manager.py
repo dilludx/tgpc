@@ -6,7 +6,6 @@ Handles file storage, backups, daily updates, and cloud sync.
 import json
 import shutil
 import os
-import base64
 import time
 import random
 import subprocess
