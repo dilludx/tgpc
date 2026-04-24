@@ -496,12 +496,11 @@ class Manager:
         except Exception as e:
             logger.error(f"Sync failed: {e}")
 
-    def run_enrichment(self, batch_size: int = 500, start: int = 1, stop: int = None, force: bool = False, skip_validation: bool = False, skip_sync: bool = False):
+    def run_enrichment(self, start: int = 1, stop: int = None, force: bool = False, skip_validation: bool = False, skip_sync: bool = False):
         """
-        Run enrichment in batches.
+        Run enrichment for serial number range.
         
         Args:
-            batch_size: Records per batch (default 500)
             start: Start from serial number (default: 1)
             stop: Stop at serial number (default: all)
             force: Re-extract even if already done
@@ -580,10 +579,7 @@ class Manager:
         # Initialize sophisticated progress tracker
         progress_tracker = ProgressTracker(progress_file)
         
-        # Track validation errors across batches
-        validation_errors = []
-        
-        logger.info(f"Starting enrichment (batch_size={batch_size})...")
+        logger.info("Starting enrichment...")
         
         # Load Data
         rx_records = self.file_manager.load("rx.json")
@@ -641,135 +637,101 @@ class Manager:
             logger.info("No records in range.")
             return
         
-        # Process in batches
-        batch_num = 0
+        # Process records one by one
         total_processed = 0
         
-        while pending_records:
-            
-            batch_num += 1
-            
-            batch_records = pending_records[:batch_size]
-            pending_records = pending_records[batch_size:]
-            
-            serial_start = batch_records[0].serial_number
-            serial_end = batch_records[-1].serial_number
-            logger.info(f"Batch {batch_num}: Processing serial {serial_start}-{serial_end} ({len(batch_records)} records)")
-            
-            processed_in_batch = 0
-            
-            for record in batch_records:
-                serial = record.serial_number
-                reg_no = record.registration_number
-                try:
-                    # Scrape
-                    details = self.scraper.extract_detailed_info(reg_no, img_dir)
-                    if not details:
-                        continue
-                    
-                    # Get basic info from rx.json lookup FIRST for validation
-                    basic_info = rx_lookup.get(serial)
-                    
-                    # CRITICAL SAFETY CHECK - Validate all details match the same person
-                    mismatches = []
-                    if details.registration_number and details.registration_number.lower() != reg_no.lower():
-                        mismatches.append(f"registration_number: expected '{reg_no}', got '{details.registration_number}'")
-                    if details.name and basic_info and details.name.strip().lower() != basic_info.name.strip().lower():
-                        mismatches.append(f"name: expected '{basic_info.name}', got '{details.name}'")
-                    if details.father_name and basic_info and details.father_name.strip().lower() != basic_info.father_name.strip().lower():
-                        mismatches.append(f"father_name: expected '{basic_info.father_name}', got '{details.father_name}'")
-                    if details.category and basic_info and details.category.strip().lower() != basic_info.category.strip().lower():
-                        mismatches.append(f"category: expected '{basic_info.category}', got '{details.category}'")
-                    
-                    if mismatches:
-                        logger.critical(f"DATA CORRUPTION PREVENTED for serial {serial} ({reg_no}): " + "; ".join(mismatches))
-                        raise DataIntegrityError(f"Data Integrity Violation: Mismatched fields for {reg_no}. Stopping to prevent corruption.")
-
-                    logger.info(f"✅ DATA VALIDATION PASSED: serial {serial} ({reg_no}) - {details.name} ({details.category})")
-
-                    basic_info = rx_lookup.get(serial)
-                    if not basic_info:
-                        logger.warning(f"Basic info not found for {reg_no}, using scraped data")
-                    
-                    basic_data = {
-                        "registration_number": (basic_info.registration_number if basic_info else details.registration_number),
-                        "name": (basic_info.name if basic_info else details.name),
-                        "father_name": (basic_info.father_name if basic_info else details.father_name),
-                        "gender": details.gender or "",
-                        "category": (basic_info.category if basic_info else details.category),
-                        "status": details.status or "",
-                        "serial_number": (basic_info.serial_number if basic_info else None)
-                    }
-                    
-                    # Combine basic info + extracted details
-                    extracted_data = details.to_detailed_dict()
-                    # Merge: use basic_data for core fields, extracted_data for extra fields (education, work_experience)
-                    data = {**extracted_data, **basic_data}
-
-                    # Save to individual JSON file
-                    detail_file = jsn_dir / f"{reg_no}.json"
-                    with open(detail_file, 'w', encoding='utf-8') as f:
-                        json.dump(data, f, indent=2, ensure_ascii=False)
-                    
-                    processed_in_batch += 1
-                    total_processed += 1
-                    
-                    # Save progress after each record with integrity checks
-                    progress_tracker.update_progress(
-                        total_processed=total_processed,
-                        last_serial=record.serial_number,
-                        remaining=len(pending_records) + len(batch_records) - processed_in_batch
-                    )
-                    
-                    # Rate limit - 1.5-2.5 seconds between requests (optimized for speed)
-                    time.sleep(random.uniform(1.5, 2.5))
+        for record in pending_records:
+            serial = record.serial_number
+            reg_no = record.registration_number
+            try:
+                # Scrape
+                details = self.scraper.extract_detailed_info(reg_no, img_dir)
+                if not details:
+                    continue
                 
-                except DataIntegrityError:
-                    raise
-                except Exception as e:
-                    logger.error(f"Enrichment failed for {reg_no}: {e}")
-            
-            logger.info(f"Batch {batch_num} complete: {processed_in_batch}/{len(batch_records)} processed")
-            
-            # Validate batch files (JSON validity, photo corruption, resolution, format)
-            if not skip_validation:
-                batch_registration_numbers = [record.registration_number for record in batch_records]
-                validation_results = validate_batch_files(jsn_dir, img_dir, batch_registration_numbers)
+                # Get basic info from rx.json lookup FIRST for validation
+                basic_info = rx_lookup.get(serial)
                 
-                if validation_results['errors']:
-                    logger.warning(f"Batch {batch_num} validation found {len(validation_results['errors'])} issues:")
-                    for error in validation_results['errors'][:10]:  # Log first 10 errors
-                        logger.warning(f"  - {error}")
-                    if len(validation_results['errors']) > 10:
-                        logger.warning(f"  ... and {len(validation_results['errors']) - 10} more")
-                    logger.info(f"Validation summary: {validation_results['json_valid']} valid JSON, {validation_results['photo_valid']} valid photos, {validation_results['json_missing']} missing JSON, {validation_results['photo_missing']} missing photos")
-                    # Collect errors for pre-sync check
-                    validation_errors.extend(validation_results['errors'])
-                else:
-                    logger.info(f"Batch {batch_num} validation passed: All {validation_results['json_valid']} JSON and {validation_results['photo_valid']} photos valid")
+                # CRITICAL SAFETY CHECK - Validate all details match the same person
+                mismatches = []
+                if details.registration_number and details.registration_number.lower() != reg_no.lower():
+                    mismatches.append(f"registration_number: expected '{reg_no}', got '{details.registration_number}'")
+                if details.name and basic_info and details.name.strip().lower() != basic_info.name.strip().lower():
+                    mismatches.append(f"name: expected '{basic_info.name}', got '{details.name}'")
+                if details.father_name and basic_info and details.father_name.strip().lower() != basic_info.father_name.strip().lower():
+                    mismatches.append(f"father_name: expected '{basic_info.father_name}', got '{details.father_name}'")
+                if details.category and basic_info and details.category.strip().lower() != basic_info.category.strip().lower():
+                    mismatches.append(f"category: expected '{basic_info.category}', got '{details.category}'")
+                
+                if mismatches:
+                    logger.critical(f"DATA CORRUPTION PREVENTED for serial {serial} ({reg_no}): " + "; ".join(mismatches))
+                    raise DataIntegrityError(f"Data Integrity Violation: Mismatched fields for {reg_no}. Stopping to prevent corruption.")
+
+                logger.info(f"✅ DATA VALIDATION PASSED: serial {serial} ({reg_no}) - {details.name} ({details.category})")
+
+                basic_info = rx_lookup.get(serial)
+                if not basic_info:
+                    logger.warning(f"Basic info not found for {reg_no}, using scraped data")
+                
+                basic_data = {
+                    "registration_number": (basic_info.registration_number if basic_info else details.registration_number),
+                    "name": (basic_info.name if basic_info else details.name),
+                    "father_name": (basic_info.father_name if basic_info else details.father_name),
+                    "gender": details.gender or "",
+                    "category": (basic_info.category if basic_info else details.category),
+                    "status": details.status or "",
+                    "serial_number": (basic_info.serial_number if basic_info else None)
+                }
+                
+                # Combine basic info + extracted details
+                extracted_data = details.to_detailed_dict()
+                # Merge: use basic_data for core fields, extracted_data for extra fields (education, work_experience)
+                data = {**extracted_data, **basic_data}
+
+                # Save to individual JSON file
+                detail_file = jsn_dir / f"{reg_no}.json"
+                with open(detail_file, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                
+                total_processed += 1
+                
+                # Save progress after each record with integrity checks
+                progress_tracker.update_progress(
+                    total_processed=total_processed,
+                    last_serial=record.serial_number,
+                    remaining=len(pending_records) - total_processed
+                )
+                
+                # Rate limit - 1.5-2.5 seconds between requests (optimized for speed)
+                time.sleep(random.uniform(1.5, 2.5))
             
-            # Save progress periodically (every batch) with integrity checks
-            progress_tracker.update_progress(
-                total_processed=total_processed,
-                last_serial=serial_end,
-                remaining=len(pending_records)
-            )
+            except DataIntegrityError:
+                raise
+            except Exception as e:
+                logger.error(f"Enrichment failed for {reg_no}: {e}")
         
         # Disconnect from Cloudflare Warp before sync (Warp slows down upload)
         if warp_connected:
             logger.info("Disconnecting from Cloudflare Warp...")
             disconnect_warp()
         
-        # Check validation errors before GDrive sync (only if validation was enabled)
-        if not skip_validation and validation_errors:
-            logger.error(f"CRITICAL: {len(validation_errors)} validation errors found across all batches. GDrive sync aborted to prevent uploading corrupted data.")
-            logger.error("Validation errors:")
-            for error in validation_errors[:20]:
-                logger.error(f"  - {error}")
-            if len(validation_errors) > 20:
-                logger.error(f"  ... and {len(validation_errors) - 20} more")
-            logger.error("Please fix validation errors before syncing. Use --force to re-enrich affected records.")
-            raise TGPCError(f"Validation errors detected. GDrive sync aborted. {len(validation_errors)} errors found.")
+        # Validate all files before GDrive sync (if validation was enabled)
+        if not skip_validation:
+            logger.info("Validating files...")
+            registration_numbers = [record.registration_number for record in pending_records]
+            validation_results = validate_batch_files(jsn_dir, img_dir, registration_numbers)
+            
+            if validation_results['errors']:
+                logger.error(f"CRITICAL: {len(validation_results['errors'])} validation errors found. GDrive sync aborted to prevent uploading corrupted data.")
+                logger.error("Validation errors:")
+                for error in validation_results['errors'][:20]:
+                    logger.error(f"  - {error}")
+                if len(validation_results['errors']) > 20:
+                    logger.error(f"  ... and {len(validation_results['errors']) - 20} more")
+                logger.info(f"Validation summary: {validation_results['json_valid']} valid JSON, {validation_results['photo_valid']} valid photos, {validation_results['json_missing']} missing JSON, {validation_results['photo_missing']} missing photos")
+                raise TGPCError(f"Validation errors detected. GDrive sync aborted. {len(validation_results['errors'])} errors found.")
+            else:
+                logger.info(f"Validation passed: All {validation_results['json_valid']} JSON and {validation_results['photo_valid']} photos valid")
         
         # Sync to Google Drive after all records are extracted (excluding rx.json)
         if not skip_sync:
@@ -797,11 +759,15 @@ class Manager:
             except subprocess.CalledProcessError as e:
                 logger.error(f"Google Drive sync failed: {e}")
         
-        # Keep progress file for tracking across batches
-        if not pending_records:
-            logger.info("All enrichment complete! Progress saved for tracking.")
+        # Keep progress file for tracking
+        if total_processed > 0:
+            logger.info(f"Enrichment complete: {total_processed} records processed")
         else:
-            logger.info(f"Enrichment paused: {len(pending_records)} records remaining, {total_processed} processed")
+            logger.info("No records processed")
+        
+        # Clear progress file when all records are done
+        if progress_file.exists():
+            progress_file.unlink()
 
     def sync_dispatch_pdfs(self):
         """Sync dispatch PDFs from TGPC website."""
