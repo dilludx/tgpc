@@ -1,0 +1,18 @@
+# Data directories - exclude from IDE indexing to prevent freezing
+data/jsn/
+data/img/
+data/backups/
+data/progress/
+
+# Large data files
+data/rx.json
+
+# Logs
+*.log
+sync.log
+
+# Temporary files
+*.backup
+*.bak
+*.tmp
+debug_*.html
