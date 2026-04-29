@@ -759,7 +759,7 @@ class Manager:
                 # details
                 logger.info("  → Syncing details...")
                 result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'jsn'), 'gdrive:tgpc/jsn',
-                              '--transfers', '64', '--checkers', '64', '--drive-chunk-size', '128M',
+                              '--transfers', '128', '--checkers', '64', '--drive-chunk-size', '128M',
                               '--fast-list', '--use-mmap', '--no-update-modtime', '--progress', '--ignore-existing'],
                               capture_output=False)
                 if result.returncode != 0:
@@ -769,7 +769,7 @@ class Manager:
                 # photos
                 logger.info("  → Syncing photos...")
                 result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'img'), 'gdrive:tgpc/img',
-                              '--transfers', '64', '--checkers', '64', '--drive-chunk-size', '128M',
+                              '--transfers', '128', '--checkers', '64', '--drive-chunk-size', '128M',
                               '--fast-list', '--use-mmap', '--no-update-modtime', '--progress', '--ignore-existing'],
                               capture_output=False)
                 if result.returncode != 0:
