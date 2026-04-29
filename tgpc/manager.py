@@ -534,7 +534,7 @@ class Manager:
                 logger.warning(f"IP did not change (still {new_ip}). Attempting again...")
                 # Retry IP rotation
                 disconnect_warp()
-                time.sleep(2)
+                time.sleep(0.5)
                 warp_connected = connect_warp()
                 new_ip = get_current_ip()
                 if new_ip:
@@ -547,7 +547,7 @@ class Manager:
             logger.warning("Could not get new IP after Warp rotation")
         
         # Health check with automatic Warp retry on blocking
-        max_retries = 3
+        max_retries = 1
         health_passed = False
         
         for attempt in range(max_retries):
@@ -561,11 +561,11 @@ class Manager:
                     logger.info("Attempting to change IP via Warp...")
                     # Disconnect and reconnect to get new IP
                     disconnect_warp()
-                    time.sleep(2)
+                    time.sleep(0.5)
                     warp_connected = connect_warp()
                     if not warp_connected:
                         logger.warning("Failed to reconnect Warp. Proceeding without VPN.")
-                    time.sleep(3)  # Wait for connection to stabilize
+                    time.sleep(1)  # Wait for connection to stabilize
                 else:
                     logger.error("Health check failed after all retry attempts. Aborting.")
                     return
