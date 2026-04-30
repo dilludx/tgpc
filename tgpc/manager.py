@@ -742,7 +742,7 @@ class Manager:
                     raise TGPCError(f"Critical validation errors detected. GDrive sync aborted. {len(critical_errors)} errors found.")
                 else:
                     # Allow sync for photo errors only (missing/invalid photos from source)
-                    logger.warning(f"WARNING: {len(photo_errors)} photo validation errors found (missing/invalid photos from source). Proceeding with GDrive sync.")
+                    logger.warning(f"WARNING: {len(photo_errors)} photo validation errors found (missing/invalid photos from source). Proceeding with MEDIA volume sync.")
                     logger.warning("Photo errors:")
                     for error in photo_errors[:20]:
                         logger.warning(f"  - {error}")
@@ -752,33 +752,29 @@ class Manager:
             else:
                 logger.info(f"Validation passed: All {validation_results['json_valid']} JSON and {validation_results['photo_valid']} photos valid")
         
-        # Sync to Google Drive after all records are extracted (excluding rx.json)
+        # Sync to MEDIA volume after all records are extracted (excluding rx.json)
         if not skip_sync:
-            logger.info("Syncing to Google Drive...")
+            logger.info("Syncing to MEDIA volume...")
             try:
                 # details
                 logger.info("  → Syncing details...")
-                result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'jsn'), 'gdrive:tgpc/jsn',
-                              '--transfers', '128', '--checkers', '64', '--drive-chunk-size', '128M',
-                              '--fast-list', '--use-mmap', '--no-update-modtime', '--progress', '--ignore-existing'],
+                result = subprocess.run(['rsync', '-av', '--progress', str(self.file_manager.data_dir / 'jsn') + '/', '/Volumes/MEDIA/tgpc/jsn/'],
                               capture_output=False)
                 if result.returncode != 0:
-                    logger.error(f"rclone details sync failed")
+                    logger.error(f"rsync details sync failed")
                     raise subprocess.CalledProcessError(result.returncode, result.args)
                 logger.info("  → details: 100% ✓")
                 # photos
                 logger.info("  → Syncing photos...")
-                result = subprocess.run(['rclone', 'copy', str(self.file_manager.data_dir / 'img'), 'gdrive:tgpc/img',
-                              '--transfers', '128', '--checkers', '64', '--drive-chunk-size', '128M',
-                              '--fast-list', '--use-mmap', '--no-update-modtime', '--progress', '--ignore-existing'],
+                result = subprocess.run(['rsync', '-av', '--progress', str(self.file_manager.data_dir / 'img') + '/', '/Volumes/MEDIA/tgpc/img/'],
                               capture_output=False)
                 if result.returncode != 0:
-                    logger.error(f"rclone photos sync failed: {result.stderr}")
+                    logger.error(f"rsync photos sync failed: {result.stderr}")
                     raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
                 logger.info("  → photos: 100% ✓")
-                logger.info("✅ Sync to Google Drive complete")
+                logger.info("✅ Sync to MEDIA volume complete")
             except subprocess.CalledProcessError as e:
-                logger.error(f"Google Drive sync failed: {e}")
+                logger.error(f"MEDIA volume sync failed: {e}")
         
         # Keep progress file for tracking
         if total_processed > 0:
