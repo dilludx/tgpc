@@ -637,82 +637,11 @@ class Manager:
             logger.info("No records in range.")
             return
         
-        # Process records one by one
+        # Process records sequentially
         total_processed = 0
-        
-        for record in pending_records:
-            serial = record.serial_number
-            reg_no = record.registration_number
-            try:
-                # Scrape
-                details = self.scraper.extract_detailed_info(reg_no, img_dir)
-                if not details:
-                    continue
-                
-                # Get basic info from rx.json lookup FIRST for validation
-                basic_info = rx_lookup.get(serial)
-                
-                # CRITICAL SAFETY CHECK - Validate all details match the same person
-                mismatches = []
-                if details.registration_number and details.registration_number.lower() != reg_no.lower():
-                    mismatches.append(f"registration_number: expected '{reg_no}', got '{details.registration_number}'")
-                if details.name and basic_info and details.name.strip().lower() != basic_info.name.strip().lower():
-                    mismatches.append(f"name: expected '{basic_info.name}', got '{details.name}'")
-                if details.father_name and basic_info and details.father_name.strip().lower() != basic_info.father_name.strip().lower():
-                    mismatches.append(f"father_name: expected '{basic_info.father_name}', got '{details.father_name}'")
-                if details.category and basic_info and details.category.strip().lower() != basic_info.category.strip().lower():
-                    mismatches.append(f"category: expected '{basic_info.category}', got '{details.category}'")
-                
-                if mismatches:
-                    logger.critical(f"DATA CORRUPTION PREVENTED for serial {serial} ({reg_no}): " + "; ".join(mismatches))
-                    raise DataIntegrityError(f"Data Integrity Violation: Mismatched fields for {reg_no}. Stopping to prevent corruption.")
-
-                logger.info(f"✅ DATA VALIDATION PASSED: serial {serial} ({reg_no}) - {details.name} ({details.category})")
-
-                basic_info = rx_lookup.get(serial)
-                if not basic_info:
-                    logger.warning(f"Basic info not found for {reg_no}, using scraped data")
-                
-                basic_data = {
-                    "registration_number": (basic_info.registration_number if basic_info else details.registration_number),
-                    "name": (basic_info.name if basic_info else details.name),
-                    "father_name": (basic_info.father_name if basic_info else details.father_name),
-                    "gender": details.gender or "",
-                    "category": (basic_info.category if basic_info else details.category),
-                    "status": details.status or "",
-                    "serial_number": (basic_info.serial_number if basic_info else None)
-                }
-                
-                # Combine basic info + extracted details
-                extracted_data = details.to_detailed_dict()
-                # Merge: use basic_data for core fields, extracted_data for extra fields (education, work_experience)
-                data = {**extracted_data, **basic_data}
-
-                # Save to individual JSON file
-                detail_file = jsn_dir / f"{reg_no}.json"
-                with open(detail_file, 'w', encoding='utf-8') as f:
-                    json.dump(data, f, indent=2, ensure_ascii=False)
-                
-                total_processed += 1
-
-                # Only update progress if this is forward progress (serial > current last_serial)
-                # This prevents progress from being affected when re-enriching single records
-                current_progress = progress_tracker.load()
-                current_last_serial = current_progress.get('last_serial', 0) if current_progress else 0
-                if record.serial_number > current_last_serial:
-                    progress_tracker.update_progress(
-                        total_processed=total_processed,
-                        last_serial=record.serial_number,
-                        remaining=len(pending_records) - total_processed
-                    )
-                
-                # Rate limit - 0.8-1.5 seconds between requests (faster, some blocking risk)
-                time.sleep(random.uniform(0.8, 1.5))
-            
-            except DataIntegrityError:
-                raise
-            except Exception as e:
-                logger.error(f"Enrichment failed for {reg_no}: {e}")
+        total_processed = self._process_records_sequential(
+            pending_records, rx_lookup, jsn_dir, img_dir, progress_tracker
+        )
         
         # Disconnect from Cloudflare Warp before sync (Warp slows down upload)
         if warp_connected:
@@ -836,3 +765,79 @@ class Manager:
             f.write(new_html)
         
         logger.info(f"Updated dispatch.html with {len(pdf_files)} PDF files")
+
+    
+    def _process_records_sequential(self, pending_records, rx_lookup, jsn_dir, img_dir, progress_tracker):
+        """Process records sequentially."""
+        total_processed = 0
+        
+        for record in pending_records:
+            serial = record.serial_number
+            reg_no = record.registration_number
+            try:
+                # Scrape using original synchronous scraper
+                details = self.scraper.extract_detailed_info(reg_no, img_dir)
+                if not details:
+                    continue
+                
+                # Get basic info from rx.json lookup for validation
+                basic_info = rx_lookup.get(serial)
+                
+                # CRITICAL SAFETY CHECK - Validate all details match
+                mismatches = []
+                if details.registration_number and details.registration_number.lower() != reg_no.lower():
+                    mismatches.append(f"registration_number: expected '{reg_no}', got '{details.registration_number}'")
+                if details.name and basic_info and details.name.strip().lower() != basic_info.name.strip().lower():
+                    mismatches.append(f"name: expected '{basic_info.name}', got '{details.name}'")
+                if details.father_name and basic_info and details.father_name.strip().lower() != basic_info.father_name.strip().lower():
+                    mismatches.append(f"father_name: expected '{basic_info.father_name}', got '{details.father_name}'")
+                if details.category and basic_info and details.category.strip().lower() != basic_info.category.strip().lower():
+                    mismatches.append(f"category: expected '{basic_info.category}', got '{details.category}'")
+                
+                if mismatches:
+                    logger.critical(f"DATA CORRUPTION PREVENTED for serial {serial} ({reg_no}): " + "; ".join(mismatches))
+                    raise DataIntegrityError(f"Data Integrity Violation: Mismatched fields for {reg_no}. Stopping to prevent corruption.")
+
+                logger.info(f"✅ DATA VALIDATION PASSED: serial {serial} ({reg_no}) - {details.name} ({details.category})")
+
+                basic_info = rx_lookup.get(serial)
+                if not basic_info:
+                    logger.warning(f"Basic info not found for {reg_no}, using scraped data")
+                
+                basic_data = {
+                    "registration_number": (basic_info.registration_number if basic_info else details.registration_number),
+                    "name": (basic_info.name if basic_info else details.name),
+                    "father_name": (basic_info.father_name if basic_info else details.father_name),
+                    "gender": details.gender or "",
+                    "category": (basic_info.category if basic_info else details.category),
+                    "status": details.status or "",
+                    "serial_number": (basic_info.serial_number if basic_info else None)
+                }
+                
+                # Combine basic info + extracted details
+                extracted_data = details.to_detailed_dict()
+                data = {**extracted_data, **basic_data}
+
+                # Save to individual JSON file
+                detail_file = jsn_dir / f"{reg_no}.json"
+                with open(detail_file, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                
+                total_processed += 1
+
+                # Update progress
+                current_progress = progress_tracker.load()
+                current_last_serial = current_progress.get('last_serial', 0) if current_progress else 0
+                if record.serial_number > current_last_serial:
+                    progress_tracker.update_progress(
+                        total_processed=total_processed,
+                        last_serial=record.serial_number,
+                        remaining=len(pending_records) - total_processed
+                    )
+            
+            except DataIntegrityError:
+                raise
+            except Exception as e:
+                logger.error(f"Enrichment failed for {reg_no}: {e}")
+        
+        return total_processed
