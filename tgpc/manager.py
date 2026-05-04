@@ -767,11 +767,23 @@ class Manager:
         logger.info(f"Updated dispatch.html with {len(pdf_files)} PDF files")
 
     
-    def _process_records_sequential(self, pending_records, rx_lookup, jsn_dir, img_dir, progress_tracker):
-        """Process records sequentially."""
+    def _process_records_sequential(self, pending_records, rx_lookup, jsn_dir, img_dir, progress_tracker, ip_rotation_interval=500):
+        """Process records sequentially with periodic IP rotation."""
         total_processed = 0
+        warp_connected = True
         
-        for record in pending_records:
+        for idx, record in enumerate(pending_records):
+            # Periodic IP rotation to avoid rate limiting
+            if ip_rotation_interval > 0 and total_processed > 0 and total_processed % ip_rotation_interval == 0:
+                logger.info(f"Rotating IP after {total_processed} records...")
+                disconnect_warp()
+                time.sleep(1)
+                if connect_warp():
+                    new_ip = get_current_ip()
+                    if new_ip:
+                        logger.info(f"IP rotated to: {new_ip}")
+                time.sleep(2)
+            
             serial = record.serial_number
             reg_no = record.registration_number
             try:
