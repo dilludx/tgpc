@@ -19,7 +19,6 @@ from collections import Counter
 from supabase import create_client
 
 from tgpc.utils import Config, TGPCError, setup_logging
-from tgpc.progress import ProgressTracker
 from tgpc.scraper import Scraper, PharmacistRecord
 from tgpc.dispatch import DispatchScraper
 
@@ -570,14 +569,7 @@ class Manager:
                     logger.error("Health check failed after all retry attempts. Aborting.")
                     return
         
-        # Progress file for resume capability
-        progress_dir = Path(self.config.data_directory) / "progress"
-        progress_dir.mkdir(exist_ok=True)
-        progress_file = Path(self.config.data_directory) / "progress" / "prog"
-        progress_file.parent.mkdir(parents=True, exist_ok=True)
-        
-        # Initialize sophisticated progress tracker
-        progress_tracker = ProgressTracker(progress_file)
+        # No progress tracking needed for minor enrichments
         
         logger.info("Starting enrichment...")
         
@@ -598,9 +590,6 @@ class Manager:
         
         if not pending_records:
             logger.info("No pending records to enrich.")
-            # Clear progress file when done
-            if progress_file.exists():
-                progress_file.unlink()
             return
         
         total_pending = len(pending_records)
@@ -638,9 +627,8 @@ class Manager:
             return
         
         # Process records sequentially
-        total_processed = 0
         total_processed = self._process_records_sequential(
-            pending_records, rx_lookup, jsn_dir, img_dir, progress_tracker
+            pending_records, rx_lookup, jsn_dir, img_dir
         )
         
         # Disconnect from Cloudflare Warp before sync (Warp slows down upload)
@@ -767,7 +755,7 @@ class Manager:
         logger.info(f"Updated dispatch.html with {len(pdf_files)} PDF files")
 
     
-    def _process_records_sequential(self, pending_records, rx_lookup, jsn_dir, img_dir, progress_tracker, ip_rotation_interval=500):
+    def _process_records_sequential(self, pending_records, rx_lookup, jsn_dir, img_dir, ip_rotation_interval=500):
         """Process records sequentially with periodic IP rotation."""
         total_processed = 0
         warp_connected = True
@@ -837,15 +825,7 @@ class Manager:
                 
                 total_processed += 1
 
-                # Update progress
-                current_progress = progress_tracker.load()
-                current_last_serial = current_progress.get('last_serial', 0) if current_progress else 0
-                if record.serial_number > current_last_serial:
-                    progress_tracker.update_progress(
-                        total_processed=total_processed,
-                        last_serial=record.serial_number,
-                        remaining=len(pending_records) - total_processed
-                    )
+                # No progress tracking needed for minor enrichments
             
             except DataIntegrityError:
                 raise
