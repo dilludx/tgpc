@@ -466,7 +466,28 @@
             
             // Create file objects with date parsing
             filteredFiles = allFiles.map(filename => {
-                const dateMatch = filename.match(/DL(\d{4})([A-Z]{3})(\d{2})/);
+                // Try DDMMYYYY format first (your new files)
+                let dateMatch = filename.match(/DL(\d{2})(\d{2})(\d{4})/);
+                if (dateMatch) {
+                    const [, day, month, year] = dateMatch;
+                    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                    const monthIndex = parseInt(month) - 1;
+                    const date = new Date(parseInt(year), monthIndex, parseInt(day));
+                    const fullMonthName = monthNames[monthIndex];
+                    const formattedDate = `Dispatch List - ${parseInt(day)} ${fullMonthName} ${year}`;
+                    
+                    return {
+                        filename: filename,
+                        url: `dispatchpdf/${filename}`,
+                        date: formattedDate,
+                        year: year,
+                        month: month,
+                        sortDate: date.getTime()
+                    };
+                }
+                
+                // Fallback to YYYYMMMDD format (existing files)
+                dateMatch = filename.match(/DL(\d{4})([A-Z]{3})(\d{2})/);
                 if (dateMatch) {
                     const [, year, month, day] = dateMatch;
                     const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
