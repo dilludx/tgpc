@@ -36,6 +36,12 @@ def main():
     sync_parser = subparsers.add_parser('sync', help='Sync data to Supabase')
 
     # Enrich command
+    enrich_parser = subparsers.add_parser('enrich', help='Run enrichment pipeline')
+    enrich_parser.add_argument('--start', type=int, default=1, help='Start from serial number (default: 1)')
+    enrich_parser.add_argument('--stop', type=int, default=None, help='Stop at serial number (default: all)')
+    enrich_parser.add_argument('--force', action='store_true', help='Re-extract even if already done')
+    enrich_parser.add_argument('--skip-validation', action='store_true', help='Skip file validation checks')
+    enrich_parser.add_argument('--skip-sync', action='store_true', help='Skip Google Drive sync')
 
     args = parser.parse_args()
     

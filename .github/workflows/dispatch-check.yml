@@ -1,0 +1,30 @@
+name: Dispatch List Check
+
+on:
+  schedule:
+    - cron: '0 8 * * *'  # Daily at 8 AM UTC
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  check-dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r scripts/requirements.txt
+
+      - name: Run dispatch check
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          python scripts/check_dispatch.py
