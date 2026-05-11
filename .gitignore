@@ -30,7 +30,6 @@ data/rx.json
 data/rxdetails.json
 data/img/
 data/progress/
-data/dispatch/
 *.backup
 *.bak
 *.tmp
