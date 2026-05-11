@@ -1,238 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TGPC Dispatch</title>
-    <link rel="icon" type="image/png" href="pdf.png">
+    <title>TGPC - Dispatch Lists</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
-        :root {
-            --content-padding: 32px;
-            --tgpc-green: #00cc66;
-            --tgpc-red: #ef4444;
-            --tgpc-gray: #808080;
-        }
-        
-        * { box-sizing: border-box; }
-        
-        html {
-            overscroll-behavior: none;
-        }
-        
-        body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            padding: 8px; 
-            background: #ffffff;
-            height: 100vh;
-            margin: 0;
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            overscroll-behavior: none;
-        }
-        
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 0 8px;
-            padding-bottom: 40px; /* Space for footer */
-            position: relative;
-        }
-        
-        .header { 
-            background: #ffffff;
-            border-bottom: 1px solid #e5e7eb;
-            padding: 10px 32px 10px 8px;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 16px;
-            position: relative;
-        }
-        
-        .header .nav-link {
-            position: absolute;
-            right: var(--content-padding);
-        }
-        
-        .header h1 { 
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 700;
-            line-height: 1.2;
-        }
-        
-        .header .brand-tgpc { color: var(--tgpc-green); }
-        .header .brand-rx { color: var(--tgpc-red); }
-        .header .brand-status { color: var(--tgpc-gray); }
-        
-        .nav-link { 
-            color: var(--tgpc-red); 
-            text-decoration: none; 
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        
-        .nav-link:hover { 
-            background: rgba(239, 68, 68, 0.1);
-            text-decoration: none;
-        }
-        
-                /* Results Section - Same as original */
-        .results-section {
-            width: 100%;
-            background: #fafafa;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 8px;
-            height: calc(100vh - 120px);
-            overflow: hidden;
-        }
-
-        .table-container {
-            height: 100%;
-            overflow-y: auto;
-            overflow-x: auto;
-        }
-        
-        .pdf-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .pdf-item { 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            padding: 8px 12px;
-            border-bottom: 1px solid #f1f5f9;
-            border-radius: 6px;
-            margin-bottom: 2px;
-        }
-        
-        .pdf-info { 
-            flex: 1; 
-            min-width: 0;
-        }
-        
-        .pdf-date { 
-            font-weight: 600; 
-            color: #00cc66; 
-            margin-bottom: 4px; 
-            font-size: 1rem;
-        }
-        
-        .pdf-link {
-            color: var(--tgpc-gray);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .pdf-link:hover {
-            color: var(--tgpc-red);
-            text-decoration: underline;
-        }
-        
-        .pdf-filename { 
-            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace; 
-            color: #475569; 
-            margin-bottom: 3px; 
-            word-break: break-all;
-            font-size: 0.875rem;
-        }
-        
-        .pdf-meta { 
-            color: #94a3b8; 
-            font-size: 0.8rem;
-        }
-        
-        .no-results {
-            text-align: center;
-            padding: 40px;
-            color: #64748b;
-        }
-        
-        .no-results h3 {
-            color: #ef4444;
-            margin-bottom: 10px;
-        }
-        
-        /* Footer Styling */
-        .site-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #fafafa;
-            border-top: 1px solid #e5e7eb;
-            padding: 6px 12px;
-            text-align: center;
-            font-size: 0.55rem;
-            color: #9ca3af;
-            line-height: 1.2;
-            z-index: 100;
-        }
-        
-        @media (max-width: 480px) {
-            .button-group {
-                justify-content: center;
-            }
-            
-            .filter-btn {
-                font-size: 0.75rem;
-                padding: 6px 12px;
-            }
-            
-            .site-footer {
-                font-size: 0.5rem;
-                padding: 8px 10px;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 2rem; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { color: #22c55e; margin-bottom: 1rem; font-size: 1.5rem; }
+        .info { color: #94a3b8; margin-bottom: 1.5rem; font-size: 0.875rem; }
+        .file-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .file-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: #1e293b; border-radius: 8px; text-decoration: none; color: inherit; transition: all 0.2s; }
+        .file-item:hover { background: #334155; transform: translateX(4px); }
+        .file-icon { width: 24px; height: 24px; fill: #ef4444; flex-shrink: 0; }
+        .file-name { flex: 1; font-size: 0.875rem; font-family: monospace; }
+        .file-date { color: #94a3b8; font-size: 0.75rem; }
+        .broken { opacity: 0.5; }
+        .no-files { text-align: center; padding: 3rem; color: #64748b; }
+        .footer { margin-top: 2rem; text-align: center; font-size: 0.75rem; color: #64748b; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1><span class="brand-tgpc">TGPC</span> <span class="brand-rx">Dispatch</span> <span class="brand-status">Status</span></h1>
-            <a href="/" class="nav-link">← Back to Registry</a>
+        <h1>TGPC Dispatch Lists</h1>
+        <p class="info">Total files: <span id="fileCount">0</span> | <span id="workingCount">0</span> working</p>
+        <div class="file-list" id="fileList">
+            <div class="no-files">Loading...</div>
         </div>
-        
-        <!-- Results Section - Same as original -->
-        <section id="resultsPanel" class="results-section" style="display: block;">
-            <div class="table-container">
-                <ul class="pdf-list" id="pdfList">
-                    <!-- PDF items will be populated by JavaScript -->
-                </ul>
-                <div id="noResults" style="display: none;" class="no-results">
-                    <h3>No dispatch lists found</h3>
-                    <p>Try adjusting your search or filters</p>
-                </div>
-            </div>
-        </section>
+        <p class="footer">Source: pharmacycouncil.telangana.gov.in</p>
     </div>
-    
-    <!-- Footer -->
-    <footer class="site-footer">
-        ⚠️ <strong>DISCLAIMER:</strong> This is an unofficial tool for educational and research purposes only, not
-        affiliated with or endorsed by TGPC or any government authority. All data is the intellectual property of their
-        respective owners.
-        <br>
-        🚫 No liability assumed for any damages or legal consequences. ⚖️ Fair Dealing, Section 52, Indian Copyright Act
-        1957. © 2025 TGPC Rx Registry
-    </footer>
-    
+
     <script>
-        // All PDF files from official TGPC website (213 working files from 2019-2026)
-        // 6 files from website return 404 errors due to data quality issues
-        const allFiles = [
+    const allFiles = [
             'DL27042026.pdf',
             'DL23022026.pdf',
             'DL20042026.pdf',
@@ -245,321 +45,264 @@
             'DL07012026.pdf',
             'DL22012026.pdf',
             'DL30012026.pdf',
-            'DL2026JAN01.pdf',
-            'DL2025SEP30.pdf',
-            'DL2025SEP29.pdf',
-            'DL2025SEP27.pdf',
-            'DL2025SEP16.pdf',
-            'DL2025SEP02.pdf',
-            'DL2025NOV27.pdf',
-            'DL2025NOV14.pdf',
-            'DL2025MAY22.pdf',
-            'DL2025MAY13.pdf',
-            'DL2025MAY05.pdf',
-            'DL2025MAR29.pdf',
-            'DL2025MAR25.pdf',
-            'DL2025MAR21.pdf',
-            'DL2025MAR17.pdf',
-            'DL2025MAR10.pdf',
-            'DL2025MAR03.pdf',
-            'DL2025JUN24.pdf',
-            'DL2025JUN17.pdf',
-            'DL2025JUN03.pdf',
-            'DL2025JUL29.pdf',
-            'DL2025JUL15.pdf',
-            'DL2025JUL04.pdf',
-            'DL2025JAN31.pdf',
-            'DL2025JAN22.pdf',
-            'DL2025JAN17.pdf',
-            'DL2025JAN03.pdf',
-            'DL2025FEB22.pdf',
-            'DL2025FEB11.pdf',
-            'DL2025DEC18.pdf',
-            'DL2025DEC12.pdf',
-            'DL2025DEC08.pdf',
-            'DL2025AUG19.pdf',
-            'DL2025AUG04.pdf',
-            'DL2025APR28.pdf',
-            'DL2025APR21.pdf',
-            'DL2025APR15.pdf',
-            'DL2024SEP30.pdf',
-            'DL2024SEP26.pdf',
-            'DL2024SEP13.pdf',
-            'DL2024OCT29.pdf',
-            'DL2024OCT15.pdf',
-            'DL2024OCT11.pdf',
-            'DL2024OCT09.pdf',
-            'DL2024NOV28.pdf',
-            'DL2024NOV21.pdf',
-            'DL2024NOV12.pdf',
-            'DL2024NOV05.pdf',
-            'DL2024MAY20.pdf',
-            'DL2024MAY04.pdf',
-            'DL2024MAR20.pdf',
-            'DL2024MAR05.pdf',
-            'DL2024JUN28.pdf',
-            'DL2024JUN03.pdf',
-            'DL2024JUN01.pdf',
-            'DL2024JUL31.pdf',
-            'DL2024JUL15.pdf',
-            'DL2024JAN13.pdf',
-            'DL2024FEB22.pdf',
-            'DL2024FEB08.pdf',
-            'DL2024DEC19.pdf',
-            'DL2024AUG31.pdf',
-            'DL2024AUG13.pdf',
-            'DL2024APR24.pdf',
-            'DL2024APR02.pdf',
-            'DL2023SEP26.pdf',
-            'DL2023SEP16.pdf',
-            'DL2023SEP12.pdf',
-            'DL2023SEP11_1.pdf',
-            'DL2023SEP11.pdf',
-            'DL2023SEP07.pdf',
-            'DL2023SEP05.pdf',
-            'DL2023OCT28.pdf',
-            'DL2023NOV22.pdf',
-            'DL2023NOV16.pdf',
-            'DL2023NOV15.pdf',
-            'DL2023NOV04.pdf',
-            'DL2023NOV01.pdf',
-            'DL2023MAY23.pdf',
-            'DL2023MAY12.pdf',
-            'DL2023MAY03.pdf',
-            'DL2023MAY01.pdf',
-            'DL2023MAR25.pdf',
-            'DL2023MAR14.pdf',
-            'DL2023JUN20.pdf',
-            'DL2023JUN07.pdf',
-            'DL2023JUL04.pdf',
-            'DL2023JAN31.pdf',
-            'DL2023JAN21.pdf',
-            'DL2023JAN10.pdf',
-            'DL2023FEB25.pdf',
-            'DL2023FEB20.pdf',
-            'DL2023FEB09.pdf',
-            'DL2023DEC16.pdf',
-            'DL2023DEC02.pdf',
-            'DL2023AUG23.pdf',
-            'DL2023AUG19.pdf',
-            'DL2023AUG18.pdf',
-            'DL2023AUG08.pdf',
-            'DL2023AUG03.pdf',
-            'DL2023APR26.pdf',
-            'DL2023APR06.pdf',
-            'DL2022SEP30.pdf',
-            'DL2022SEP21.pdf',
-            'DL2022SEP08.pdf',
-            'DL2022OCT29.pdf',
-            'DL2022OCT21.pdf',
-            'DL2022OCT20.pdf',
-            'DL2022OCT19.pdf',
-            'DL2022OCT12.pdf',
-            'DL2022NOV29.pdf',
-            'DL2022NOV23.pdf',
-            'DL2022NOV04.pdf',
-            'DL2022MAY28.pdf',
-            'DL2022MAY20.pdf',
-            'DL2022MAY13.pdf',
-            'DL2022MAR08.pdf',
-            'DL2022JUN27.pdf',
-            'DL2022JUN10.pdf',
-            'DL2022JUL25.pdf',
-            'DL2022JUL16.pdf',
-            'DL2022FEB05.pdf',
-            'DL2022DEC21.pdf',
-            'DL2022DEC13.pdf',
-            'DL2022AUG23.pdf',
-            'DL2022APR16.pdf',
-            'DL2021SEP30.pdf',
-            'DL2021SEP03.pdf',
-            'DL2021OCT30.pdf',
-            'DL2021OCT20.pdf',
-            'DL2021OCT13.pdf',
-            'DL2021OCT11.pdf',
-            'DL2021NOV22.pdf',
-            'DL2021NOV03.pdf',
-            'DL2021MAY31.pdf',
-            'DL2021MAY29.pdf',
-            'DL2021MAR20.pdf',
-            'DL2021MAR17.pdf',
-            'DL2021MAR10.pdf',
-            'DL2021JUN18.pdf',
-            'DL2021JUN07.pdf',
-            'DL2021JUN01.pdf',
-            'DL2021JUL22.pdf',
-            'DL2021JAN22.pdf',
-            'DL2021FEB27.pdf',
-            'DL2021FEB19.pdf',
-            'DL2021FEB13.pdf',
-            'DL2021FEB06.pdf',
-            'DL2021DEC31.pdf',
-            'DL2021DEC20.pdf',
-            'DL2021DEC11.pdf',
-            'DL2021DEC01.pdf',
-            'DL2021AUG25.pdf',
-            'DL2021AUG11.pdf',
-            'DL2021AUG03.pdf',
-            'DL2021APR28.pdf',
-            'DL2021APR10.pdf',
-            'DL2021APR03.pdf',
-            'DL2020SEP24.pdf',
-            'DL2020SEP08.pdf',
-            'DL2020OCT28.pdf',
-            'DL2020OCT07.pdf',
-            'DL2020NOV12.pdf',
-            'DL2020MAY29.pdf',
-            'DL2020MAY28.pdf',
-            'DL2020MAR13.pdf',
-            'DL2020JUN30.pdf',
-            'DL2020JUN15.pdf',
-            'DL2020JUN09.pdf',
-            'DL2020JUN03_d.pdf',
-            'DL2020JUN03_c.pdf',
-            'DL2020JUN03.pdf',
-            'DL2020JUN02.pdf',
-            'DL2020JUL21.pdf',
-            'DL2020JUL13.pdf',
-            'DL2020JUL04.pdf',
-            'DL2020JAN20.pdf',
-            'DL2020FEB29.pdf',
-            'DL2020FEB15.pdf',
-            'DL2020DEC22.pdf',
-            'DL2020DEC09.pdf',
-            'DL2020AUG31.pdf',
-            'DL2020AUG03.pdf',
-            'DL2019SEP21.pdf',
-            'DL2019SEP07.pdf',
-            'DL2019OCT21.pdf',
-            'DL2019OCT05.pdf',
-            'DL2019NOV30.pdf',
-            'DL2019NOV23.pdf',
-            'DL2019NOV01.pdf',
-            'DL2019MAY31.pdf',
-            'DL2019MAY30.pdf',
-            'DL2019MAY10.pdf',
-            'DL2019MAR30.pdf',
-            'DL2019MAR16.pdf',
-            'DL2019MAR02.pdf',
-            'DL2019JUL18.pdf',
-            'DL2019JUL01.pdf',
-            'DL2019FEB21.pdf',
-            'DL2019FEB16.pdf',
-            'DL2019FEB09.pdf',
-            'DL2019FEB02_1.pdf',
-            'DL2019FEB02.pdf',
-            'DL2019FEB01_1.pdf',
-            'DL2019FEB01.pdf',
-            'DL2019DEC16.pdf',
-            'DL2019AUG22.pdf',
-            'DL2019AUG02.pdf',
-            'DL2019APR30.pdf',
-            'DL2019APR26.pdf',
+            'DL01052023.pdf',
+            'DL01062021.pdf',
+            'DL01062024.pdf',
+            'DL01072019.pdf',
+            'DL01112019.pdf',
+            'DL01112023.pdf',
+            'DL01122021.pdf',
+            'DL02022018.pdf',
+            'DL02022019.pdf',
+            'DL02032019.pdf',
+            'DL02042024.pdf',
+            'DL02062020.pdf',
+            'DL02082019.pdf',
+            'DL02092025.pdf',
+            'DL02122023.pdf',
+            'DL03012025.pdf',
+            'DL03032025.pdf',
+            'DL03042021.pdf',
+            'DL03052023.pdf',
+            'DL03062020.pdf',
+            'DL03062020C.pdf',
+            'DL03062020D.pdf',
+            'DL03062024.pdf',
+            'DL03062025.pdf',
+            'DL03082020.pdf',
+            'DL03082021.pdf',
+            'DL03082023.pdf',
+            'DL03092021.pdf',
+            'DL03112021.pdf',
+            'DL04072020.pdf',
+            'DL04072025.pdf',
+            'DL04082025.pdf',
+            'DL04112022.pdf',
+            'DL04112023.pdf',
+            'DL05022022.pdf',
+            'DL05032024.pdf',
+            'DL05052025.pdf',
+            'DL05102019.pdf',
+            'DL05112024.pdf',
+            'DL06022021.pdf',
+            'DL06042023.pdf',
+            'DL07062021.pdf',
+            'DL07062023.pdf',
+            'DL07092019.pdf',
+            'DL07092023.pdf',
+            'DL07102020.pdf',
+            'DL08022024.pdf',
+            'DL08032022.pdf',
+            'DL08082023.pdf',
+            'DL08092020.pdf',
+            'DL09022018.pdf',
+            'DL09022023.pdf',
+            'DL09022026.pdf',
+            'DL09062020.pdf',
+            'DL09102024.pdf',
+            'DL09122020.pdf',
+            'DL10012023.pdf',
+            'DL10032021.pdf',
+            'DL10032025.pdf',
+            'DL10042021.pdf',
+            'DL10052019.pdf',
+            'DL10062022.pdf',
+            'DL10092022.pdf',
+            'DL11022025.pdf',
+            'DL11082021.pdf',
+            'DL11092023.pdf',
+            'DL11102021.pdf',
+            'DL11102021AD.pdf',
+            'DL11102024.pdf',
+            'DL11122021.pdf',
+            'DL12052023.pdf',
+            'DL12092023.pdf',
+            'DL12102022.pdf',
+            'DL12112020.pdf',
+            'DL12112024.pdf',
+            'DL12122025.pdf',
+            'DL13012024.pdf',
+            'DL13022021.pdf',
+            'DL13052022.pdf',
+            'DL13052025.pdf',
+            'DL13072020.pdf',
+            'DL13082024.pdf',
+            'DL13092024.pdf',
+            'DL13122022.pdf',
+            'DL14032020.pdf',
+            'DL14032023.pdf',
+            'DL14112025.pdf',
+            'DL15022020.pdf',
+            'DL15042025.pdf',
+            'DL15062020.pdf',
+            'DL15072024.pdf',
+            'DL15072025.pdf',
+            'DL15102024.pdf',
+            'DL15112023.pdf',
+            'DL16022019.pdf',
+            'DL16022026.pdf',
+            'DL16032019.pdf',
+            'DL16042022.pdf',
+            'DL16072022.pdf',
+            'DL16092023.pdf',
+            'DL16092025.pdf',
+            'DL16112023.pdf',
+            'DL16122019.pdf',
+            'DL16122023.pdf',
+            'DL17012025.pdf',
+            'DL17032021.pdf',
+            'DL17032025.pdf',
+            'DL17062025.pdf',
+            'DL18042019.pdf',
+            'DL18062021.pdf',
+            'DL18072019.pdf',
+            'DL18082023.pdf',
+            'DL18122025.pdf',
+            'DL19022021.pdf',
+            'DL19082025.pdf',
+            'DL19122020.pdf',
+            'DL19122024.pdf',
+            'DL20012020.pdf',
+            'DL20022023.pdf',
+            'DL20032021.pdf',
+            'DL20032024.pdf',
+            'DL20052022.pdf',
+            'DL20052024.pdf',
+            'DL20062023.pdf',
+            'DL20102021.pdf',
+            'DL20102022.pdf',
+            'DL20122021.pdf',
+            'DL21012023.pdf',
+            'DL21022018.pdf',
+            'DL21042025.pdf',
+            'DL21072020.pdf',
+            'DL21092019.pdf',
+            'DL21092022.pdf',
+            'DL21102019.pdf',
+            'DL21102022.pdf',
+            'DL21112024.pdf',
+            'DL21122022.pdf',
+            'DL22012021.pdf',
+            'DL22012025.pdf',
+            'DL22022024.pdf',
+            'DL22022025.pdf',
+            'DL22052025.pdf',
+            'DL22072021.pdf',
+            'DL22082019.pdf',
+            'DL22112021.pdf',
+            'DL22112023.pdf',
+            'DL23052023.pdf',
+            'DL23082022.pdf',
+            'DL23082023.pdf',
+            'DL23092020.pdf',
+            'DL23112019.pdf',
+            'DL23112022.pdf',
+            'DL24042024.pdf',
+            'DL24062025.pdf',
+            'DL24082023.pdf',
+            'DL25022023.pdf',
+            'DL25032023.pdf',
+            'DL25032025.pdf',
+            'DL25072022.pdf',
+            'DL25082021.pdf',
+            'DL26042023.pdf',
+            'DL26092023.pdf',
+            'DL26092024.pdf',
+            'DL27022021.pdf',
+            'DL27062022.pdf',
+            'DL27092025.pdf',
+            'DL27112025.pdf',
+            'DL28042021.pdf',
+            'DL28042025.pdf',
+            'DL28052020.pdf',
+            'DL28052022.pdf',
+            'DL28062024.pdf',
+            'DL28102020.pdf',
+            'DL28102023.pdf',
+            'DL28112024.pdf',
+            'DL29022020.pdf',
+            'DL29032025.pdf',
+            'DL29052020.pdf',
+            'DL29052021.pdf',
+            'DL29072025.pdf',
+            'DL29092025.pdf',
+            'DL29102022.pdf',
+            'DL29102024.pdf',
+            'DL29112022.pdf',
+            'DL30012026.pdf',
+            'DL30032019.pdf',
+            'DL30042019.pdf',
+            'DL30052019.pdf',
+            'DL30062020.pdf',
+            'DL30092021.pdf',
+            'DL30092022.pdf',
+            'DL30092024.pdf',
+            'DL30092025.pdf',
+            'DL30102021.pdf',
+            'DL30112019.pdf',
+            'DL31012023.pdf',
+            'DL31012025.pdf',
+            'DL31052019.pdf',
+            'DL31072024.pdf',
+            'DL31082020.pdf',
+            'DL31082024.pdf',
+            'DL31122021.pdf',
+            'DL31122025.pdf',
         ];
 
-        let filteredFiles = [];
+    const BASE_URL = 'https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev';
 
-        const R2_BASE = 'https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/dispatchlist';
-
-        function loadFiles() {
-            console.log('Loading', allFiles.length, 'files');
-            
-            filteredFiles = [];
-            
-            filteredFiles = allFiles.map(filename => {
-                let dateMatch = filename.match(/DL(\d{2})(\d{2})(\d{4})/);
-                if (dateMatch) {
-                    const [, day, month, year] = dateMatch;
-                    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                    const monthIndex = parseInt(month) - 1;
-                    const date = new Date(parseInt(year), monthIndex, parseInt(day));
-                    const fullMonthName = monthNames[monthIndex];
-                    const formattedDate = `Dispatch List - ${parseInt(day)} ${fullMonthName} ${year}`;
-                    
-                    return {
-                        filename: filename,
-                        url: `${R2_BASE}/${filename}`,
-                        date: formattedDate,
-                        year: year,
-                        month: month,
-                        sortDate: date.getTime()
-                    };
-                }
-                
-                dateMatch = filename.match(/DL(\d{4})([A-Z]{3})(\d{2})/);
-                if (dateMatch) {
-                    const [, year, month, day] = dateMatch;
-                    const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-                    const monthIndex = monthNames.indexOf(month);
-                    const date = new Date(parseInt(year), monthIndex, parseInt(day));
-                    const fullMonthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                    const fullMonthName = fullMonthNames[monthIndex];
-                    const formattedDate = `Dispatch List - ${parseInt(day)} ${fullMonthName} ${year}`;
-                    
-                    return {
-                        filename: filename,
-                        url: `${R2_BASE}/${filename}`,
-                        date: formattedDate,
-                        year: year,
-                        month: monthIndex + 1 < 10 ? '0' + (monthIndex + 1) : (monthIndex + 1).toString(),
-                        sortDate: date.getTime()
-                    };
-                }
-                return {
-                    filename: filename,
-                    url: `${R2_BASE}/${filename}`,
-                    date: 'Unknown',
-                    year: '0000',
-                    month: '00',
-                    sortDate: 0
-                };
-            });
-            
-            filteredFiles.sort((a, b) => b.sortDate - a.sortDate);
-            
-            displayFiles();
+    function parseDate(filename) {
+        const match = filename.match(/DL(\d{2})(\d{2})(\d{4})\.pdf/i);
+        if (match) {
+            return {
+                day: match[1],
+                month: match[2],
+                year: match[3],
+                date: new Date(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]))
+            };
         }
+        return null;
+    }
 
-                
-        function displayFiles(pdfs = filteredFiles) {
-            const pdfList = document.getElementById('pdfList');
-            const noResults = document.getElementById('noResults');
-            
-            if (pdfs.length === 0) {
-                pdfList.style.display = 'none';
-                noResults.style.display = 'block';
-            } else {
-                pdfList.style.display = 'block';
-                noResults.style.display = 'none';
-                
-                let html = '';
-                pdfs.forEach(file => {
-                    html += `
-                        <li class="pdf-item">
-                            <div class="pdf-info">
-                                <div class="pdf-date">
-                                    <a href="${file.url}" target="_blank" class="pdf-link">${file.date}</a>
-                                </div>
-                            </div>
-                        </li>`;
-                });
-                pdfList.innerHTML = html;
-            }
+    function formatDisplayDate(filename) {
+        const parsed = parseDate(filename);
+        if (parsed) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${parsed.day} ${months[parsed.month - 1]} ${parsed.year}`;
         }
-        
-        // Load files when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, starting loadFiles...');
-            
-            // Test if elements exist
-            const pdfListEl = document.getElementById('pdfList');
-            
-            console.log('Elements found:', {
-                pdfList: !!pdfListEl
-            });
-            
-            loadFiles();
-        });
+        return filename.replace('.pdf', '');
+    }
+
+    function buildSourceUrl(filename) {
+        return `${BASE_URL}/${filename}`;
+    }
+
+    function init() {
+        const fileList = document.getElementById('fileList');
+        const fileCount = document.getElementById('fileCount');
+        const workingCount = document.getElementById('workingCount');
+
+        fileCount.textContent = allFiles.length;
+
+        const files = allFiles.map(f => ({ name: f, date: parseDate(f) }))
+            .filter(f => f.date !== null)
+            .sort((a, b) => b.date.date - a.date.date);
+
+        workingCount.textContent = files.length;
+
+        fileList.innerHTML = files.map(f => {
+            const url = buildSourceUrl(f.name);
+            const isBroken = !url;
+            return `<a href="${url || '#'}" class="file-item ${isBroken ? 'broken' : ''}" target="_blank" rel="noopener">
+                <svg class="file-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/></svg>
+                <span class="file-name">${f.name}</span>
+                <span class="file-date">${formatDisplayDate(f.name)}</span>
+            </a>`;
+        }).join('');
+    }
+
+    init();
     </script>
 </body>
 </html>
