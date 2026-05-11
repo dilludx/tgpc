@@ -59,6 +59,9 @@ docs/dispatchlist/
 .DS_Store
 Thumbs.db
 
+# Wrangler (Cloudflare CLI)
+.wrangler/
+
 # Testing and linting
 .cache/
 .pytest_cache/
