@@ -36,15 +36,6 @@ def main():
     sync_parser = subparsers.add_parser('sync', help='Sync data to Supabase')
 
     # Enrich command
-    enrich_parser = subparsers.add_parser('enrich', help='Run enrichment pipeline')
-    enrich_parser.add_argument('--start', type=int, default=1, help='Start from serial number (default: 1)')
-    enrich_parser.add_argument('--stop', type=int, default=None, help='Stop at serial number (default: all)')
-    enrich_parser.add_argument('--force', action='store_true', help='Re-extract even if already done')
-    enrich_parser.add_argument('--skip-validation', action='store_true', help='Skip file validation checks')
-    enrich_parser.add_argument('--skip-sync', action='store_true', help='Skip Google Drive sync')
-
-    # Dispatch command
-    dispatch_parser = subparsers.add_parser('dispatch', help='Sync dispatch PDFs')
 
     args = parser.parse_args()
     
@@ -63,8 +54,7 @@ def main():
         manager.sync_to_supabase()
     elif args.command == 'enrich':
         manager.run_enrichment(start=args.start, stop=args.stop, force=args.force, skip_validation=args.skip_validation, skip_sync=args.skip_sync)
-    elif args.command == 'dispatch':
-        manager.sync_dispatch_pdfs()
+    
     else:
         parser.print_help()
 

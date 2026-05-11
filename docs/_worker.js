@@ -3,10 +3,10 @@ export default {
         const url = new URL(request.url);
         const path = url.pathname;
 
-        // Handle dispatch route
-        if (path === '/dispatch' || path === '/dispatch/') {
+        // Handle dispatchlist route
+        if (path === '/dispatchlist' || path === '/dispatchlist/') {
             const newUrl = new URL(request.url);
-            newUrl.pathname = '/dispatch.html';
+            newUrl.pathname = '/dispatchlist.html';
             return env.ASSETS.fetch(newUrl.toString());
         }
 

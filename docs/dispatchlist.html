@@ -459,15 +459,14 @@
 
         let filteredFiles = [];
 
+        const R2_BASE = 'https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/dispatchlist';
+
         function loadFiles() {
             console.log('Loading', allFiles.length, 'files');
             
-            // Reset filteredFiles array
             filteredFiles = [];
             
-            // Create file objects with date parsing
             filteredFiles = allFiles.map(filename => {
-                // Try DDMMYYYY format first (your new files)
                 let dateMatch = filename.match(/DL(\d{2})(\d{2})(\d{4})/);
                 if (dateMatch) {
                     const [, day, month, year] = dateMatch;
@@ -479,7 +478,7 @@
                     
                     return {
                         filename: filename,
-                        url: `dispatchpdf/${filename}`,
+                        url: `${R2_BASE}/${filename}`,
                         date: formattedDate,
                         year: year,
                         month: month,
@@ -487,7 +486,6 @@
                     };
                 }
                 
-                // Fallback to YYYYMMMDD format (existing files)
                 dateMatch = filename.match(/DL(\d{4})([A-Z]{3})(\d{2})/);
                 if (dateMatch) {
                     const [, year, month, day] = dateMatch;
@@ -500,7 +498,7 @@
                     
                     return {
                         filename: filename,
-                        url: `dispatchpdf/${filename}`,
+                        url: `${R2_BASE}/${filename}`,
                         date: formattedDate,
                         year: year,
                         month: monthIndex + 1 < 10 ? '0' + (monthIndex + 1) : (monthIndex + 1).toString(),
@@ -509,7 +507,7 @@
                 }
                 return {
                     filename: filename,
-                    url: `dispatchpdf/${filename}`,
+                    url: `${R2_BASE}/${filename}`,
                     date: 'Unknown',
                     year: '0000',
                     month: '00',
@@ -517,10 +515,8 @@
                 };
             });
             
-            // Sort by date (newest first)
             filteredFiles.sort((a, b) => b.sortDate - a.sortDate);
             
-            // Display files
             displayFiles();
         }
 

@@ -37,6 +37,9 @@ data/dispatch/
 *.log
 debug_*.html
 
+# Dispatchlist PDFs (hosted on R2, not in git)
+docs/dispatchlist/
+
 # Database files (we use Supabase cloud)
 *.db
 *.db-journal
