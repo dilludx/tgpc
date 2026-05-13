@@ -1,7 +1,0 @@
-#!/bin/bash
-#
-# Copy this file to supabase-creds.sh and set real values.
-# Do not commit supabase-creds.sh.
-
-export SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
-export SUPABASE_SECRET_KEY="YOUR_SUPABASE_SERVICE_ROLE_OR_SECRET_KEY"
