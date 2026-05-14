@@ -25,6 +25,7 @@ export default [
       'no-redeclare': 'error',
       'no-unused-vars': 'warn',
       'no-undef': 'error',
+      'no-empty': 'warn',
     },
   },
 ];
