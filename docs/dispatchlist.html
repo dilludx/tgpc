@@ -359,7 +359,7 @@
             .sort((a, b) => b.p.date - a.p.date);
 
         years = [...new Set(files.map(f => f.p.y))].sort((a, b) => b - a);
-        activeTab = null;
+        activeTab = years[0] || null;
 
         tabsEl.innerHTML = years.map(y => {
                 const c = files.filter(f => f.p.y === y).length;
@@ -422,15 +422,9 @@
     tabsEl.addEventListener('click', e => {
         const tab = e.target.closest('.tab');
         if (!tab) return;
-        const year = tab.dataset.year;
-        if (activeTab === year) {
-            activeTab = null;
-            tabsEl.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        } else {
-            tabsEl.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            activeTab = year;
-        }
+        tabsEl.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeTab = tab.dataset.year;
         render();
     });
 
