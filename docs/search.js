@@ -695,7 +695,9 @@ function exportResults() {
     });
 
     // Save PDF
-    doc.save(`tgpc_rx_search_${new Date().toISOString().split('T')[0]}.pdf`);
+    const d = new Date();
+    const dateStr = String(d.getDate()).padStart(2,'0') + String(d.getMonth()+1).padStart(2,'0') + d.getFullYear();
+    doc.save(`TGPC-RX-SEARCH-${dateStr}.pdf`);
 }
 
 // Export results to CSV
