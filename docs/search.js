@@ -649,7 +649,7 @@ function exportResults() {
     doc.setTextColor(0, 204, 102);
     doc.text('TGPC Rx Registry', 14, 20);
 
-    // Add subtitle with date
+    // Add subtitle with date and count
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
     const dateStr = new Date().toLocaleDateString('en-US', {
@@ -657,8 +657,7 @@ function exportResults() {
         day: 'numeric',
         year: 'numeric'
     });
-    doc.text(`Search Results - ${dateStr}`, 14, 27);
-    doc.text(`Total Records: ${currentResults.length}`, 14, 32);
+    doc.text(`Search Results - ${dateStr} - ${currentResults.length} Records`, 14, 27);
 
     // Prepare table data
     const tableData = currentResults.map(record => [
@@ -670,7 +669,7 @@ function exportResults() {
 
     // Add table
     doc.autoTable({
-        startY: 38,
+        startY: 33,
         head: [['Registration Number', 'Name', 'Father\'s Name', 'Category']],
         body: tableData,
         theme: 'striped',
