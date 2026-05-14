@@ -115,7 +115,7 @@
             background: #f8f9fa;
             color: #1a1a1a;
             border: 1px solid #d1d5db;
-            border-radius: 8px;
+            border-radius: 999px;
             font-size: 0.875rem;
             font-weight: 500;
             cursor: pointer;
@@ -623,8 +623,8 @@
         .btn-primary {
             background: #00cc66;
             color: white;
-            border: none;
-            border-radius: 8px;
+            border: 1px solid #00cc66;
+            border-radius: 999px;
             height: 38px;
             cursor: pointer;
             font-weight: 500;
@@ -632,6 +632,7 @@
 
         .btn-primary:hover {
             background: #00b359;
+            border-color: #00b359;
             box-shadow: 0 2px 8px rgba(0, 204, 102, 0.25);
         }
 
@@ -639,7 +640,7 @@
             background: #f8f9fa;
             color: #1a1a1a;
             border: 1px solid #d1d5db;
-            border-radius: 8px;
+            border-radius: 999px;
             height: 38px;
             cursor: pointer;
             font-weight: 500;
@@ -723,9 +724,14 @@
         }
 
         .filter-chip.active {
-            background: #f8f9fa;
-            color: #00cc66;
+            background: #00cc66;
+            color: white;
             border-color: #00cc66;
+        }
+
+        .filter-chip.active:hover {
+            background: #00b359;
+            border-color: #00b359;
         }
 
         /* Results Section */
