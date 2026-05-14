@@ -268,7 +268,10 @@
         <header class="header">
             <div style="display:flex;align-items:center;justify-content:space-between;">
                 <h1>TGPC - Dispatch Lists</h1>
-                <a href="/" style="color:var(--accent-red);text-decoration:none;font-size:0.8rem;font-weight:500;padding:4px 14px;border:1.5px solid var(--accent-red);border-radius:999px;">&larr; Back to main page</a>
+                <div style="display:flex;align-items:center;gap:0.75rem;">
+                    <span style="font-size:0.8rem;color:var(--text-muted);" id="totalCount"></span>
+                    <a href="/" style="color:var(--accent-red);text-decoration:none;font-size:0.8rem;font-weight:500;padding:4px 14px;border:1.5px solid var(--accent-red);border-radius:999px;">&larr; Back to main page</a>
+                </div>
             </div>
         </header>
 
@@ -348,6 +351,7 @@
     const badgeEl = $('resultBadge');
     const tabsEl = $('tabs');
     const searchEl = $('searchInput');
+    const totalCountEl = $('totalCount');
 
     function showLoading(show) { loadingEl.classList.toggle('hidden', !show); }
     function showError(show) { errorEl.classList.toggle('hidden', !show); }
@@ -363,6 +367,8 @@
 
         years = [...new Set(files.map(f => f.p.y))].sort((a, b) => b - a);
         activeTab = years[0] || null;
+
+        totalCountEl.textContent = `${files.length} file${files.length !== 1 ? 's' : ''}`;
 
         tabsEl.innerHTML = years.map(y => {
                 const c = files.filter(f => f.p.y === y).length;
