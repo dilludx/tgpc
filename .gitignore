@@ -58,6 +58,9 @@ docs/dispatchlist/
 .DS_Store
 Thumbs.db
 
+# Node
+node_modules/
+
 # Wrangler (Cloudflare CLI)
 .wrangler/
 

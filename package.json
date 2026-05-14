@@ -1,0 +1,11 @@
+{
+  "name": "tgpc",
+  "private": true,
+  "scripts": {
+    "lint": "eslint docs/",
+    "lint:fix": "eslint docs/ --fix"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
+  }
+}
