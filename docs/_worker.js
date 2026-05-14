@@ -3,6 +3,22 @@ export default {
         const url = new URL(request.url);
         const path = url.pathname;
 
+        // API: list dispatch files from R2
+        if (path === '/api/dispatch-files') {
+            try {
+                const listing = await env.DISPATCH_BUCKET.list({ prefix: 'dispatchlist/' });
+                const files = listing.objects.map(obj => ({
+                    name: obj.key.replace('dispatchlist/', ''),
+                    size: obj.size
+                }));
+                return new Response(JSON.stringify(files), {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            } catch (err) {
+                return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+            }
+        }
+
         // Handle dispatchlist route
         if (path === '/dispatchlist' || path === '/dispatchlist/') {
             const newUrl = new URL(request.url);
