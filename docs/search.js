@@ -696,8 +696,8 @@ function exportResults() {
 
     // Save PDF
     const d = new Date();
-    const dateStr = String(d.getDate()).padStart(2,'0') + String(d.getMonth()+1).padStart(2,'0') + d.getFullYear();
-    doc.save(`TGPC-RX-SEARCH-${dateStr}.pdf`);
+    const fileDateStr = String(d.getDate()).padStart(2,'0') + String(d.getMonth()+1).padStart(2,'0') + d.getFullYear();
+    doc.save(`TGPC-RX-SEARCH-${fileDateStr}.pdf`);
 }
 
 // Export results to CSV
