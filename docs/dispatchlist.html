@@ -102,12 +102,9 @@
 
         .tabs {
             display: flex;
+            flex-wrap: wrap;
             gap: 0.25rem;
             margin-bottom: 1.25rem;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            padding-bottom: 0.25rem;
         }
 
         .tabs::-webkit-scrollbar { display: none; }
@@ -337,7 +334,7 @@
     let files = [];
     let years = [];
     let sizeMap = {};
-    let activeTab = 'all';
+    let activeTab = null;
     let query = '';
 
     const $ = id => document.getElementById(id);
@@ -362,11 +359,11 @@
             .sort((a, b) => b.p.date - a.p.date);
 
         years = [...new Set(files.map(f => f.p.y))].sort((a, b) => b - a);
+        activeTab = null;
 
-        tabsEl.innerHTML = `<span class="tab active" data-year="all">All <span style="opacity:0.6;font-size:0.7rem;">${files.length}</span></span>` +
-            years.map(y => {
+        tabsEl.innerHTML = years.map(y => {
                 const c = files.filter(f => f.p.y === y).length;
-                return `<span class="tab" data-year="${y}">${y} <span style="opacity:0.6;font-size:0.7rem;">${c}</span></span>`;
+                return `<span class="tab${activeTab === y ? ' active' : ''}" data-year="${y}">${y} <span style="opacity:0.6;font-size:0.7rem;">${c}</span></span>`;
             }).join('');
 
         render();
@@ -374,7 +371,7 @@
 
     function filter(year) {
         return files.filter(f => {
-            if (year !== 'all' && f.p.y !== year) return false;
+            if (year !== null && f.p.y !== year) return false;
             if (!query) return true;
             const q = query.toLowerCase();
             return f.name.toLowerCase().includes(q) || fmt(f.p).toLowerCase().includes(q);
@@ -394,7 +391,7 @@
         badgeEl.textContent = `${filtered.length} file${filtered.length !== 1 ? 's' : ''}`;
 
         let html = '';
-        if (activeTab === 'all') {
+        if (activeTab === null) {
             for (const year of years) {
                 const fy = filtered.filter(f => f.p.y === year);
                 if (fy.length === 0) continue;
@@ -425,9 +422,15 @@
     tabsEl.addEventListener('click', e => {
         const tab = e.target.closest('.tab');
         if (!tab) return;
-        tabsEl.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        activeTab = tab.dataset.year;
+        const year = tab.dataset.year;
+        if (activeTab === year) {
+            activeTab = null;
+            tabsEl.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        } else {
+            tabsEl.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            activeTab = year;
+        }
         render();
     });
 
