@@ -460,11 +460,12 @@ function checkUrlQuery() {
     return;
 }
 
-// Sort results by registration number (by prefix, then by number ascending)
+// Sort results by registration number (custom prefix order: TS, TG, TSDR, TGDR)
 function sortResults() {
+    const PREFIX_ORDER = ['TS', 'TG', 'TSDR', 'TGDR'];
+
     let sorted = [...currentResults];
     sorted.sort((a, b) => {
-        // Extract prefix and number from registration number (e.g., "TS000001" or "TG061028")
         const parseReg = (reg) => {
             const match = reg.match(/^([A-Z]+)(\d+)$/);
             if (match) {
@@ -476,11 +477,14 @@ function sortResults() {
         const regA = parseReg(a.registration_number);
         const regB = parseReg(b.registration_number);
 
-        // Sort by prefix first (alphabetically)
         if (regA.prefix !== regB.prefix) {
+            const idxA = PREFIX_ORDER.indexOf(regA.prefix);
+            const idxB = PREFIX_ORDER.indexOf(regB.prefix);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
             return regA.prefix.localeCompare(regB.prefix);
         }
-        // Then by number (ascending)
         return regA.num - regB.num;
     });
     currentPage = 1;
@@ -643,7 +647,7 @@ function exportResults() {
 
     const keyword = document.getElementById('searchInput').value.trim();
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    const doc = new jsPDF({ format: 'a4', unit: 'mm' });
 
     // Format date/time
     const now = new Date();
@@ -668,7 +672,7 @@ function exportResults() {
 
     // Add table with title & page numbers in didDrawPage
     doc.autoTable({
-        startY: 16,
+        startY: 15,
         head: [['Registration Number', 'Name', 'Father\'s Name', 'Category']],
         body: tableData,
         theme: 'striped',
@@ -685,18 +689,19 @@ function exportResults() {
         alternateRowStyles: {
             fillColor: [250, 250, 250]
         },
-        margin: { top: 12, left: 6, right: 6, bottom: 12 },
+        margin: { top: 12, left: 10, right: 10, bottom: 12 },
+        tableWidth: 'auto',
         didDrawPage: function(data) {
             doc.setFontSize(14);
             doc.setTextColor(0, 204, 102);
-            doc.text(title, 6, 10);
+            doc.text(title, 10, 10);
 
             doc.setFontSize(8);
             doc.setTextColor(150, 150, 150);
             doc.text(
                 `Page ${data.pageNumber} / ${data.pageCount}`,
                 doc.internal.pageSize.width / 2,
-                doc.internal.pageSize.height - 8,
+                doc.internal.pageSize.height - 10,
                 { align: 'center' }
             );
         }
