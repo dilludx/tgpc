@@ -641,23 +641,22 @@ function exportResults() {
         return;
     }
 
+    const keyword = document.getElementById('searchInput').value.trim();
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    // Add title
-    doc.setFontSize(18);
-    doc.setTextColor(0, 204, 102);
-    doc.text('TGPC Rx Registry', 14, 20);
+    // Format date/time
+    const now = new Date();
+    const dayName = DAYS[now.getDay()];
+    const dayNum = String(now.getDate()).padStart(2, '0');
+    const monthName = MONTHS[now.getMonth()];
+    const year = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const formattedDate = `${dayName}, ${dayNum} ${monthName} ${year} ${hours}:${minutes}`;
 
-    // Add subtitle with date and count
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    const dateStr = new Date().toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    });
-    doc.text(`Search Results - ${dateStr} - ${currentResults.length} Records`, 14, 27);
+    // Title
+    const title = `TGPC Rx Registry - Search Keyword: ${keyword} - ${formattedDate}`;
 
     // Prepare table data
     const tableData = currentResults.map(record => [
@@ -667,9 +666,9 @@ function exportResults() {
         record.category
     ]);
 
-    // Add table
+    // Add table with title & page numbers in didDrawPage
     doc.autoTable({
-        startY: 33,
+        startY: 16,
         head: [['Registration Number', 'Name', 'Father\'s Name', 'Category']],
         body: tableData,
         theme: 'striped',
@@ -677,27 +676,35 @@ function exportResults() {
             fillColor: [0, 204, 102],
             textColor: [255, 255, 255],
             fontStyle: 'bold',
-            fontSize: 10
+            fontSize: 9
         },
         bodyStyles: {
-            fontSize: 9
+            fontSize: 8,
+            cellPadding: 2
         },
         alternateRowStyles: {
             fillColor: [250, 250, 250]
         },
-        columnStyles: {
-            0: { cellWidth: 40 },
-            1: { cellWidth: 60 },
-            2: { cellWidth: 50 },
-            3: { cellWidth: 30 }
-        },
-        margin: { top: 38, left: 14, right: 14 }
+        margin: { top: 12, left: 6, right: 6, bottom: 12 },
+        didDrawPage: function(data) {
+            doc.setFontSize(14);
+            doc.setTextColor(0, 204, 102);
+            doc.text(title, 6, 10);
+
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text(
+                `Page ${data.pageNumber} / ${data.pageCount}`,
+                doc.internal.pageSize.width / 2,
+                doc.internal.pageSize.height - 8,
+                { align: 'center' }
+            );
+        }
     });
 
     // Save PDF
-    const d = new Date();
-    const fileDateStr = String(d.getDate()).padStart(2,'0') + String(d.getMonth()+1).padStart(2,'0') + d.getFullYear();
-    doc.save(`TGPC-RX-SEARCH-${fileDateStr}.pdf`);
+    const fileDateStr = dayNum + String(now.getMonth()+1).padStart(2,'0') + year;
+    doc.save(`TGPC-RX-SEARCH-${keyword}-${fileDateStr}.pdf`);
 }
 
 // Export results to CSV
@@ -707,11 +714,26 @@ function exportCSV() {
         return;
     }
 
+    const keyword = document.getElementById('searchInput').value.trim();
+
+    // Format date/time
+    const now = new Date();
+    const dayName = DAYS[now.getDay()];
+    const dayNum = String(now.getDate()).padStart(2, '0');
+    const monthName = MONTHS[now.getMonth()];
+    const year = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const formattedDate = `${dayName}, ${dayNum} ${monthName} ${year} ${hours}:${minutes}`;
+
+    // Metadata row
+    const metadata = `# TGPC Rx Registry - Search Keyword: ${keyword} - ${formattedDate}`;
+
     // CSV header
     const headers = ['Registration Number', 'Name', 'Father Name', 'Category'];
 
     // Build CSV content
-    const csvRows = [headers.join(',')];
+    const csvRows = [metadata, headers.join(',')];
 
     currentResults.forEach(record => {
         const row = [
@@ -729,7 +751,8 @@ function exportCSV() {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'tgpc_rx_search_' + new Date().toISOString().split('T')[0] + '.csv';
+    const fileDateStr = dayNum + String(now.getMonth()+1).padStart(2,'0') + year;
+    link.download = `TGPC-RX-SEARCH-${keyword}-${fileDateStr}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
