@@ -487,6 +487,7 @@ function sortResults() {
         }
         return regA.num - regB.num;
     });
+    currentResults = sorted;
     currentPage = 1;
     displayResults(sorted);
 }
