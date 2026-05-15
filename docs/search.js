@@ -6,6 +6,7 @@ let supabaseClient;
 // State
 let currentResults = [];
 let displayedResults = [];
+let fullResults = [];
 let currentFilters = {
     category: 'all'
 };
@@ -159,8 +160,7 @@ function setupEventListeners() {
         }
     });
 
-    // Filter chips with debounce
-    let filterTimeout;
+    // Filter chips
     document.querySelectorAll('.filter-chip').forEach(btn => {
         btn.addEventListener('click', () => {
             const filterType = btn.dataset.filter;
@@ -172,8 +172,11 @@ function setupEventListeners() {
             });
             btn.classList.add('active');
 
-            // Update filter (no auto-search to reduce Supabase load)
+            // Update filter and re-display
             currentFilters[filterType] = filterValue;
+            if (fullResults.length > 0) {
+                applyFilter();
+            }
         });
     });
 }
@@ -460,6 +463,16 @@ function checkUrlQuery() {
     return;
 }
 
+// Filter current results by active category, then sort and display
+function applyFilter() {
+    if (currentFilters.category === 'all') {
+        currentResults = [...fullResults];
+    } else {
+        currentResults = fullResults.filter(r => r.category === currentFilters.category);
+    }
+    sortResults();
+}
+
 // Sort results by registration number (custom prefix order: TS, TG, TSDR, TGDR)
 function sortResults() {
     const PREFIX_ORDER = ['TS', 'TG', 'TSDR', 'TGDR'];
@@ -524,24 +537,19 @@ async function performSearch() {
     resultsPanelEl.style.display = 'none';
 
     try {
-        let query = supabaseClient
+        const { data, error } = await supabaseClient
             .from('rx')
             .select('registration_number,name,father_name,category')
-            .or(`registration_number.ilike.%${queryText}%,name.ilike.%${queryText}%,father_name.ilike.%${queryText}%`);
-
-        if (currentFilters.category !== 'all') {
-            query = query.eq('category', currentFilters.category);
-        }
-
-        const { data, error } = await query.limit(100000);
+            .or(`registration_number.ilike.%${queryText}%,name.ilike.%${queryText}%,father_name.ilike.%${queryText}%`)
+            .limit(100000);
 
         if (error) {
             throw error;
         }
 
-        currentResults = data || [];
+        fullResults = data || [];
         currentPage = 1;
-        sortResults();
+        applyFilter();
         resultsPanelEl.style.display = 'block';
     } catch (error) {
         console.error('Search error:', error);
@@ -628,6 +636,7 @@ function resetSearch() {
     // Clear results
     currentResults = [];
     displayedResults = [];
+    fullResults = [];
     currentPage = 1;
 
     // Hide results panel
