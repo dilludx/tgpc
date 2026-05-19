@@ -481,7 +481,8 @@ class Manager:
             
             # Update last_sync timestamp in metadata table
             try:
-                sync_time = datetime.now().isoformat()
+                ist = timezone(timedelta(hours=5, minutes=30))
+                sync_time = datetime.now(ist).isoformat()
                 supabase.table('metadata').upsert({
                     'key': 'last_sync',
                     'value': sync_time
