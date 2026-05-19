@@ -304,9 +304,8 @@ async function loadStatsUpdated() {
     
     if (cached) {
         try {
-            // Ensure timestamp is treated as UTC by appending Z if missing
-            const utcValue = cached.endsWith('Z') ? cached : cached + 'Z';
-            const cachedDate = new Date(utcValue);
+            const ts = cached.includes('T') && !cached.endsWith('Z') && !cached.includes('+') && !/[0-9]{2}:[0-9]{2}$/.test(cached) ? cached + 'Z' : cached;
+            const cachedDate = new Date(ts);
             updateDisplay(formatUpdatedTimestamp(cachedDate));
         } catch (e) {
             try {
@@ -331,13 +330,12 @@ async function loadStatsUpdated() {
         }
 
         if (!error && data && data.value) {
-            // Ensure timestamp is treated as UTC by appending Z if missing
-            const utcValue = data.value.endsWith('Z') ? data.value : data.value + 'Z';
-            const syncDate = new Date(utcValue);
+            const ts = data.value.includes('T') && !data.value.endsWith('Z') && !data.value.includes('+') && !data.value.includes('-') ? data.value + 'Z' : data.value;
+            const syncDate = new Date(ts);
             updateDisplay(formatUpdatedTimestamp(syncDate));
             // Save to cache
         try {
-            localStorage.setItem(CACHE_KEY, utcValue);
+            localStorage.setItem(CACHE_KEY, data.value);
         } catch (e) {
             console.warn('localStorage.setItem failed:', e);
         }

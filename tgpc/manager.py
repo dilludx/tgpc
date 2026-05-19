@@ -12,7 +12,7 @@ import subprocess
 import requests
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Iterable
 from collections import Counter
 
@@ -481,8 +481,7 @@ class Manager:
             
             # Update last_sync timestamp in metadata table
             try:
-                ist = timezone(timedelta(hours=5, minutes=30))
-                sync_time = datetime.now(ist).isoformat()
+                sync_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
                 supabase.table('metadata').upsert({
                     'key': 'last_sync',
                     'value': sync_time
