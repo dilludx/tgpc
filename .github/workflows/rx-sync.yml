@@ -96,13 +96,6 @@ jobs:
         SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
       run: |
         BUCKET="tgpc"
-        # Clean up old bucket name
-        curl -s -X DELETE "$SUPABASE_URL/storage/v1/object/rx-registry/rx.json" \
-          -H "Authorization: Bearer $SUPABASE_SECRET_KEY" \
-          -H "apikey: $SUPABASE_SECRET_KEY" 2>&1 || true
-        curl -s -X DELETE "$SUPABASE_URL/storage/v1/bucket/rx-registry" \
-          -H "Authorization: Bearer $SUPABASE_SECRET_KEY" \
-          -H "apikey: $SUPABASE_SECRET_KEY" 2>&1 || true
         # Ensure bucket exists (create or ignore if already exists)
         BUCKET_RESP=$(curl -s -X POST "$SUPABASE_URL/storage/v1/bucket" \
           -H "Authorization: Bearer $SUPABASE_SECRET_KEY" \
