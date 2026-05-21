@@ -1,25 +1,12 @@
 name: ⛑️ CI Validate
 
 on:
-  pull_request:
-    branches: [ main, exp ]
-    paths:
-      - "docs/**"
-      - "tgpc/**"
-      - "tests/**"
-      - "scripts/**"
-      - ".github/workflows/**"
-      - "README.md"
-      - ".gitignore"
-      - "pyproject.toml"
-      - "requirements.txt"
   push:
-    branches: [ main, exp ]
+    branches: [ main ]
     paths:
       - "docs/**"
       - "tgpc/**"
       - "tests/**"
-      - "scripts/**"
       - ".github/workflows/**"
       - "README.md"
       - ".gitignore"
@@ -46,7 +33,7 @@ jobs:
           pip install -e .
 
       - name: Compile check
-        run: python -m compileall -q tgpc scripts tests
+        run: python -m compileall -q tgpc tests
 
       - name: Sanity test
         run: python tests/sanity.py

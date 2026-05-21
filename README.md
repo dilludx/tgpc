@@ -35,16 +35,20 @@ Run validation locally:
 ```bash
 python3 tests/sanity.py
 python3 -m unittest discover -s tests -p 'test_*.py' -v
-python3 -m compileall -q tgpc scripts tests
+python3 -m compileall -q tgpc tests
 node --check docs/config.js docs/search.js docs/mobile.js docs/_worker.js
 ```
 
-## Required Environment Variables
+## Required Environment Variables / GitHub Secrets
 - `SUPABASE_URL`: project URL used by the sync command
 - `SUPABASE_SECRET_KEY`: secret key used by the sync command
+- `RESEND_API_KEY`: Resend API key for sync notification emails (free tier: 100 emails/day)
+- `NOTIFICATION_EMAIL`: recipient email address for sync notifications
 - `TGPC_PROXY_URL`: optional outbound proxy URL for TGPC scraping when GitHub-hosted runners cannot reach the source directly
 
 The public frontend uses the publishable key from `docs/config.js`, so database access rules must stay appropriately locked down in Supabase.
+
+> **Note:** The `rx-sync.yml` workflow sends a detailed HTML email (new/changed/removed records by category) after each successful sync via Resend. No Gmail SMTP credentials are needed.
 
 ## Data Artifacts
 - `data/rx.json`: canonical basic pharmacist registry snapshot
