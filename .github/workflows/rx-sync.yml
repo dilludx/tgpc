@@ -68,15 +68,6 @@ jobs:
       run: |
         UPDATE_STATUS='${{ steps.update.outputs.update_status }}'
         SOURCE_ERROR='${{ steps.update.outputs.source_error }}'
-
-        # Parse details JSON
-        NEW_DETAILS='${{ steps.update.outputs.new_details }}'
-        REM_DETAILS='${{ steps.update.outputs.removed_details }}'
-        MOD_DETAILS='${{ steps.update.outputs.modified_details }}'
-        
-        NEW_CATS='${{ steps.update.outputs.new_cat_stats }}'
-        REM_CATS='${{ steps.update.outputs.rem_cat_stats }}'
-        MOD_CATS='${{ steps.update.outputs.mod_cat_stats }}'
         
         {
           echo "### ♻️ Rx Sync • $(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]') • $(TZ='Asia/Kolkata' date '+%H:%M IST')"
@@ -114,63 +105,49 @@ jobs:
           exit 1
         fi
         
-        # Use python to parse JSON and output lists
         python3 -c "
-        import json
-        import os
+        import json, os
+        from pathlib import Path
         
-        def format_cats(json_str):
-            try:
-                stats = json.loads(json_str) if json_str else {}
-                if not stats: return ''
-                # Sort by count desc
-                sorted_stats = sorted(stats.items(), key=lambda item: item[1], reverse=True)
-                parts = [f'{k}: {v}' for k, v in sorted_stats]
-                return ', '.join(parts)
-            except: return ''
-
-        try:
-            # Handle potential empty strings by defaulting to empty list JSON
-            new_json = '$NEW_DETAILS' if '$NEW_DETAILS' else '[]'
-            rem_json = '$REM_DETAILS' if '$REM_DETAILS' else '[]'
-            mod_json = '$MOD_DETAILS' if '$MOD_DETAILS' else '[]'
-
-            new_recs = json.loads(new_json) or []
-            rem_recs = json.loads(rem_json) or []
-            mod_recs = json.loads(mod_json) or []
-            
-            new_cat_str = format_cats('$NEW_CATS')
-            rem_cat_str = format_cats('$REM_CATS')
-            mod_cat_str = format_cats('$MOD_CATS')
-            
-            # Check if there are any changes at all
-            has_changes = new_cat_str or mod_cat_str or rem_cat_str
-            
-            if not has_changes:
-                print('✅ No updates')
-            else:
-                # Additions
-                if new_cat_str:
-                    print(f'#### 🌱 NEW: {new_cat_str}')
-                    for r in new_recs:
-                        print(f'- {r}')
-                    print('')
-                
-                # Modifications
-                if mod_cat_str:
-                    print(f'#### 🌀 CHANGES: {mod_cat_str}')
-                    for r in mod_recs:
-                        print(f'- {r}')
-                    print('')
-                
-                # Removals
-                if rem_cat_str:
-                    print(f'#### ❌ REMOVALS: {rem_cat_str}')
-                    for r in rem_recs:
-                        print(f'- {r}')
-                
-        except Exception as e:
-            print(f'Error parsing details: {e}')
+        details_path = Path('data/update_details.json')
+        if not details_path.exists():
+            print('No update details file found - likely no changes')
+            exit(0)
+        
+        with open(details_path) as f:
+            data = json.load(f)
+        
+        new_recs = data.get('new_details', [])
+        rem_recs = data.get('removed_details', [])
+        mod_recs = data.get('modified_details', [])
+        
+        def fmt_cats(cats):
+            if not cats:
+                return ''
+            sorted_cats = sorted(cats.items(), key=lambda x: x[1], reverse=True)
+            return ', '.join(f'{k}: {v}' for k, v in sorted_cats)
+        
+        new_cat_str = fmt_cats(data.get('new_cat_stats', {}))
+        rem_cat_str = fmt_cats(data.get('rem_cat_stats', {}))
+        mod_cat_str = fmt_cats(data.get('mod_cat_stats', {}))
+        
+        if not (new_cat_str or mod_cat_str or rem_cat_str):
+            print('✅ No updates')
+        else:
+            if new_cat_str:
+                print(f'#### 🌱 NEW: {new_cat_str}')
+                for r in new_recs:
+                    print(f'- {r}')
+                print('')
+            if mod_cat_str:
+                print(f'#### 🌀 CHANGES: {mod_cat_str}')
+                for r in mod_recs:
+                    print(f'- {r}')
+                print('')
+            if rem_cat_str:
+                print(f'#### ❌ REMOVALS: {rem_cat_str}')
+                for r in rem_recs:
+                    print(f'- {r}')
         " >> "$GITHUB_STEP_SUMMARY"
     
     - name: Send email notification
@@ -182,6 +159,7 @@ jobs:
         python3 << 'EOF'
         import json, os, re, sys
         from datetime import datetime, timezone, timedelta
+        from pathlib import Path
 
         api_key = os.environ.get("RESEND_API_KEY")
         recipient = os.environ.get("NOTIFICATION_EMAIL")
@@ -189,9 +167,15 @@ jobs:
             print("Missing RESEND_API_KEY or NOTIFICATION_EMAIL")
             sys.exit(0)
 
-        new = json.loads('${{ steps.update.outputs.new_details }}' or '[]')
-        mod = json.loads('${{ steps.update.outputs.modified_details }}' or '[]')
-        rem = json.loads('${{ steps.update.outputs.removed_details }}' or '[]')
+        details_path = Path("data/update_details.json")
+        if details_path.exists():
+            with open(details_path) as f:
+                data = json.load(f)
+            new = data.get("new_details", [])
+            mod = data.get("modified_details", [])
+            rem = data.get("removed_details", [])
+        else:
+            new = mod = rem = []
 
         if not new and not mod and not rem:
             print("No changes")
