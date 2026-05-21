@@ -34,10 +34,18 @@ jobs:
     - name: Run data update
       id: update
       run: |
+        do_update() {
+          echo "🔄 Connecting Cloudflare WARP..."
+          warp-cli connect && sleep 3 && echo "✓ WARP connected"
+          cleanup() { echo "🔄 Disconnecting WARP..."; warp-cli disconnect; }
+          trap cleanup EXIT
+          python3 -m tgpc update
+        }
+        
         if [[ "${{ github.event.inputs.force_sync }}" == "true" ]]; then
           if [ ! -f data/rx.json ]; then
             echo "⚠️ No existing data found. Running update instead."
-            python3 -m tgpc update
+            do_update
           else
             echo "⚡ FORCE SYNC MODE - Skipping data update, using existing data"
             {
@@ -51,7 +59,7 @@ jobs:
           fi
         else
           echo "♻️ STARTING TGPC DATA UPDATE..."
-          python3 -m tgpc update
+          do_update
         fi
     
     - name: Sync to Supabase
