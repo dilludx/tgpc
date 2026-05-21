@@ -222,8 +222,6 @@ jobs:
                 html += "</div>"
             return html + "</div>"
 
-        import urllib.request, urllib.error
-
         MAX_EMAIL = 200
         def truncate(items):
             if len(items) > MAX_EMAIL:
@@ -252,13 +250,22 @@ jobs:
         if rem: parts.append(f"❌ {len(rem)}")
         subject = " | ".join(parts + ["Rx Data Sync", subj_time])
 
-        payload = json.dumps({"from":"Rx Data Sync <onboarding@resend.dev>","to":[recipient],"subject":subject,"text":text,"html":html}).encode()
-        req = urllib.request.Request("https://api.resend.com/emails", data=payload, headers={"Authorization":f"Bearer {api_key}","Content-Type":"application/json"})
-        try:
-            resp = urllib.request.urlopen(req)
-            print(f"Email sent ({resp.status})")
-        except urllib.error.HTTPError as e:
-            print(f"Resend API error {e.code}: {e.read().decode(errors='replace')[:500]}")
+        payload = json.dumps({"from":"Rx Data Sync <onboarding@resend.dev>","to":[recipient],"subject":subject,"text":text,"html":html})
+        import subprocess, tempfile, os
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            f.write(payload)
+            f.flush()
+            result = subprocess.run([
+                'curl', '-s', '-X', 'POST', 'https://api.resend.com/emails',
+                '-H', f'Authorization: Bearer {api_key}',
+                '-H', 'Content-Type: application/json',
+                '-d', f'@{f.name}'
+            ], capture_output=True, text=True, timeout=30)
+            os.unlink(f.name)
+        if result.returncode == 0 and 'error' not in result.stdout:
+            print(f"Email sent: {result.stdout.strip()}")
+        else:
+            print(f"Resend API error: {result.stdout.strip()}")
             sys.exit(1)
         EOF
 
