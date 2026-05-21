@@ -91,7 +91,7 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        gh api repos/dilludx/tgpc/actions/artifacts --jq '.artifacts[] | select(.name == "rx-data") | .id' 2>/dev/null | while read id; do
+        gh api --paginate repos/dilludx/tgpc/actions/artifacts --jq '.artifacts[] | select(.name == "rx-data") | .id' 2>/dev/null | while read id; do
           echo "Deleting old artifact $id"
           gh api -X DELETE repos/dilludx/tgpc/actions/artifacts/$id
         done
