@@ -96,11 +96,13 @@ jobs:
         SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
       run: |
         BUCKET="rx-registry"
-        # Ensure bucket exists
-        curl -s -X POST "$SUPABASE_URL/storage/v1/bucket" \
+        # Ensure bucket exists (create or ignore if already exists)
+        BUCKET_RESP=$(curl -s -X POST "$SUPABASE_URL/storage/v1/bucket" \
           -H "Authorization: Bearer $SUPABASE_SECRET_KEY" \
+          -H "apikey: $SUPABASE_SECRET_KEY" \
           -H "Content-Type: application/json" \
-          -d "{\"name\": \"$BUCKET\", \"public\": false}" > /dev/null 2>&1 || true
+          -d "{\"name\": \"$BUCKET\", \"public\": false}" 2>&1)
+        echo "Bucket create: $BUCKET_RESP"
         # Upload with upsert (overwrite)
         echo "📤 Uploading rx.json to Supabase Storage..."
         curl -s -X POST "$SUPABASE_URL/storage/v1/object/$BUCKET/rx.json" \
