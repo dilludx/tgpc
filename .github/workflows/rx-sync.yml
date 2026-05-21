@@ -31,6 +31,21 @@ jobs:
       run: |
         mkdir -p data/backups
     
+    - name: Restore data from artifact
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        if [ ! -f data/rx.json ]; then
+          echo "📦 No local data found. Trying artifact restore..."
+          if gh run download --repo dilludx/tgpc -n rx-data --dir data/ 2>/dev/null && [ -f data/rx.json ]; then
+            echo "✅ Restored rx.json from artifact ($(wc -c < data/rx.json) bytes)"
+          else
+            echo "No artifact found — will do full scrape"
+          fi
+        else
+          echo "✅ Local rx.json found ($(wc -c < data/rx.json) bytes)"
+        fi
+    
     - name: Run data update
       id: update
       run: |
@@ -70,6 +85,14 @@ jobs:
       run: |
         echo "♻️ SYNCING DATA TO SUPABASE CLOUD DATABASE..."
         python3 -m tgpc sync
+    
+    - name: Upload data to artifact
+      if: ${{ steps.update.outputs.success == 'True' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: rx-data
+        path: data/rx.json
+        retention-days: 90
     
     - name: Create update summary
       if: always()
