@@ -89,6 +89,27 @@ jobs:
         echo "♻️ SYNCING DATA TO SUPABASE CLOUD DATABASE..."
         python3 -m tgpc sync
     
+    - name: Upload to Supabase Storage
+      if: ${{ steps.update.outputs.success == 'True' }}
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      run: |
+        BUCKET="rx-registry"
+        # Ensure bucket exists
+        curl -s -X POST "$SUPABASE_URL/storage/v1/bucket" \
+          -H "Authorization: Bearer $SUPABASE_SECRET_KEY" \
+          -H "Content-Type: application/json" \
+          -d "{\"name\": \"$BUCKET\", \"public\": false}" > /dev/null 2>&1 || true
+        # Upload with upsert (overwrite)
+        echo "📤 Uploading rx.json to Supabase Storage..."
+        curl -s -X POST "$SUPABASE_URL/storage/v1/object/$BUCKET/rx.json" \
+          -H "Authorization: Bearer $SUPABASE_SECRET_KEY" \
+          -H "Content-Type: application/json" \
+          -H "x-upsert: true" \
+          -d @data/rx.json
+        echo ""
+    
     - name: Clean old artifact
       if: ${{ steps.update.outputs.success == 'True' }}
       env:
