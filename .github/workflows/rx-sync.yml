@@ -86,6 +86,16 @@ jobs:
         echo "♻️ SYNCING DATA TO SUPABASE CLOUD DATABASE..."
         python3 -m tgpc sync
     
+    - name: Clean old artifact
+      if: ${{ steps.update.outputs.success == 'True' }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh api repos/dilludx/tgpc/actions/artifacts --jq '.artifacts[] | select(.name == "rx-data") | .id' 2>/dev/null | while read id; do
+          echo "Deleting old artifact $id"
+          gh api -X DELETE repos/dilludx/tgpc/actions/artifacts/$id
+        done
+    
     - name: Upload data to artifact
       if: ${{ steps.update.outputs.success == 'True' }}
       uses: actions/upload-artifact@v4
