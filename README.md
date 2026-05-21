@@ -10,7 +10,7 @@ Automated TGPC pharmacist registry scraping, local data management, Supabase syn
 - Runs automated validation with GitHub Actions
 
 ## Current Automation
-- `rx-sync.yml.disabled`: disabled scheduled sync workflow (contains update/sync/summary pipeline and can be re-enabled by renaming)
+- `rx-sync.yml`: scheduled sync workflow (scrapes, syncs to Supabase, sends email notification)
 - `ci-validate.yml`: runs compile checks, parser sanity checks, unit tests, frontend JS syntax checks, and workflow linting
 - `website-status.yml`: reusable/manual workflow that checks `https://tgpc.pages.dev/`
 
