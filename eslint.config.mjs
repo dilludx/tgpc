@@ -10,6 +10,7 @@ export default [
         console: 'readonly',
         alert: 'readonly',
         Response: 'readonly',
+        Headers: 'readonly',
         Blob: 'readonly',
         fetch: 'readonly',
         localStorage: 'readonly',

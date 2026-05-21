@@ -44,75 +44,23 @@ jobs:
         TGPC_USE_TOR: false
       run: |
         if [[ "${{ github.event.inputs.force_sync }}" == "true" ]]; then
-          echo "⚡ FORCE SYNC MODE - Skipping data update, using existing data"
-          {
-            echo "success=True"
-            echo "total_records=$(python -c 'import json; print(len(json.load(open("data/rx.json"))))')"
-            echo "new_records=0"
-            echo "modified_records=0"
-            echo "removed_records=0"
-            echo "integrity_score=1.0"
-          } >> "$GITHUB_OUTPUT"
+          if [ ! -f data/rx.json ]; then
+            echo "⚠️ No existing data found. Running update instead."
+            python -m tgpc update
+          else
+            echo "⚡ FORCE SYNC MODE - Skipping data update, using existing data"
+            {
+              echo "success=True"
+              echo "total_records=$(python -c 'import json; print(len(json.load(open("data/rx.json"))))')"
+              echo "new_records=0"
+              echo "modified_records=0"
+              echo "removed_records=0"
+              echo "integrity_score=1.0"
+            } >> "$GITHUB_OUTPUT"
+          fi
         else
           echo "♻️ STARTING TGPC DATA UPDATE..."
-          
-          # Run the update via CLI (outputs stats to GITHUB_OUTPUT automatically)
           python -m tgpc update
-        fi
-
-
-    - name: Check for changes and save new records
-      id: changes
-      if: ${{ steps.update.outputs.success == 'True' }}
-      run: |
-        rm -f /tmp/new_records.json
-
-        if git diff --quiet data/rx.json; then
-          echo "changes=false" >> "$GITHUB_OUTPUT"
-          echo "NO CHANGES DETECTED IN RX.JSON"
-        else
-          echo "changes=true" >> "$GITHUB_OUTPUT"
-          echo "CHANGES DETECTED IN RX.JSON"
-          echo ""
-          echo "🌱 RECORDS ADDED:"
-          echo "===================="
-          
-          # Save only truly new registration numbers (JSON-aware, not line-diff based)
-          python3 << 'PYEOF'
-        import json
-        import subprocess
-        from pathlib import Path
-
-        current_path = Path("data/rx.json")
-        current_records = json.loads(current_path.read_text(encoding="utf-8"))
-
-        base_records = []
-        show = subprocess.run(
-            ["git", "show", "HEAD:data/rx.json"],
-            capture_output=True,
-            text=True
-        )
-        if show.returncode == 0 and show.stdout.strip():
-            base_records = json.loads(show.stdout)
-
-        base_ids = {r.get("registration_number") for r in base_records}
-        new_records = [
-            r for r in current_records
-            if r.get("registration_number") and r.get("registration_number") not in base_ids
-        ]
-
-        with open("/tmp/new_records.json", "w", encoding="utf-8") as f:
-            json.dump(new_records, f, ensure_ascii=False)
-
-        if new_records:
-            for i, record in enumerate(new_records, 1):
-                print(
-                    f"{i}. {record.get('registration_number', 'N/A')} - "
-                    f"{record.get('name', 'N/A')} ({record.get('category', 'N/A')})"
-                )
-        else:
-            print("No new records detected")
-        PYEOF
         fi
     
     - name: Sync to Supabase

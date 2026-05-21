@@ -1,3 +1,22 @@
+const SECURITY_HEADERS = {
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+};
+
+function addSecurityHeaders(response) {
+    const headers = new Headers(response.headers);
+    for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+        if (!headers.has(key)) {
+            headers.set(key, value);
+        }
+    }
+    return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+    });
+}
+
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
@@ -11,11 +30,11 @@ export default {
                     name: obj.key.replace('dispatchlist/', ''),
                     size: obj.size
                 }));
-                return new Response(JSON.stringify(files), {
+                return addSecurityHeaders(new Response(JSON.stringify(files), {
                     headers: { 'Content-Type': 'application/json' }
-                });
+                }));
             } catch (err) {
-                return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+                return addSecurityHeaders(new Response(JSON.stringify({ error: err.message }), { status: 500 }));
             }
         }
 
@@ -23,7 +42,8 @@ export default {
         if (path === '/dispatchlist' || path === '/dispatchlist/') {
             const newUrl = new URL(request.url);
             newUrl.pathname = '/dispatchlist.html';
-            return env.ASSETS.fetch(newUrl.toString());
+            const response = await env.ASSETS.fetch(newUrl.toString());
+            return addSecurityHeaders(response);
         }
 
         // For root path, detect device and serve appropriate HTML
@@ -35,10 +55,12 @@ export default {
             const newUrl = new URL(request.url);
             newUrl.pathname = targetPath;
 
-            return env.ASSETS.fetch(newUrl.toString());
+            const response = await env.ASSETS.fetch(newUrl.toString());
+            return addSecurityHeaders(response);
         }
 
         // For all other paths, serve as normal
-        return env.ASSETS.fetch(request);
+        const response = await env.ASSETS.fetch(request);
+        return addSecurityHeaders(response);
     }
 };
