@@ -38,8 +38,9 @@ jobs:
       run: |
         sudo apt-get update -qq
         sudo apt-get install -y -qq tor torsocks
+        # Configure Indian exit nodes and restart system tor
         echo "ExitNodes {in}" | sudo tee -a /etc/tor/torrc
-        sudo tor --RunAsDaemon 1
+        sudo systemctl restart tor
         # Wait for Tor to bootstrap (up to 30s)
         for i in $(seq 1 30); do
           if curl -s --socks5-hostname 127.0.0.1:9050 --max-time 5 https://check.torproject.org/ > /dev/null 2>&1; then
