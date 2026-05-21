@@ -32,14 +32,12 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -e .
-        pip install supabase
+        pip install supabase requests[socks]
     
     - name: Setup Tor proxy
       run: |
         sudo apt-get update -qq
-        sudo apt-get install -y -qq tor torsocks
-        # Configure Indian exit nodes and restart system tor
-        echo "ExitNodes {in}" | sudo tee -a /etc/tor/torrc
+        sudo apt-get install -y -qq tor
         sudo systemctl restart tor
         # Wait for Tor to bootstrap (up to 30s)
         for i in $(seq 1 30); do
@@ -60,11 +58,13 @@ jobs:
     
     - name: Run data update
       id: update
+      env:
+        HTTPS_PROXY: socks5://127.0.0.1:9050
       run: |
         if [[ "${{ github.event.inputs.force_sync }}" == "true" ]]; then
           if [ ! -f data/rx.json ]; then
             echo "⚠️ No existing data found. Running update instead."
-            torsocks python -m tgpc update
+            python -m tgpc update
           else
             echo "⚡ FORCE SYNC MODE - Skipping data update, using existing data"
             {
@@ -78,7 +78,7 @@ jobs:
           fi
         else
           echo "♻️ STARTING TGPC DATA UPDATE..."
-          torsocks python -m tgpc update
+          python -m tgpc update
         fi
     
     - name: Sync to Supabase
