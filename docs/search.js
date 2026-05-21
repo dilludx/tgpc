@@ -5,15 +5,10 @@ let supabaseClient;
 
 // State
 let currentResults = [];
-let displayedResults = [];
 let fullResults = [];
 let currentFilters = {
     category: 'all'
 };
-let searchTimeout;
-let currentPage = 1;
-const RESULTS_PER_PAGE = 100;
-
 // Date/Time constants (shared across functions)
 const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -87,7 +82,7 @@ async function fetchLastSync() {
     }
 }
 
-function handleRealtimeUpdate(payload) {
+function handleRealtimeUpdate() {
     // Show notification
     showUpdateNotification();
 
@@ -149,7 +144,6 @@ function setupEventListeners() {
             document.getElementById('resultsPanel').style.display = 'none';
             document.getElementById('error').innerHTML = '';
             currentResults = [];
-            displayedResults = [];
         }
     });
 
@@ -208,7 +202,7 @@ async function checkConnection() {
         // statusEl is already set to 'Busy' in static HTML
 
         // Try a simple query to check connection
-        const { data, error } = await supabaseClient
+        const { error } = await supabaseClient
             .from('rx')
             .select('id')
             .limit(1);
@@ -307,7 +301,7 @@ async function loadStatsUpdated() {
             const ts = cached.includes('T') && !cached.endsWith('Z') && !cached.includes('+') && !/[0-9]{2}:[0-9]{2}$/.test(cached) ? cached + 'Z' : cached;
             const cachedDate = new Date(ts);
             updateDisplay(formatUpdatedTimestamp(cachedDate));
-        } catch (e) {
+        } catch {
             try {
                 localStorage.removeItem(CACHE_KEY);
             } catch (e2) {
@@ -339,7 +333,6 @@ async function loadStatsUpdated() {
         } catch (e) {
             console.warn('localStorage.setItem failed:', e);
         }
-        } else {
         }
     } catch (error) {
         console.error('loadStatsUpdated: Exception:', error);
@@ -377,7 +370,7 @@ async function loadAnalytics() {
         try {
             cachedStats = JSON.parse(cached);
             displayAnalytics(cachedStats);
-        } catch (e) {
+        } catch {
             try {
                 localStorage.removeItem(CACHE_KEY);
             } catch (e2) {
@@ -429,7 +422,6 @@ function displayAnalytics(stats) {
             const element = document.getElementById(elementId);
             if (element) {
                 element.textContent = stats.categories[cat].toLocaleString();
-            } else {
             }
         });
 
@@ -438,7 +430,6 @@ function displayAnalytics(stats) {
     // Set last updated date with time
     const now = new Date();
 
-    const dayName = DAYS[now.getDay()];
     const dayNum = String(now.getDate()).padStart(2, '0');
     const monthName = MONTHS[now.getMonth()];
     const year = now.getFullYear();
@@ -499,14 +490,7 @@ function sortResults() {
         return regA.num - regB.num;
     });
     currentResults = sorted;
-    currentPage = 1;
     displayResults(sorted);
-}
-
-// Load more results
-function loadMore() {
-    currentPage++;
-    displayResults(displayedResults, true);
 }
 
 async function performSearch() {
@@ -519,7 +503,6 @@ async function performSearch() {
 
     if (queryText.length < 3) {
         currentResults = [];
-        displayedResults = [];
         resultsPanelEl.style.display = 'none';
         errorEl.textContent = 'Enter at least 3 characters to search.';
         return;
@@ -546,13 +529,11 @@ async function performSearch() {
         }
 
         fullResults = data || [];
-        currentPage = 1;
         applyFilter();
         resultsPanelEl.style.display = 'block';
     } catch (error) {
         console.error('Search error:', error);
         currentResults = [];
-        displayedResults = [];
         resultsPanelEl.style.display = 'none';
         errorEl.textContent = 'Error searching database. Please try again.';
     } finally {
@@ -565,7 +546,6 @@ function displayResults(data) {
     const resultsDiv = document.getElementById('results');
     const resultsCount = document.getElementById('resultsCount');
 
-    displayedResults = data;
     resultsCount.textContent = data.length.toLocaleString();
 
     if (data.length === 0) {
@@ -633,9 +613,7 @@ function resetSearch() {
 
     // Clear results
     currentResults = [];
-    displayedResults = [];
     fullResults = [];
-    currentPage = 1;
 
     // Hide results panel
     document.getElementById('resultsPanel').style.display = 'none';

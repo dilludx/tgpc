@@ -88,7 +88,7 @@ async function loadStatusAndStats() {
         statusEl.classList.add('live');
         statusEl.innerHTML = `<span class="dot"></span><span>Live</span><span class="sep">|</span><span class="date">${getDateText()} <span id="liveTime"></span></span>`;
         startClock();
-    } catch (error) {
+    } catch {
         document.getElementById('statusText').textContent = 'Offline';
     }
 
