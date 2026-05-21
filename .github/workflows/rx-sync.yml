@@ -34,19 +34,36 @@ jobs:
         pip install -e .
         pip install supabase
     
+    - name: Setup Tor proxy
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq tor torsocks
+        echo "ExitNodes {in}" | sudo tee -a /etc/tor/torrc
+        sudo tor --RunAsDaemon 1
+        # Wait for Tor to bootstrap (up to 30s)
+        for i in $(seq 1 30); do
+          if curl -s --socks5-hostname 127.0.0.1:9050 --max-time 5 https://check.torproject.org/ > /dev/null 2>&1; then
+            echo "Tor bootstrapped successfully"
+            break
+          fi
+          if [ "$i" -eq 30 ]; then
+            echo "Tor bootstrap failed after 30s"
+            exit 1
+          fi
+          sleep 1
+        done
+    
     - name: Create data directory
       run: |
         mkdir -p data/backups
     
     - name: Run data update
       id: update
-      env:
-        TGPC_USE_TOR: false
       run: |
         if [[ "${{ github.event.inputs.force_sync }}" == "true" ]]; then
           if [ ! -f data/rx.json ]; then
             echo "⚠️ No existing data found. Running update instead."
-            python -m tgpc update
+            torsocks python -m tgpc update
           else
             echo "⚡ FORCE SYNC MODE - Skipping data update, using existing data"
             {
@@ -60,7 +77,7 @@ jobs:
           fi
         else
           echo "♻️ STARTING TGPC DATA UPDATE..."
-          python -m tgpc update
+          torsocks python -m tgpc update
         fi
     
     - name: Sync to Supabase
@@ -92,7 +109,7 @@ jobs:
           echo ""
         } >> "$GITHUB_STEP_SUMMARY"
 
-        if [ "$UPDATE_STATUS" = "source_unavailable" ]; then
+        if [ "$UPDATE_STATUS" = "source_unavailable" ] || [ "$UPDATE_STATUS" = "blocked" ]; then
           {
             echo "⚠️ TGPC source was unreachable during this run."
             echo ""
@@ -102,7 +119,7 @@ jobs:
             fi
             echo "Existing data was preserved, and Supabase sync / commit steps were skipped."
           } >> "$GITHUB_STEP_SUMMARY"
-          exit 0
+          exit 1
         fi
 
         if [ "$UPDATE_STATUS" = "empty_scrape" ]; then
@@ -111,7 +128,7 @@ jobs:
             echo ""
             echo "Existing data was preserved."
           } >> "$GITHUB_STEP_SUMMARY"
-          exit 0
+          exit 1
         fi
 
         if [ "$UPDATE_STATUS" = "safety_abort" ]; then
@@ -120,7 +137,7 @@ jobs:
             echo ""
             echo "The new scrape dropped below the 90% integrity threshold, so existing data was preserved."
           } >> "$GITHUB_STEP_SUMMARY"
-          exit 0
+          exit 1
         fi
         
         # Use python to parse JSON and output lists
