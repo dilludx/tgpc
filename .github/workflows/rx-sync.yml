@@ -131,23 +131,31 @@ jobs:
         rem_cat_str = fmt_cats(data.get('rem_cat_stats', {}))
         mod_cat_str = fmt_cats(data.get('mod_cat_stats', {}))
         
+        MAX_SHOW = 20
+        
         if not (new_cat_str or mod_cat_str or rem_cat_str):
             print('✅ No updates')
         else:
             if new_cat_str:
                 print(f'#### 🌱 NEW: {new_cat_str}')
-                for r in new_recs:
+                for r in new_recs[:MAX_SHOW]:
                     print(f'- {r}')
+                if len(new_recs) > MAX_SHOW:
+                    print(f'- ... and {len(new_recs) - MAX_SHOW} more')
                 print('')
             if mod_cat_str:
                 print(f'#### 🌀 CHANGES: {mod_cat_str}')
-                for r in mod_recs:
+                for r in mod_recs[:MAX_SHOW]:
                     print(f'- {r}')
+                if len(mod_recs) > MAX_SHOW:
+                    print(f'- ... and {len(mod_recs) - MAX_SHOW} more')
                 print('')
             if rem_cat_str:
                 print(f'#### ❌ REMOVALS: {rem_cat_str}')
-                for r in rem_recs:
+                for r in rem_recs[:MAX_SHOW]:
                     print(f'- {r}')
+                if len(rem_recs) > MAX_SHOW:
+                    print(f'- ... and {len(rem_recs) - MAX_SHOW} more')
         " >> "$GITHUB_STEP_SUMMARY"
     
     - name: Send email notification
@@ -214,33 +222,44 @@ jobs:
                 html += "</div>"
             return html + "</div>"
 
+        import urllib.request, urllib.error
+
+        MAX_EMAIL = 200
+        def truncate(items):
+            if len(items) > MAX_EMAIL:
+                return items[:MAX_EMAIL] + [f"... and {len(items) - MAX_EMAIL} more"]
+            return items
+
+        new_t, mod_t, rem_t = truncate(new), truncate(mod), truncate(rem)
+
         text = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
         html = ('<!DOCTYPE html><html><head><meta charset="UTF-8"></head>'
                 '<body style="font-family:-apple-system,sans-serif;background:#fff;padding:15px 20px;color:#333;line-height:1.3;margin:0;">'
                 '<div style="max-width:600px;">'
                 f'<h2 style="margin:0;font-size:17px;line-height:1.2;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">Rx</span> <span style="color:#808080;">Registry</span> Sync Report</h2>'
                 f'<div style="color:#666;font-size:12px;margin-bottom:30px;font-weight:500;">{sync_time}</div>'
-                f'{fmt_html("🌱 NEW", new, "#00cc66")}{fmt_html("🌀 CHANGES", mod, "#3b82f6")}{fmt_html("❌ REMOVALS", rem, "#ef4444")}'
+                f'{fmt_html("🌱 NEW", new_t, "#00cc66")}{fmt_html("🌀 CHANGES", mod_t, "#3b82f6")}{fmt_html("❌ REMOVALS", rem_t, "#ef4444")}'
                 '<div style="margin-top:15px;font-size:11px;color:#888;padding-top:10px;">'
                 '<div style="font-weight:700;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">Rx</span> <span style="color:#808080;">Registry</span></div>'
                 '<div>Automated Data Synchronization System</div></div></div></body></html>')
-
-        for label, items in [("NEW",new),("CHANGES",mod),("REMOVALS",rem)]:
-            if items:
-                text += f"{label} ({len(items)}):\n" + "\n".join(sorted(items, key=lambda x: (cat(x), reg_no(x)))) + "\n\n"
+        for label, items, total in [("NEW",new_t,new),("CHANGES",mod_t,mod),("REMOVALS",rem_t,rem)]:
+            if total:
+                text += f"{label} ({len(total)}):\n" + "\n".join(sorted(items, key=lambda x: (cat(x), reg_no(x)))) + "\n\n"
         text += "---\nTGPC Rx Registry\nAutomated Data Synchronization System"
-
         parts = []
         if new: parts.append(f"🌱 {len(new)}")
         if mod: parts.append(f"🌀 {len(mod)}")
         if rem: parts.append(f"❌ {len(rem)}")
         subject = " | ".join(parts + ["Rx Data Sync", subj_time])
 
-        import urllib.request
         payload = json.dumps({"from":"Rx Data Sync <onboarding@resend.dev>","to":[recipient],"subject":subject,"text":text,"html":html}).encode()
         req = urllib.request.Request("https://api.resend.com/emails", data=payload, headers={"Authorization":f"Bearer {api_key}","Content-Type":"application/json"})
-        resp = urllib.request.urlopen(req)
-        print(f"Email sent ({resp.status})")
+        try:
+            resp = urllib.request.urlopen(req)
+            print(f"Email sent ({resp.status})")
+        except urllib.error.HTTPError as e:
+            print(f"Resend API error {e.code}: {e.read().decode(errors='replace')[:500]}")
+            sys.exit(1)
         EOF
 
     - name: Notify on failure
