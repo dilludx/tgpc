@@ -88,59 +88,7 @@ def validate_batch_files(jsn_dir: Path, img_dir: Path, registration_numbers: Lis
     return results
 
 
-def connect_warp():
-    """Connect to Cloudflare Warp VPN with IP rotation."""
-    try:
-        # Disconnect first to ensure IP changes
-        subprocess.run(['warp-cli', 'disconnect'], capture_output=True, text=True, timeout=30)
-        time.sleep(2)  # Wait for disconnection to complete
-        
-        # Connect to get new IP
-        result = subprocess.run(['warp-cli', 'connect'], capture_output=True, text=True, timeout=30)
-        if result.returncode == 0:
-            logger.info("Cloudflare Warp connected successfully")
-            time.sleep(3)  # Wait for connection to stabilize
-            
-            # Get and display current IP
-            ip = get_current_ip()
-            if ip:
-                logger.info(f"Current IP address: {ip}")
-            else:
-                logger.warning("Could not retrieve current IP address")
-            return True
-        else:
-            logger.error(f"Failed to connect Warp: {result.stderr}")
-            return False
-    except FileNotFoundError:
-        logger.warning("warp-cli not found. Skipping Warp connection.")
-        return False
-    except subprocess.TimeoutExpired:
-        logger.error("Warp connection timed out")
-        return False
-    except Exception as e:
-        logger.error(f"Error connecting Warp: {e}")
-        return False
 
-
-def disconnect_warp():
-    """Disconnect from Cloudflare Warp VPN."""
-    try:
-        result = subprocess.run(['warp-cli', 'disconnect'], capture_output=True, text=True, timeout=30)
-        if result.returncode == 0:
-            logger.info("Cloudflare Warp disconnected successfully")
-            return True
-        else:
-            logger.error(f"Failed to disconnect Warp: {result.stderr}")
-            return False
-    except FileNotFoundError:
-        logger.warning("warp-cli not found. Skipping Warp disconnection.")
-        return False
-    except subprocess.TimeoutExpired:
-        logger.error("Warp disconnection timed out")
-        return False
-    except Exception as e:
-        logger.error(f"Error disconnecting Warp: {e}")
-        return False
 
 
 def get_current_ip():
@@ -518,69 +466,10 @@ class Manager:
             skip_sync: Skip Google Drive sync (default False)
         """
         
-        # Get current IP before disconnecting Warp
-        old_ip = get_current_ip()
-        if old_ip:
-            logger.info(f"Current IP before Warp rotation: {old_ip}")
-        else:
-            logger.warning("Could not get current IP before Warp rotation")
-        
-        # Always disconnect Warp first to ensure IP rotation
-        logger.info("Disconnecting Warp to ensure IP rotation...")
-        disconnect_warp()
-        time.sleep(2)
-        
-        # Connect to Cloudflare Warp with IP rotation
-        logger.info("Connecting to Cloudflare Warp with new IP...")
-        warp_connected = connect_warp()
-        if not warp_connected:
-            logger.warning("Failed to connect to Warp. Proceeding without VPN.")
-        
-        # Verify IP changed
-        new_ip = get_current_ip()
-        if new_ip:
-            logger.info(f"New IP after Warp rotation: {new_ip}")
-            if old_ip and new_ip == old_ip:
-                logger.warning(f"IP did not change (still {new_ip}). Attempting again...")
-                # Retry IP rotation
-                disconnect_warp()
-                time.sleep(0.5)
-                warp_connected = connect_warp()
-                new_ip = get_current_ip()
-                if new_ip:
-                    logger.info(f"IP after retry: {new_ip}")
-                    if new_ip == old_ip:
-                        logger.error("IP still did not change after retry. Proceeding with current IP.")
-                    else:
-                        logger.info("IP successfully changed after retry.")
-        else:
-            logger.warning("Could not get new IP after Warp rotation")
-        
-        # Health check with automatic Warp retry on blocking
-        max_retries = 1
-        health_passed = False
-        
-        for attempt in range(max_retries):
-            if self.scraper.health_check():
-                health_passed = True
-                logger.info("Health check passed")
-                break
-            else:
-                logger.warning(f"Health check failed (attempt {attempt + 1}/{max_retries})")
-                if attempt < max_retries - 1:
-                    logger.info("Attempting to change IP via Warp...")
-                    # Disconnect and reconnect to get new IP
-                    disconnect_warp()
-                    time.sleep(0.5)
-                    warp_connected = connect_warp()
-                    if not warp_connected:
-                        logger.warning("Failed to reconnect Warp. Proceeding without VPN.")
-                    time.sleep(1)  # Wait for connection to stabilize
-                else:
-                    logger.error("Health check failed after all retry attempts. Aborting.")
-                    return
-        
-        # No progress tracking needed for minor enrichments
+        # Health check
+        if not self.scraper.health_check():
+            logger.error("Health check failed. Aborting enrichment.")
+            return
         
         logger.info("Starting enrichment...")
         
@@ -641,11 +530,6 @@ class Manager:
         total_processed = self._process_records_sequential(
             pending_records, rx_lookup, jsn_dir, img_dir
         )
-        
-        # Disconnect from Cloudflare Warp before sync (Warp slows down upload)
-        if warp_connected:
-            logger.info("Disconnecting from Cloudflare Warp...")
-            disconnect_warp()
         
         # Validate all files before GDrive sync (if validation was enabled)
         if not skip_validation:
@@ -714,22 +598,10 @@ class Manager:
 
     
     def _process_records_sequential(self, pending_records, rx_lookup, jsn_dir, img_dir, ip_rotation_interval=500):
-        """Process records sequentially with periodic IP rotation."""
+        """Process records sequentially."""
         total_processed = 0
-        warp_connected = True
         
         for idx, record in enumerate(pending_records):
-            # Periodic IP rotation to avoid rate limiting
-            if ip_rotation_interval > 0 and total_processed > 0 and total_processed % ip_rotation_interval == 0:
-                logger.info(f"Rotating IP after {total_processed} records...")
-                disconnect_warp()
-                time.sleep(1)
-                if connect_warp():
-                    new_ip = get_current_ip()
-                    if new_ip:
-                        logger.info(f"IP rotated to: {new_ip}")
-                time.sleep(2)
-            
             serial = record.serial_number
             reg_no = record.registration_number
             try:
