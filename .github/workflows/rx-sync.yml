@@ -113,6 +113,22 @@ jobs:
           -d @data/rx.json
         echo ""
     
+    - name: Upload to Cloudflare R2
+      if: ${{ steps.update.outputs.success == 'True' }}
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      run: |
+        echo "📤 Uploading rx.json to Cloudflare R2..."
+        python3 -m pip install awscli --break-system-packages --quiet 2>&1 | tail -1
+        aws s3api put-object \
+          --endpoint-url "https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com" \
+          --bucket tgpc \
+          --key rxjson/rx.json \
+          --body data/rx.json
+        echo "✅ R2 upload complete"
+    
     - name: Clean old artifact
       if: ${{ steps.update.outputs.success == 'True' }}
       env:
