@@ -129,6 +129,16 @@ jobs:
           --body data/rx.json
         echo "✅ R2 upload complete"
     
+    - name: Upload to Google Drive
+      if: ${{ steps.update.outputs.success == 'True' }}
+      env:
+        RCLONE_CONFIG: /tmp/rclone-gdrive.conf
+      run: |
+        echo "📤 Uploading rx.json to Google Drive..."
+        echo "${{ secrets.RCLONE_GDRIVE_CONFIG }}" | base64 -d > /tmp/rclone-gdrive.conf
+        rclone copy data/rx.json gdrive:tgpc/rx.json
+        echo "✅ Google Drive upload complete"
+    
     - name: Clean old artifact
       if: ${{ steps.update.outputs.success == 'True' }}
       env:
