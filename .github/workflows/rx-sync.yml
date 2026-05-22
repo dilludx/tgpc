@@ -146,7 +146,7 @@ jobs:
       run: |
         echo "📤 Uploading rx.json to Backblaze B2..."
         echo "${{ secrets.RCLONE_GDRIVE_CONFIG }}" | base64 -d > /tmp/rclone-gdrive.conf
-        rclone copyto data/rx.json b2:tgpcdx/rx.json
+        rclone copyto data/rx.json b2:tgpcdx/rx.json --ignore-times
         echo "✅ Backblaze B2 upload complete"
     
     - name: Clean old artifact
