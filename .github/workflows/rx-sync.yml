@@ -125,7 +125,7 @@ jobs:
         aws s3api put-object \
           --endpoint-url "https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com" \
           --bucket tgpc \
-          --key rxjson/rx.json \
+          --key rx.json \
           --body data/rx.json
         echo "✅ R2 upload complete"
     
