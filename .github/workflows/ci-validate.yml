@@ -13,6 +13,8 @@ on:
       - "pyproject.toml"
       - "requirements.txt"
       - ".pre-commit-config.yaml"
+      - "package.json"
+      - "package-lock.json"
 
 jobs:
   validate:
