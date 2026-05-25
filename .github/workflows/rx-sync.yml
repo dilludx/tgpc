@@ -18,7 +18,7 @@ jobs:
     runs-on: [self-hosted, macos, india]
     permissions:
       actions: write
-      contents: write
+      contents: read
 
     steps:
     - name: Checkout repository
@@ -72,18 +72,14 @@ jobs:
           python3 -m tgpc update
         fi
 
-    - name: Commit updated rx.json to repository
+    - name: Sync rx.json to local repo
       if: ${{ steps.update.outputs.success == 'True' }}
       run: |
-        git config user.name "TGPC Rx Sync"
-        git config user.email "rx-sync@tgpc.pages.dev"
-        git add data/rx.json
-        if git diff --cached --quiet; then
-          echo "ℹ️ No changes to rx.json to commit"
+        if [ -f data/rx.json ]; then
+          cp data/rx.json /Users/dinesh/tgpc/data/rx.json
+          echo "✅ Synced rx.json to local repo ($(wc -c < data/rx.json) bytes)"
         else
-          git commit -m "♻️ Update rx.json (${{ steps.update.outputs.total_records }} records, +${{ steps.update.outputs.new_records }}/-${{ steps.update.outputs.removed_records }}/~${{ steps.update.outputs.modified_records }})"
-          git push
-          echo "✅ Committed and pushed updated rx.json"
+          echo "⚠️ No rx.json found to sync"
         fi
 
     - name: Sync to Supabase

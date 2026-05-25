@@ -22,6 +22,7 @@ env/
 .venv/
 
 # Data files (keep main data, ignore backups and temp)
+data/rx.json
 data/backups/
 data/detailed/
 data/jsn/
