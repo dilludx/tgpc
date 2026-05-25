@@ -40,8 +40,7 @@ class ManagerEnrichmentTests(unittest.TestCase):
             with patch("tgpc.manager.Scraper", return_value=DetailScraper(details_by_id)):
                 return Manager()
 
-    @patch("tgpc.manager.time.sleep", return_value=None)
-    def test_run_enrichment_saves_first_pending_record_in_sorted_order(self, _sleep):
+    def test_run_enrichment_saves_first_pending_record_in_sorted_order(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             manager = self._make_manager(
                 temp_dir,
@@ -52,7 +51,13 @@ class ManagerEnrichmentTests(unittest.TestCase):
                         father_name="Parent",
                         category="BPharm",
                         validity_date="2026-12-31",
-                        education=[{"qualification": "BPharm", "university": "OU", "year": "2018"}],
+                        education=[
+                            {
+                                "qualification": "BPharm",
+                                "university": "OU",
+                                "year": "2018",
+                            }
+                        ],
                         work_experience={"address": "Clinic Street"},
                     )
                 },
@@ -73,8 +78,7 @@ class ManagerEnrichmentTests(unittest.TestCase):
             self.assertEqual(details["education"][0]["qualification"], "BPharm")
             self.assertEqual(details["work_experience"]["address"], "Clinic Street")
 
-    @patch("tgpc.manager.time.sleep", return_value=None)
-    def test_run_enrichment_raises_on_registration_mismatch(self, _sleep):
+    def test_run_enrichment_raises_on_registration_mismatch(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             manager = self._make_manager(
                 temp_dir,

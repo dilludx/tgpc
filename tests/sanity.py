@@ -24,51 +24,58 @@ SAMPLE_HTML = """
 </html>
 """
 
+
 def extract_records(html):
     """Extract records from HTML - mirrors scraper logic"""
-    soup = BeautifulSoup(html, 'html.parser')
-    
+    soup = BeautifulSoup(html, "html.parser")
+
     records = []
-    table = soup.find('table', attrs={'id': 'tablesorter-demo'}) or soup.find('table')
-    
+    table = soup.find("table", attrs={"id": "tablesorter-demo"}) or soup.find("table")
+
     if not table:
         return []
 
-    for row in table.find_all('tr')[1:]:
-        cells = row.find_all('td')
+    for row in table.find_all("tr")[1:]:
+        cells = row.find_all("td")
         if len(cells) < 5:
             continue
-            
+
         try:
-            records.append(PharmacistRecord(
-                serial_number=int(cells[0].get_text(strip=True)) if cells[0].get_text(strip=True).isdigit() else None,
-                registration_number=cells[1].get_text(strip=True),
-                name=cells[2].get_text(strip=True),
-                father_name=cells[3].get_text(strip=True),
-                category=cells[4].get_text(strip=True)
-            ))
+            records.append(
+                PharmacistRecord(
+                    serial_number=int(cells[0].get_text(strip=True))
+                    if cells[0].get_text(strip=True).isdigit()
+                    else None,
+                    registration_number=cells[1].get_text(strip=True),
+                    name=cells[2].get_text(strip=True),
+                    father_name=cells[3].get_text(strip=True),
+                    category=cells[4].get_text(strip=True),
+                )
+            )
         except Exception:
             continue
-            
+
     return records
+
 
 def run_sanity_check():
     print("♻️ Running Sanity Check...")
-    
+
     # Run extraction on sample HTML
     records = extract_records(SAMPLE_HTML)
-    
+
     # Verify results
     if len(records) != 1:
         print(f"❌ Failed: Expected 1 record, got {len(records)}")
         sys.exit(1)
-        
+
     r = records[0]
     if r.registration_number != "12345" or r.name != "John Doe":
         print(f"❌ Failed: Data mismatch. Got {r}")
         sys.exit(1)
-        
+
     print("✅ Sanity Check Passed: Scraper logic is intact.")
+
 
 if __name__ == "__main__":
     run_sanity_check()

@@ -23,17 +23,17 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    
+
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade pip --break-system-packages
         python3 -m pip install -e . --break-system-packages
         python3 -m pip install supabase --break-system-packages
-    
+
     - name: Create data directory
       run: |
         mkdir -p data/backups
-    
+
     - name: Restore data from artifact
       env:
         GH_TOKEN: ${{ github.token }}
@@ -48,7 +48,7 @@ jobs:
         else
           echo "✅ Local rx.json found ($(wc -c < data/rx.json) bytes)"
         fi
-    
+
     - name: Run data update
       id: update
       run: |
@@ -71,7 +71,7 @@ jobs:
           echo "♻️ STARTING TGPC DATA UPDATE..."
           python3 -m tgpc update
         fi
-    
+
     - name: Sync to Supabase
       if: ${{ steps.update.outputs.success == 'True' }}
       env:
@@ -80,7 +80,7 @@ jobs:
       run: |
         echo "♻️ SYNCING DATA TO SUPABASE CLOUD DATABASE..."
         python3 -m tgpc sync
-    
+
     - name: Upload to Supabase Storage
       if: ${{ steps.update.outputs.success == 'True' }}
       env:
@@ -104,7 +104,7 @@ jobs:
           -H "x-upsert: true" \
           -d @data/rx.json
         echo ""
-    
+
     - name: Upload to Cloudflare R2
       if: ${{ steps.update.outputs.success == 'True' }}
       env:
@@ -120,7 +120,7 @@ jobs:
           --key rx.json \
           --body data/rx.json
         echo "✅ R2 upload complete"
-    
+
     - name: Upload to Google Drive
       if: ${{ steps.update.outputs.success == 'True' }}
       env:
@@ -130,17 +130,17 @@ jobs:
         echo "${{ secrets.RCLONE_GDRIVE_CONFIG }}" | base64 -d > /tmp/rclone-gdrive.conf
         rclone copyto data/rx.json gdrive:tgpc/rx.json
         echo "✅ Google Drive upload complete"
-    
+
     - name: Clean old artifact
       if: ${{ steps.update.outputs.success == 'True' }}
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        gh api --paginate repos/dilludx/tgpc/actions/artifacts --jq '.artifacts[] | select(.name == "rx-data") | .id' 2>/dev/null | while read id; do
+        gh api --paginate repos/dilludx/tgpc/actions/artifacts --jq '.artifacts[] | select(.name == "rx-data") | .id' 2>/dev/null | while read -r id; do
           echo "Deleting old artifact $id"
-          gh api -X DELETE repos/dilludx/tgpc/actions/artifacts/$id
+          gh api -X DELETE "repos/dilludx/tgpc/actions/artifacts/$id"
         done
-    
+
     - name: Upload data to artifact
       if: ${{ steps.update.outputs.success == 'True' }}
       uses: actions/upload-artifact@v4
@@ -148,13 +148,13 @@ jobs:
         name: rx-data
         path: data/rx.json
         retention-days: 90
-    
+
     - name: Create update summary
       if: always()
       run: |
         UPDATE_STATUS='${{ steps.update.outputs.update_status }}'
         SOURCE_ERROR='${{ steps.update.outputs.source_error }}'
-        
+
         {
           echo "### ♻️ Rx Sync • $(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]') • $(TZ='Asia/Kolkata' date '+%H:%M IST')"
           echo ""
@@ -190,35 +190,35 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           exit 1
         fi
-        
+
         python3 -c "
         import json, os
         from pathlib import Path
-        
+
         details_path = Path('data/update_details.json')
         if not details_path.exists():
             print('No update details file found - likely no changes')
             exit(0)
-        
+
         with open(details_path) as f:
             data = json.load(f)
-        
+
         new_recs = data.get('new_details', [])
         rem_recs = data.get('removed_details', [])
         mod_recs = data.get('modified_details', [])
-        
+
         def fmt_cats(cats):
             if not cats:
                 return ''
             sorted_cats = sorted(cats.items(), key=lambda x: x[1], reverse=True)
             return ', '.join(f'{k}: {v}' for k, v in sorted_cats)
-        
+
         new_cat_str = fmt_cats(data.get('new_cat_stats', {}))
         rem_cat_str = fmt_cats(data.get('rem_cat_stats', {}))
         mod_cat_str = fmt_cats(data.get('mod_cat_stats', {}))
-        
+
         MAX_SHOW = 20
-        
+
         if not (new_cat_str or mod_cat_str or rem_cat_str):
             print('✅ No updates')
         else:
@@ -243,7 +243,7 @@ jobs:
                 if len(rem_recs) > MAX_SHOW:
                     print(f'- ... and {len(rem_recs) - MAX_SHOW} more')
         " >> "$GITHUB_STEP_SUMMARY"
-    
+
     - name: Send email notification
       if: ${{ steps.update.outputs.success == 'True' }}
       env:

@@ -295,7 +295,7 @@ async function loadStatsUpdated() {
     } catch (e) {
         console.warn('localStorage not available:', e);
     }
-    
+
     if (cached) {
         try {
             const ts = cached.includes('T') && !cached.endsWith('Z') && !cached.includes('+') && !/[0-9]{2}:[0-9]{2}$/.test(cached) ? cached + 'Z' : cached;
@@ -363,7 +363,7 @@ async function loadAnalytics() {
     } catch (e) {
         console.warn('localStorage not available:', e);
     }
-    
+
     let cachedStats = null;
 
     if (cached) {

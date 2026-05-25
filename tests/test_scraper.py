@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 # Mock supabase before importing tgpc package modules
 sys.modules["supabase"] = MagicMock()
 
-from tgpc.utils import Config
 from tgpc.scraper import Scraper
 
 
@@ -24,11 +23,11 @@ class ScraperParsingTests(unittest.TestCase):
         response.text = "ok" * 1000
         response.raise_for_status.return_value = None
 
-        with patch.object(scraper.rate_limiter, "wait"), patch.object(
-            scraper.rate_limiter, "record_result"
-        ) as record_result, patch.object(
-            scraper.session, "request", return_value=response
-        ) as request_mock:
+        with (
+            patch.object(scraper.rate_limiter, "wait"),
+            patch.object(scraper.rate_limiter, "record_result") as record_result,
+            patch.object(scraper.session, "request", return_value=response) as request_mock,
+        ):
             result = scraper._request("GET", "https://example.com")
 
         self.assertIs(result, response)
@@ -73,14 +72,22 @@ class ScraperParsingTests(unittest.TestCase):
 
     def test_extract_basic_records_returns_empty_when_no_table_exists(self):
         scraper = Scraper()
-        with patch.object(scraper, "_request", return_value=make_response("<html><body>No table</body></html>")):
+        with patch.object(
+            scraper,
+            "_request",
+            return_value=make_response("<html><body>No table</body></html>"),
+        ):
             records = scraper.extract_basic_records()
 
         self.assertEqual(records, [])
 
     def test_extract_detailed_info_returns_none_for_no_records_found(self):
         scraper = Scraper()
-        with patch.object(scraper, "_request", return_value=make_response("<html><body>No Records Found</body></html>")):
+        with patch.object(
+            scraper,
+            "_request",
+            return_value=make_response("<html><body>No Records Found</body></html>"),
+        ):
             record = scraper.extract_detailed_info("RX404")
 
         self.assertIsNone(record)

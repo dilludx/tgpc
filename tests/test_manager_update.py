@@ -61,14 +61,8 @@ class ManagerUpdateTests(unittest.TestCase):
 
     def test_safety_guard_blocks_large_drop(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            existing = [
-                record(f"RX{i:03d}", f"Name{i}", f"Father{i}", "BPharm", i)
-                for i in range(1, 101)
-            ]
-            fresh = [
-                record(f"RX{i:03d}", f"Name{i}", f"Father{i}", "BPharm", i)
-                for i in range(1, 81)
-            ]
+            existing = [record(f"RX{i:03d}", f"Name{i}", f"Father{i}", "BPharm", i) for i in range(1, 101)]
+            fresh = [record(f"RX{i:03d}", f"Name{i}", f"Father{i}", "BPharm", i) for i in range(1, 81)]
 
             manager = self._make_manager(temp_dir, fresh)
             manager.file_manager.save(existing)
@@ -174,24 +168,30 @@ class ManagerUpdateTests(unittest.TestCase):
 
             self.assertEqual(
                 output["new_details"],
-                json.dumps([
-                    "R1 - New One (BPharm)",
-                    "R3 - New Three (DPharm)",
-                ]),
+                json.dumps(
+                    [
+                        "R1 - New One (BPharm)",
+                        "R3 - New Three (DPharm)",
+                    ]
+                ),
             )
             self.assertEqual(
                 output["removed_details"],
-                json.dumps([
-                    "R2 - Removed Two (DPharm)",
-                    "R8 - Removed Eight (PharmD)",
-                ]),
+                json.dumps(
+                    [
+                        "R2 - Removed Two (DPharm)",
+                        "R8 - Removed Eight (PharmD)",
+                    ]
+                ),
             )
             self.assertEqual(
                 output["modified_details"],
-                json.dumps([
-                    "R4 - Updated Four (MPharm)",
-                    "R6 - Updated Six (QC)",
-                ]),
+                json.dumps(
+                    [
+                        "R4 - Updated Four (MPharm)",
+                        "R6 - Updated Six (QC)",
+                    ]
+                ),
             )
 
             self.assertEqual(output["new_cat_stats"], json.dumps({"BPharm": 1, "DPharm": 1}))
