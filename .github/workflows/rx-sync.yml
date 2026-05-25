@@ -18,7 +18,7 @@ jobs:
     runs-on: [self-hosted, macos, india]
     permissions:
       actions: write
-      contents: read
+      contents: write
 
     steps:
     - name: Checkout repository
@@ -70,6 +70,20 @@ jobs:
         else
           echo "♻️ STARTING TGPC DATA UPDATE..."
           python3 -m tgpc update
+        fi
+
+    - name: Commit updated rx.json to repository
+      if: ${{ steps.update.outputs.success == 'True' }}
+      run: |
+        git config user.name "TGPC Rx Sync"
+        git config user.email "rx-sync@tgpc.pages.dev"
+        git add data/rx.json
+        if git diff --cached --quiet; then
+          echo "ℹ️ No changes to rx.json to commit"
+        else
+          git commit -m "♻️ Update rx.json (${{ steps.update.outputs.total_records }} records, +${{ steps.update.outputs.new_records }}/-${{ steps.update.outputs.removed_records }}/~${{ steps.update.outputs.modified_records }})"
+          git push
+          echo "✅ Committed and pushed updated rx.json"
         fi
 
     - name: Sync to Supabase

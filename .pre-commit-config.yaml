@@ -4,6 +4,7 @@ repos:
     hooks:
       - id: check-ast
       - id: check-json
+        exclude: ^data/rx\.json$
       - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
