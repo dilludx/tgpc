@@ -84,11 +84,19 @@ function render() {
     if (filtered.length === 0) {
         listEl.innerHTML = '';
         emptyEl.classList.remove('hidden');
-        badgeEl.textContent = '';
+        badgeEl.classList.toggle('hidden', !query);
+        badgeEl.textContent = query ? 'No matching files' : '';
         return;
     }
     emptyEl.classList.add('hidden');
-    badgeEl.textContent = '';
+
+    if (query) {
+        badgeEl.classList.remove('hidden');
+        badgeEl.textContent = `${filtered.length} of ${files.length} files`;
+    } else {
+        badgeEl.classList.add('hidden');
+        badgeEl.textContent = '';
+    }
 
     let html = '';
     if (activeTab === null) {
