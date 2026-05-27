@@ -139,10 +139,13 @@ jobs:
         echo "📤 Uploading rx.json to Google Drive..."
         echo "${{ secrets.RCLONE_GDRIVE_CONFIG }}" | base64 -d > /tmp/rclone-gdrive.conf
         MAX_SERIAL=$(python3 -c "import json; data=json.load(open('data/rx.json')); print(max(r.get('serial_number',0) for r in data if r.get('serial_number')))")
-        # Upload new file first, then remove old ones
+        # Upload plain rx.json (always the latest, easy to find) + versioned copy
+        rclone copyto data/rx.json "gdrive:tgpc/rx.json"
+        echo "✅ Uploaded as rx.json"
         rclone copyto data/rx.json "gdrive:tgpc/rx-${MAX_SERIAL}.json"
         echo "✅ Uploaded as rx-${MAX_SERIAL}.json"
-        rclone delete gdrive:tgpc --include "rx-*.json" --exclude "rx-${MAX_SERIAL}.json" 2>/dev/null || true
+        # Permanently delete old versioned files (no trash)
+        rclone delete gdrive:tgpc --drive-use-trash=false --include "rx-*.json" --exclude "rx-${MAX_SERIAL}.json" --exclude "rx.json" 2>/dev/null || true
         echo "✅ Old versions cleaned up"
         # Upload img.zip and jsn.zip if they exist
         if [ -f data/jsn.zip ]; then
