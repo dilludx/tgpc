@@ -1,16 +1,15 @@
-# TGPC Rx Registry
+# TGPC Pharmacist Registry
 
-Automated TGPC pharmacist registry scraping, local data management, Supabase synchronisation, and static search UI publishing.
+TGPC Pharmacist registry scraper, local data management, Supabase synchronisation, and static search UI publishing.
 
 ## What This Repo Does
-- Scrapes the public TGPC pharmacist registry into `data/rx.json`
+- Scrapes the public TGPC Pharmacist registry into `data/rx.json`
 - Syncs the latest dataset to Supabase for the public search UI
 - Supports local enrichment into `data/jsn/` (per-record JSON) plus `data/img/` (photos)
-- Serves separate desktop and mobile search pages from `docs/`
-- Runs automated validation with GitHub Actions
+- Serves desktop and mobile search pages from `docs/`
 
-## Current Automation
-- `rx-sync.yml`: manual sync workflow (scrapes, syncs to Supabase, sends email notification)
+## Workflows
+- `rx-sync.yml`: manual workflow — scrapes, syncs to Supabase + Cloudflare R2 + Google Drive, sends email notification
 
 ## Local Commands
 Install the package in a virtual environment:
@@ -37,34 +36,31 @@ python3 -m unittest discover -s tests -p 'test_*.py' -v
 ## Required Environment Variables / GitHub Secrets
 - `SUPABASE_URL`: project URL used by the sync command
 - `SUPABASE_SECRET_KEY`: secret key used by the sync command
-- `RESEND_API_KEY`: Resend API key for sync notification emails (free tier: 100 emails/day)
+- `RESEND_API_KEY`: Resend API key for sync notification emails
 - `NOTIFICATION_EMAIL`: recipient email address for sync notifications
-- `TGPC_PROXY_URL`: optional outbound proxy URL for TGPC scraping when GitHub-hosted runners cannot reach the source directly
+- `TGPC_PROXY_URL`: optional outbound proxy for TGPC scraping
 
-The public frontend uses the publishable key from `docs/config.js`, so database access rules must stay appropriately locked down in Supabase.
+The frontend uses the publishable key from `docs/config.js` — database access rules must stay locked down.
 
-> **Note:** The `rx-sync.yml` workflow sends a detailed HTML email (new/changed/removed records by category) after each successful sync via Resend. No Gmail SMTP credentials are needed.
+> **Note:** `rx-sync.yml` sends a detailed HTML email (new/changed/removed records by category) after each successful sync via Resend.
 
 ## Data Artifacts
-- `data/rx.json`: canonical basic pharmacist registry snapshot
-- `data/jsn/`: optional local enrichment output (`<registration_number>.json`)
-- `data/img/`: optional local photo cache created by enrichment (`<registration_number>.jpg`/`.png`/`.webp`)
-
+- `data/rx.json`: canonical Pharmacist registry snapshot
+- `data/jsn/`: optional enrichment output (`<registration_number>.json`)
+- `data/img/`: optional photo cache (`<registration_number>.jpg`/`.png`/`.webp`)
 
 ## Operational Notes
-- `update` refuses to replace the dataset if the new scrape drops below 90% of the existing record count
-- `enrich` aborts immediately on registration mismatches so bad detail pages cannot be silently written
-- `data/jsn/` and `data/img/` are local working artifacts and are ignored by Git
-- The desktop and mobile UIs both read from Supabase directly and share the same frontend config
+- `update` refuses to replace data if the new scrape drops below 90% of the existing count
+- `enrich` aborts on registration mismatches to prevent corrupt data
+- `data/jsn/` and `data/img/` are local working artifacts, ignored by Git
+- Desktop and mobile UIs both read from Supabase and share the same config
 
-## Status
-The repo is operational and runs on-demand via manual workflow dispatch.
+## License & Disclaimer
 
-## ⚖️ License & Disclaimer
-**NO LIABILITY**: The creator, the repository owner, the contributors, and the hosting platform (GitHub) assume **NO LIABILITY** and are **NOT RESPONSIBLE** for any lawsuits, damages, data loss, or legal consequences arising from the use, misuse, or existence of this repository.
+**NO LIABILITY**: The creator, repository owner, contributors, and hosting platform assume **no liability** for any damages, data loss, or legal consequences arising from the use or existence of this repository.
 
-- **Code**: Licensed under the MIT License.
-- **Data**: All data belongs to the respective authority. This tool is for educational purposes only.
-- **Usage**: Users assume full responsibility for how they use this tool and the data it accesses.
+- **Code**: MIT License.
+- **Data**: Belongs to the respective authority. Educational purposes only.
+- **Usage**: Full responsibility rests with the user.
 
-**Indian Copyright Act, 1957**: This tool is developed for educational and research purposes under the 'Fair Dealing' provisions of Section 52 of the Indian Copyright Act, 1957. The data accessed remains the intellectual property of the original copyright holder.
+**Indian Copyright Act, 1957**: Developed for educational and research purposes under Section 52 (Fair Dealing). All data remains the intellectual property of the original copyright holder.
