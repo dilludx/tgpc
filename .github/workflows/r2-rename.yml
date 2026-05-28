@@ -13,7 +13,7 @@ jobs:
     - name: Upload notice attachments
       run: |
         EP="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
-        upload() { curl -sL "$1" | aws s3api put-object --endpoint-url "$EP" --bucket tgpc --key "notice/$2" --body /dev/stdin; }
+        upload() { curl -sL "$1" -o /tmp/f && aws s3api put-object --endpoint-url "$EP" --bucket tgpc --key "notice/$2" --body /tmp/f; }
         upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/exit_examination_circular_23022026.jpg" exit_examination_circular_23022026.jpg
         upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/exit_exam_notification_23022026.jpg" exit_exam_notification_23022026.jpg
         upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/exit_examination_circular.jpg" exit_examination_circular.jpg
