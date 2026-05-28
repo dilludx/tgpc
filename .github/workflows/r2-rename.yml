@@ -10,53 +10,25 @@ jobs:
     steps:
     - name: Install awscli
       run: pip install awscli --quiet
-    - name: Upload notice attachments to R2
+    - name: Upload notice attachments
       run: |
-        python3 << 'PYEOF'
-import json, os, subprocess, urllib.request
-endpoint = f"https://{os.environ['CLOUDFLARE_ACCOUNT_ID']}.r2.cloudflarestorage.com"
-with open("/dev/stdin") if False else urllib.request.urlopen("https://raw.githubusercontent.com/dilludx/tgpc/main/docs/notice.json") as f:
-    data = json.load(f)
-seen = set()
-for n in data:
-    for link in n.get("links", []):
-        url = link["url"]
-        if "r2.dev" in url and url not in seen:
-            seen.add(url)
-            fn = url.rsplit("/", 1)[1]
-            key = f"notice/{fn}"
-            # Reconstruct TGPC source URL from filename mapping
-            src = fn.replace("_", " ").replace("exit_exam_notification_23022026", "exit_exam_notification_23022026")
-            # Direct mapping based on downloaded files
-            mapping = {
-                "exit_examination_circular_23022026.jpg": "/pdf/Circulars/exit_examination_circular_23022026.jpg",
-                "exit_exam_notification_23022026.jpg": "/pdf/Circulars/exit_exam_notification_23022026.jpg",
-                "exit_examination_circular.jpg": "/pdf/Circulars/exit_examination_circular.jpg",
-                "exit_exam_notification.jpg": "/pdf/Circulars/exit_exam_notification.jpg",
-                "Notice_Nov_11_2025_holiday.jpeg": "/pdf/Circulars/Notice_Nov_11_2025_holiday.jpeg",
-                "CIRCULAR_3.pdf": "/pdf/Circulars/CIRCULAR_3.pdf",
-                "Circular_2.pdf": "/pdf/Circulars/Circular_2.pdf",
-                "dpharm_circular.jpeg": "/pdf/Circulars/dpharm_circular.jpeg",
-                "dpharm_affidavit.jpeg": "/pdf/Circulars/dpharm_affidavit.jpeg",
-                "upskills_notice.jpeg": "/pdf/Circulars/upskills_notice.jpeg",
-                "Circular_1.pdf": "/pdf/Circulars/Circular_1.pdf",
-                "Exit_Exam_DPharm.pdf": "/pdf/Circulars/Exit%20Exam%20for%20DPharm%20Course.pdf",
-                "Candidate_Registration_Enrollement.pdf": "/pdf/Circulars/Candidate%20Registration%20Enrollement%20Process%20Skill%20India%20Digital%20_SID_%20Portal%202.pdf",
-                "circular_161224.jpeg": "/pdf/Circulars/circular_161224.jpeg",
-                "Election_Gazette.pdf": "/pdf/Circulars/Election%20Gazette.pdf",
-                "Vocational_Courses_Bridge_Courses.pdf": "/pdf/Circulars/Vocational%20Courses%20Bridge%20Courses.pdf",
-                "go_ts_to_tg.jpg": "/pdf/ChecklistforUploadDocs/go_ts%20to%20tg.jpg",
-                "tspc_emails_changed.jpeg": "/pdf/ChecklistforUploadDocs/tspc_emails_changed.jpeg",
-            }
-            src_path = mapping.get(fn)
-            if not src_path:
-                print(f"  SKIP (no mapping): {fn}")
-                continue
-            src_url = f"https://pharmacycouncil.telangana.gov.in{src_path}"
-            print(f"  {fn}...", end=" ", flush=True)
-            data = urllib.request.urlopen(src_url).read()
-            proc = subprocess.run(["aws", "s3api", "put-object",
-                "--endpoint-url", endpoint, "--bucket", "tgpc",
-                "--key", key, "--body", "/dev/stdin"], input=data, capture_output=True)
-            print("OK" if proc.returncode == 0 else f"FAILED: {proc.stderr.decode()}")
-PYEOF
+        EP="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
+        upload() { curl -sL "$1" | aws s3api put-object --endpoint-url "$EP" --bucket tgpc --key "notice/$2" --body /dev/stdin; }
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/exit_examination_circular_23022026.jpg" exit_examination_circular_23022026.jpg
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/exit_exam_notification_23022026.jpg" exit_exam_notification_23022026.jpg
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/exit_examination_circular.jpg" exit_examination_circular.jpg
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/exit_exam_notification.jpg" exit_exam_notification.jpg
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Notice_Nov_11_2025_holiday.jpeg" Notice_Nov_11_2025_holiday.jpeg
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/CIRCULAR_3.pdf" CIRCULAR_3.pdf
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Circular_2.pdf" Circular_2.pdf
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/dpharm_circular.jpeg" dpharm_circular.jpeg
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/dpharm_affidavit.jpeg" dpharm_affidavit.jpeg
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/upskills_notice.jpeg" upskills_notice.jpeg
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Circular_1.pdf" Circular_1.pdf
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Exit%20Exam%20for%20DPharm%20Course.pdf" Exit_Exam_DPharm.pdf
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Candidate%20Registration%20Enrollement%20Process%20Skill%20India%20Digital%20_SID_%20Portal%202.pdf" Candidate_Registration_Enrollement.pdf
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/circular_161224.jpeg" circular_161224.jpeg
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Election%20Gazette.pdf" Election_Gazette.pdf
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Vocational%20Courses%20Bridge%20Courses.pdf" Vocational_Courses_Bridge_Courses.pdf
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/ChecklistforUploadDocs/go_ts%20to%20tg.jpg" go_ts_to_tg.jpg
+        upload "https://pharmacycouncil.telangana.gov.in/pdf/ChecklistforUploadDocs/tspc_emails_changed.jpeg" tspc_emails_changed.jpeg
