@@ -1,0 +1,33 @@
+name: NU
+on: workflow_dispatch
+jobs:
+  u:
+    runs-on: ubuntu-latest
+    env:
+      A: ${{ secrets.R2_ACCESS_KEY_ID }}
+      S: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      C: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+    - run: pip install awscli -q
+    - run: |
+        B=https://pharmacycouncil.telangana.gov.in/pdf
+        E=https://$C.r2.cloudflarestorage.com
+        up() { f=$(mktemp) && curl -sLo "$f" "$1" && aws s3api put-object --endpoint-url "$E" --bucket tgpc --key "notice/$2" --body "$f" && rm "$f"; }
+        up $B/Circulars/exit_examination_circular_23022026.jpg exit_examination_circular_23022026.jpg
+        up $B/Circulars/exit_exam_notification_23022026.jpg exit_exam_notification_23022026.jpg
+        up $B/Circulars/exit_examination_circular.jpg exit_examination_circular.jpg
+        up $B/Circulars/exit_exam_notification.jpg exit_exam_notification.jpg
+        up $B/Circulars/Notice_Nov_11_2025_holiday.jpeg Notice_Nov_11_2025_holiday.jpeg
+        up $B/Circulars/CIRCULAR_3.pdf CIRCULAR_3.pdf
+        up $B/Circulars/Circular_2.pdf Circular_2.pdf
+        up $B/Circulars/dpharm_circular.jpeg dpharm_circular.jpeg
+        up $B/Circulars/dpharm_affidavit.jpeg dpharm_affidavit.jpeg
+        up $B/Circulars/upskills_notice.jpeg upskills_notice.jpeg
+        up $B/Circulars/Circular_1.pdf Circular_1.pdf
+        up "$B/Circulars/Exit%20Exam%20for%20DPharm%20Course.pdf" Exit_Exam_DPharm.pdf
+        up "$B/Circulars/Candidate%20Registration%20Enrollement%20Process%20Skill%20India%20Digital%20_SID_%20Portal%202.pdf" Candidate_Registration_Enrollement.pdf
+        up $B/Circulars/circular_161224.jpeg circular_161224.jpeg
+        up "$B/Circulars/Election%20Gazette.pdf" Election_Gazette.pdf
+        up "$B/Circulars/Vocational%20Courses%20Bridge%20Courses.pdf" Vocational_Courses_Bridge_Courses.pdf
+        up "$B/ChecklistforUploadDocs/go_ts%20to%20tg.jpg" go_ts_to_tg.jpg
+        up $B/ChecklistforUploadDocs/tspc_emails_changed.jpeg tspc_emails_changed.jpeg
