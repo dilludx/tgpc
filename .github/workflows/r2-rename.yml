@@ -1,0 +1,67 @@
+name: R2 Rename
+on: workflow_dispatch
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+    - name: Install awscli
+      run: pip install awscli --quiet
+    - name: Rename dispatchlist/ -> dispatch/
+      run: |
+        for key in $(aws s3api list-objects \
+          --endpoint-url "https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com" \
+          --bucket tgpc \
+          --prefix dispatchlist/ \
+          --query 'Contents[].Key' \
+          --output text); do
+          new_key="dispatch${key#dispatchlist}"
+          echo "$key -> $new_key"
+          aws s3api copy-object \
+            --endpoint-url "https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com" \
+            --bucket tgpc \
+            --copy-source "$key" \
+            --key "$new_key"
+          aws s3api delete-object \
+            --endpoint-url "https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com" \
+            --bucket tgpc \
+            --key "$key"
+        done
+    - name: Upload notice attachments
+      run: |
+        for url in \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/exit_examination_circular_23022026.jpg" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/exit_exam_notification_23022026.jpg" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/exit_examination_circular.jpg" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/exit_exam_notification.jpg" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Notice_Nov_11_2025_holiday.jpeg" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/CIRCULAR_3.pdf" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Circular_2.pdf" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/dpharm_circular.jpeg" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/dpharm_affidavit.jpeg" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/upskills_notice.jpeg" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Circular_1.pdf" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Exit%20Exam%20for%20DPharm%20Course.pdf" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Candidate%20Registration%20Enrollement%20Process%20Skill%20India%20Digital%20_SID_%20Portal%202.pdf" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/circular_161224.jpeg" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Election%20Gazette.pdf" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/Circulars/Vocational%20Courses%20Bridge%20Courses.pdf" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/ChecklistforUploadDocs/go_ts%20to%20tg.jpg" \
+          "https://pharmacycouncil.telangana.gov.in/pdf/ChecklistforUploadDocs/tspc_emails_changed.jpeg"; do
+          filename=$(basename "$url" | sed 's/%20/_/g' | sed 's/ /_/g')
+          key="notice/$(echo "$filename" | sed 's/go_ts_to_tg\.jpg/go_ts_to_tg.jpg/' \
+            | sed 's/Candidate%20Registration%20Enrollement%20Process%20Skill%20India%20Digital%20_SID_%20Portal%202\.pdf/Candidate_Registration_Enrollement.pdf/' \
+            | sed 's/Exit%20Exam%20for%20DPharm%20Course\.pdf/Exit_Exam_DPharm.pdf/' \
+            | sed 's/Election%20Gazette\.pdf/Election_Gazette.pdf/' \
+            | sed 's/Vocational%20Courses%20Bridge%20Courses\.pdf/Vocational_Courses_Bridge_Courses.pdf/' \
+            | sed 's/go_ts%20to%20tg\.jpg/go_ts_to_tg.jpg/')"
+          echo "Uploading $filename -> $key"
+          curl -sL "$url" | aws s3api put-object \
+            --endpoint-url "https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com" \
+            --bucket tgpc \
+            --key "$key" \
+            --body /dev/stdin
+        done
