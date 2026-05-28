@@ -10,9 +10,7 @@ Automated TGPC pharmacist registry scraping, local data management, Supabase syn
 - Runs automated validation with GitHub Actions
 
 ## Current Automation
-- `rx-sync.yml`: scheduled sync workflow (scrapes, syncs to Supabase, sends email notification)
-- `ci-validate.yml`: runs compile checks, parser sanity checks, unit tests, frontend JS syntax checks, and workflow linting
-- `website-status.yml`: reusable/manual workflow that checks `https://tgpc.pages.dev/`
+- `rx-sync.yml`: manual sync workflow (scrapes, syncs to Supabase, sends email notification)
 
 ## Local Commands
 Install the package in a virtual environment:
@@ -30,13 +28,10 @@ python3 -m tgpc sync
 python3 -m tgpc enrich
 ```
 
-Run validation locally:
+Run tests locally:
 
 ```bash
-python3 tests/sanity.py
 python3 -m unittest discover -s tests -p 'test_*.py' -v
-python3 -m compileall -q tgpc tests
-node --check docs/config.js docs/search.js docs/mobile.js docs/_worker.js
 ```
 
 ## Required Environment Variables / GitHub Secrets
@@ -54,17 +49,16 @@ The public frontend uses the publishable key from `docs/config.js`, so database 
 - `data/rx.json`: canonical basic pharmacist registry snapshot
 - `data/jsn/`: optional local enrichment output (`<registration_number>.json`)
 - `data/img/`: optional local photo cache created by enrichment (`<registration_number>.jpg`/`.png`/`.webp`)
-- `data/backups/`: local timestamped snapshots created before update runs
-- `data/progress/prog`: local enrichment resume/progress marker
+
 
 ## Operational Notes
 - `update` refuses to replace the dataset if the new scrape drops below 90% of the existing record count
-- `enrich` now aborts immediately on registration mismatches so bad detail pages cannot be silently written
+- `enrich` aborts immediately on registration mismatches so bad detail pages cannot be silently written
 - `data/jsn/` and `data/img/` are local working artifacts and are ignored by Git
 - The desktop and mobile UIs both read from Supabase directly and share the same frontend config
 
 ## Status
-The repo is operational and the scheduled sync path is intended to run autonomously, with CI covering backend parsing and frontend script integrity.
+The repo is operational and runs on-demand via manual workflow dispatch.
 
 ## ⚖️ License & Disclaimer
 **NO LIABILITY**: The creator, the repository owner, the contributors, and the hosting platform (GitHub) assume **NO LIABILITY** and are **NOT RESPONSIBLE** for any lawsuits, damages, data loss, or legal consequences arising from the use, misuse, or existence of this repository.
