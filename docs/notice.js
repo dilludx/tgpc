@@ -125,7 +125,7 @@ tabsEl.addEventListener('click', e => {
 async function load() {
     loadingEl.classList.remove('hidden');
     try {
-        const resp = await fetch('/notices.json');
+        const resp = await fetch('/api/notice');
         if (!resp.ok) throw new Error('Failed to load notices');
         const data = await resp.json();
 

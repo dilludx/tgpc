@@ -140,7 +140,7 @@ async function loadData() {
     showLoading(true);
     showError(false);
     try {
-        const resp = await fetch('/api/dispatch-files');
+        const resp = await fetch('/api/dispatch');
         if (!resp.ok) throw new Error('API unavailable');
         const data = await resp.json();
         showLoading(false);

@@ -23,7 +23,7 @@ export default {
         const path = url.pathname;
 
         // API: list dispatch files from R2
-        if (path === '/api/dispatch-files') {
+        if (path === '/api/dispatch') {
             try {
                 const listing = await env.DISPATCH_BUCKET.list({ prefix: 'dispatchlist/' });
                 const files = listing.objects.map(obj => ({
@@ -38,8 +38,16 @@ export default {
             }
         }
 
-        // Handle dispatchlist route
-        if (path === '/dispatchlist' || path === '/dispatchlist/') {
+        // API: serve notice data
+        if (path === '/api/notice') {
+            const newUrl = new URL(request.url);
+            newUrl.pathname = '/notice.json';
+            const response = await env.ASSETS.fetch(newUrl.toString());
+            return addSecurityHeaders(response);
+        }
+
+        // Handle dispatch routes
+        if (path === '/dispatchlist' || path === '/dispatchlist/' || path === '/dispatch' || path === '/dispatch/') {
             const newUrl = new URL(request.url);
             newUrl.pathname = '/dispatchlist.html';
             const response = await env.ASSETS.fetch(newUrl.toString());
