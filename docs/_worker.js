@@ -25,9 +25,9 @@ export default {
         // API: list dispatch files from R2
         if (path === '/api/dispatch') {
             try {
-                const listing = await env.DISPATCH_BUCKET.list({ prefix: 'dispatch/' });
+                const listing = await env.DISPATCH_BUCKET.list({ prefix: 'dispatchlist/' });
                 const files = listing.objects.map(obj => ({
-                    name: obj.key.replace('dispatch/', ''),
+                    name: obj.key.replace('dispatchlist/', ''),
                     size: obj.size
                 }));
                 return addSecurityHeaders(new Response(JSON.stringify(files), {
