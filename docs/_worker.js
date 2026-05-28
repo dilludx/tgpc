@@ -46,6 +46,14 @@ export default {
             return addSecurityHeaders(response);
         }
 
+        // Handle notice route
+        if (path === '/notice' || path === '/notice/') {
+            const newUrl = new URL(request.url);
+            newUrl.pathname = '/notice.html';
+            const response = await env.ASSETS.fetch(newUrl.toString());
+            return addSecurityHeaders(response);
+        }
+
         // For root path, detect device and serve appropriate HTML
         if (path === '/' || path === '') {
             const ua = request.headers.get('User-Agent') || '';
