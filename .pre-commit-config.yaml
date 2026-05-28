@@ -5,17 +5,3 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
-
-  - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.11
-    hooks:
-      - id: actionlint
-
-  - repo: local
-    hooks:
-      - id: eslint
-        name: ESLint
-        entry: npm run lint --silent
-        language: system
-        pass_filenames: false
-        always_run: true
