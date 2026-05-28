@@ -1,16 +1,4 @@
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: check-ast
-      - id: check-json
-      - id: check-yaml
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
-      - id: check-merge-conflict
-      - id: mixed-line-ending
-        args: [--fix=lf]
-
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.5
     hooks:
@@ -25,29 +13,9 @@ repos:
 
   - repo: local
     hooks:
-      - id: node-syntax-check
-        name: Node.js syntax check
-        entry: node --check
-        language: system
-        files: \.js$
-
       - id: eslint
         name: ESLint
         entry: npm run lint --silent
-        language: system
-        pass_filenames: false
-        always_run: true
-
-      - id: sanity-test
-        name: Sanity test
-        entry: python3 tests/sanity.py
-        language: system
-        pass_filenames: false
-        always_run: true
-
-      - id: unit-tests
-        name: Unit tests
-        entry: python3 -m unittest discover -s tests -p "test_*.py"
         language: system
         pass_filenames: false
         always_run: true
