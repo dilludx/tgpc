@@ -379,10 +379,3 @@ jobs:
       run: |
         echo "❌ Daily update failed! Check the logs above for details."
         echo "The rx.json file was not updated due to validation failures or errors."
-
-  # Trigger website status check after rx-sync completes
-  verify-website:
-    name: Verify Website Status
-    needs: rx-sync
-    if: always()  # Run even if rx-sync fails, to check if site is still up
-    uses: ./.github/workflows/website-status.yml
