@@ -5,8 +5,14 @@
     "source": "News",
     "title": "Diploma in Pharmacy Exit Examination - Issue of Registration / Renewal of Registration Certificates",
     "links": [
-      {"label": "Circular", "url": "/pdf/Circulars/exit_examination_circular_23022026.jpg"},
-      {"label": "Notification", "url": "/pdf/Circulars/exit_exam_notification_23022026.jpg"}
+      {
+        "label": "Circular",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/exit_examination_circular_23022026.jpg"
+      },
+      {
+        "label": "Notification",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/exit_exam_notification_23022026.jpg"
+      }
     ]
   },
   {
@@ -15,8 +21,14 @@
     "source": "News",
     "title": "Diploma in Pharmacy Exit Exam Regulations 2022 - Issue of Renewal of Registration Certificate",
     "links": [
-      {"label": "Circular", "url": "/pdf/Circulars/exit_examination_circular.jpg"},
-      {"label": "Notification", "url": "/pdf/Circulars/exit_exam_notification.jpg"}
+      {
+        "label": "Circular",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/exit_examination_circular.jpg"
+      },
+      {
+        "label": "Notification",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/exit_exam_notification.jpg"
+      }
     ]
   },
   {
@@ -25,7 +37,10 @@
     "source": "News",
     "title": "Notice - Assembly bye-election to Jubilee Hills Constituency on 11-11-2025 - Public holiday declared",
     "links": [
-      {"label": "Notice", "url": "/pdf/Circulars/Notice_Nov_11_2025_holiday.jpeg"}
+      {
+        "label": "Notice",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/Notice_Nov_11_2025_holiday.jpeg"
+      }
     ]
   },
   {
@@ -34,7 +49,10 @@
     "source": "News",
     "title": "Circular",
     "links": [
-      {"label": "Circular", "url": "/pdf/Circulars/CIRCULAR_3.pdf"}
+      {
+        "label": "Circular",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/CIRCULAR_3.pdf"
+      }
     ]
   },
   {
@@ -43,7 +61,10 @@
     "source": "News",
     "title": "Circular",
     "links": [
-      {"label": "Circular", "url": "/pdf/Circulars/Circular_2.pdf"}
+      {
+        "label": "Circular",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/Circular_2.pdf"
+      }
     ]
   },
   {
@@ -64,8 +85,14 @@
     "source": "News",
     "title": "Diploma in Pharmacy Exit Examination Regulations 2022",
     "links": [
-      {"label": "Circular", "url": "/pdf/Circulars/dpharm_circular.jpeg"},
-      {"label": "Affidavit", "url": "/pdf/Circulars/dpharm_affidavit.jpeg"}
+      {
+        "label": "Circular",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/dpharm_circular.jpeg"
+      },
+      {
+        "label": "Affidavit",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/dpharm_affidavit.jpeg"
+      }
     ]
   },
   {
@@ -74,7 +101,10 @@
     "source": "News",
     "title": "Email Id's of Telangana Pharmacy Council has been changed",
     "links": [
-      {"label": "Notice", "url": "/pdf/ChecklistforUploadDocs/tspc_emails_changed.jpeg"}
+      {
+        "label": "Notice",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/tspc_emails_changed.jpeg"
+      }
     ]
   },
   {
@@ -83,8 +113,14 @@
     "source": "News",
     "title": "Training registration extended upto 20.12.2024 @5PM - All Registered Pharmacists of TGPC",
     "links": [
-      {"label": "Notice", "url": "/pdf/Circulars/upskills_notice.jpeg"},
-      {"label": "Enrollment Portal", "url": "https://pharmacycouncil.telangana.gov.in/pharmacy/upskills"}
+      {
+        "label": "Notice",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/upskills_notice.jpeg"
+      },
+      {
+        "label": "Enrollment Portal",
+        "url": "https://pharmacycouncil.telangana.gov.in/pharmacy/upskills"
+      }
     ]
   },
   {
@@ -105,7 +141,10 @@
     "source": "News",
     "title": "As per Govt Order, TS (Andhra Pradesh) changed to TG (Telangana) on registration certificates",
     "links": [
-      {"label": "Govt Order", "url": "/pdf/ChecklistforUploadDocs/go_ts to tg.jpg"}
+      {
+        "label": "Govt Order",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/go_ts_to_tg.jpg"
+      }
     ]
   },
   {
@@ -132,7 +171,10 @@
     "source": "Circular",
     "title": "Circular",
     "links": [
-      {"label": "Circular", "url": "/pdf/Circulars/Circular_1.pdf"}
+      {
+        "label": "Circular",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/Circular_1.pdf"
+      }
     ]
   },
   {
@@ -141,7 +183,10 @@
     "source": "Circular",
     "title": "Diploma in Pharmacy Exit Examination Regulations, 2022",
     "links": [
-      {"label": "Regulations", "url": "/pdf/Circulars/Exit Exam for DPharm Course.pdf"}
+      {
+        "label": "Regulations",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/Exit_Exam_DPharm.pdf"
+      }
     ]
   },
   {
@@ -150,7 +195,10 @@
     "source": "Circular",
     "title": "Upskilling Programme - Candidate Registration Enrolment Process on Skill India Digital Hub (SIDH)",
     "links": [
-      {"label": "Process Document", "url": "/pdf/Circulars/Candidate Registration Enrollement Process Skill India Digital _SID_ Portal 2.pdf"}
+      {
+        "label": "Process Document",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/Candidate_Registration_Enrollement.pdf"
+      }
     ]
   },
   {
@@ -159,7 +207,10 @@
     "source": "Circular",
     "title": "Circular",
     "links": [
-      {"label": "Circular", "url": "/pdf/Circulars/circular_161224.jpeg"}
+      {
+        "label": "Circular",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/circular_161224.jpeg"
+      }
     ]
   },
   {
@@ -168,7 +219,10 @@
     "source": "Circular",
     "title": "Election Gazette",
     "links": [
-      {"label": "Gazette", "url": "/pdf/Circulars/Election Gazette.pdf"}
+      {
+        "label": "Gazette",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/Election_Gazette.pdf"
+      }
     ]
   },
   {
@@ -177,7 +231,10 @@
     "source": "Circular",
     "title": "Vocational Courses / Bridge Courses",
     "links": [
-      {"label": "Details", "url": "/pdf/Circulars/Vocational Courses Bridge Courses.pdf"}
+      {
+        "label": "Details",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/Vocational_Courses_Bridge_Courses.pdf"
+      }
     ]
   }
 ]

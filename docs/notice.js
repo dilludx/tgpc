@@ -96,7 +96,7 @@ function row(n) {
     const links = (n.links || []).map(l => {
         const cls = linkClass(l.url);
         const label = esc(l.label);
-        const url = l.url.startsWith('http') ? esc(l.url) : `https://pharmacycouncil.telangana.gov.in${esc(l.url)}`;
+        const url = l.url.startsWith('http') ? esc(l.url) : `https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice${esc(l.url)}`;
         return `<a href="${url}" class="link-badge ${cls}" target="_blank" rel="noopener">${label}</a>`;
     }).join(' ');
 
