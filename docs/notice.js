@@ -51,7 +51,6 @@ function filter() {
         if (!query) return true;
         const q = query.toLowerCase();
         return n.title.toLowerCase().includes(q) ||
-               n.source.toLowerCase().includes(q) ||
                fmtDate(n.date).toLowerCase().includes(q);
     });
 }
@@ -81,7 +80,7 @@ function render() {
         for (const y of years) {
             const fy = filtered.filter(n => getYear(n.date) === y);
             if (fy.length === 0) continue;
-            html += `<tr style="background:#f9fafb;font-weight:600;color:var(--text-muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;"><td colspan="4" style="padding:0.75rem 1rem;border-bottom:2px solid var(--border);">${y} &mdash; ${fy.length} notice${fy.length !== 1 ? 's' : ''}</td></tr>`;
+            html += `<tr style="background:#f9fafb;font-weight:600;color:var(--text-muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;"><td colspan="3" style="padding:0.75rem 1rem;border-bottom:2px solid var(--border);">${y} &mdash; ${fy.length} notice${fy.length !== 1 ? 's' : ''}</td></tr>`;
             html += fy.map(r => row(r)).join('');
         }
         tbody.innerHTML = html;
@@ -91,7 +90,6 @@ function render() {
 }
 
 function row(n) {
-    const srcClass = n.source.toLowerCase();
     const date = fmtDate(n.date);
     const links = (n.links || []).map(l => {
         const cls = linkClass(l.url);
@@ -102,7 +100,6 @@ function row(n) {
 
     return `<tr>
         <td class="date-cell" data-label="Date">${esc(date)}</td>
-        <td data-label="Source"><span class="source-badge ${srcClass}">${esc(n.source)}</span></td>
         <td class="title-cell" data-label="Title">${esc(n.title)}</td>
         <td class="links-cell" data-label="Links">${links || '&mdash;'}</td>
     </tr>`;
@@ -143,7 +140,7 @@ async function load() {
 
         render();
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:3rem 1rem;color:var(--text-muted);">Failed to load notices.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:3rem 1rem;color:var(--text-muted);">Failed to load notices.</td></tr>`;
     }
     loadingEl.classList.add('hidden');
 }
