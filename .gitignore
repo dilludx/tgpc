@@ -38,6 +38,7 @@ debug_*.html
 
 # Dispatchlist PDFs (hosted on R2, not in git)
 docs/dispatchlist/
+docs/dispatchpdf/
 
 # Database files (we use Supabase cloud)
 *.db
