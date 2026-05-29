@@ -1,0 +1,19 @@
+name: R2 Notice Cleanup
+on: workflow_dispatch
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install awscli --quiet
+      - run: |
+          ENDPOINT="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
+          for key in \
+            notice/upskills_notice.jpeg; do
+            echo "Deleting $key..."
+            aws s3api delete-object --endpoint-url "$ENDPOINT" --bucket tgpc --key "$key" && echo "  OK" || echo "  FAILED"
+          done
