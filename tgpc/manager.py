@@ -470,7 +470,7 @@ class Manager:
             return
 
         endpoint = f"https://{account_id}.r2.cloudflarestorage.com"
-        file_path = str(self.file_manager.path)
+        file_path = str(self.file_manager.data_dir / "rx.json")
         try:
             result = subprocess.run(
                 [
@@ -515,7 +515,7 @@ class Manager:
                 [
                     "rclone",
                     "copyto",
-                    str(self.file_manager.path),
+                    str(self.file_manager.data_dir / "rx.json"),
                     "gdrive:tgpc/rx.json",
                 ],
                 capture_output=True,
@@ -536,7 +536,7 @@ class Manager:
     def sync_to_release(self):
         """Upload rx.json to GitHub Release."""
         tag = "rx-data"
-        file_path = str(self.file_manager.path)
+        file_path = str(self.file_manager.data_dir / "rx.json")
         repo = os.environ.get("GITHUB_REPOSITORY", "dilludx/tgpc")
         try:
             result = subprocess.run(
