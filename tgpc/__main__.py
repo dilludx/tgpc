@@ -37,9 +37,34 @@ def main():
         action="store_true",
         help="Also sync to Supabase after update",
     )
+    update_parser.add_argument(
+        "--sync-all",
+        action="store_true",
+        help="Also sync to all destinations after update",
+    )
 
     # Sync command
-    subparsers.add_parser("sync", help="Sync data to Supabase")
+    sync_parser = subparsers.add_parser("sync", help="Sync data to cloud destinations")
+    sync_parser.add_argument(
+        "--supabase",
+        action="store_true",
+        help="Sync to Supabase",
+    )
+    sync_parser.add_argument(
+        "--r2",
+        action="store_true",
+        help="Sync to Cloudflare R2",
+    )
+    sync_parser.add_argument(
+        "--gdrive",
+        action="store_true",
+        help="Sync to Google Drive",
+    )
+    sync_parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Sync to all destinations (Supabase + R2 + GDrive)",
+    )
 
     # Enrich command
     enrich_parser = subparsers.add_parser("enrich", help="Run enrichment pipeline")
@@ -56,14 +81,32 @@ def main():
     if args.command == "update":
         status = manager.run_daily_update()
         if status in {"source_unavailable", "updated", "blocked"}:
-            if args.sync_supabase:
+            if args.sync_all:
+                load_credentials()
+                manager.sync_to_supabase()
+                manager.sync_to_r2()
+                manager.sync_to_gdrive()
+            elif args.sync_supabase:
                 load_credentials()
                 manager.sync_to_supabase()
             return
         raise SystemExit(1)
     elif args.command == "sync":
         load_credentials()
-        manager.sync_to_supabase()
+        do_supabase = args.all or args.supabase
+        do_r2 = args.all or args.r2
+        do_gdrive = args.all or args.gdrive
+
+        if not any([do_supabase, do_r2, do_gdrive]):
+            print("Specify a destination: --supabase, --r2, --gdrive, or --all")
+            raise SystemExit(1)
+
+        if do_supabase:
+            manager.sync_to_supabase()
+        if do_r2:
+            manager.sync_to_r2()
+        if do_gdrive:
+            manager.sync_to_gdrive()
     elif args.command == "enrich":
         manager.run_enrichment(
             start=args.start,

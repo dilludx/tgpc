@@ -459,6 +459,80 @@ class Manager:
         except Exception as e:
             logger.error(f"Sync failed: {e}")
 
+    def sync_to_r2(self):
+        """Sync rx.json to Cloudflare R2."""
+        account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+        access_key = os.environ.get("R2_ACCESS_KEY_ID")
+        secret_key = os.environ.get("R2_SECRET_ACCESS_KEY")
+
+        if not all([account_id, access_key, secret_key]):
+            logger.error("Missing R2 credentials")
+            return
+
+        endpoint = f"https://{account_id}.r2.cloudflarestorage.com"
+        file_path = str(self.file_manager.path)
+        try:
+            result = subprocess.run(
+                [
+                    "aws",
+                    "s3api",
+                    "put-object",
+                    "--endpoint-url",
+                    endpoint,
+                    "--bucket",
+                    "tgpc",
+                    "--key",
+                    "rx.json",
+                    "--body",
+                    file_path,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if result.returncode == 0:
+                logger.info("R2 sync complete")
+            else:
+                logger.error(f"R2 sync failed: {result.stderr.strip()}")
+        except FileNotFoundError:
+            logger.error("awscli not installed. Run: pip install awscli")
+        except Exception as e:
+            logger.error(f"R2 sync error: {e}")
+
+    def sync_to_gdrive(self):
+        """Sync rx.json to Google Drive via rclone."""
+        gdrive_config_b64 = os.environ.get("RCLONE_GDRIVE_CONFIG")
+        if not gdrive_config_b64:
+            logger.error("Missing RCLONE_GDRIVE_CONFIG")
+            return
+
+        config_path = Path("/tmp/rclone-gdrive.conf")
+        try:
+            import base64
+
+            config_path.write_bytes(base64.b64decode(gdrive_config_b64))
+            result = subprocess.run(
+                [
+                    "rclone",
+                    "copyto",
+                    str(self.file_manager.path),
+                    "gdrive:tgpc/rx.json",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=120,
+                env={**os.environ, "RCLONE_CONFIG": str(config_path)},
+            )
+            config_path.unlink(missing_ok=True)
+            if result.returncode == 0:
+                logger.info("GDrive sync complete")
+            else:
+                logger.error(f"GDrive sync failed: {result.stderr.strip()}")
+        except FileNotFoundError:
+            logger.error("rclone not installed")
+        except Exception as e:
+            logger.error(f"GDrive sync error: {e}")
+
     def run_enrichment(
         self,
         start: int = 1,
