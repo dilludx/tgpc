@@ -61,9 +61,14 @@ def main():
         help="Sync to Google Drive",
     )
     sync_parser.add_argument(
+        "--release",
+        action="store_true",
+        help="Upload rx.json to GitHub Release",
+    )
+    sync_parser.add_argument(
         "--all",
         action="store_true",
-        help="Sync to all destinations (Supabase + R2 + GDrive)",
+        help="Sync to all destinations (Supabase + R2 + GDrive + Release)",
     )
 
     # Enrich command
@@ -86,6 +91,7 @@ def main():
                 manager.sync_to_supabase()
                 manager.sync_to_r2()
                 manager.sync_to_gdrive()
+                manager.sync_to_release()
             elif args.sync_supabase:
                 load_credentials()
                 manager.sync_to_supabase()
@@ -96,9 +102,10 @@ def main():
         do_supabase = args.all or args.supabase
         do_r2 = args.all or args.r2
         do_gdrive = args.all or args.gdrive
+        do_release = args.all or args.release
 
-        if not any([do_supabase, do_r2, do_gdrive]):
-            print("Specify a destination: --supabase, --r2, --gdrive, or --all")
+        if not any([do_supabase, do_r2, do_gdrive, do_release]):
+            print("Specify a destination: --supabase, --r2, --gdrive, --release, or --all")
             raise SystemExit(1)
 
         if do_supabase:
@@ -107,6 +114,8 @@ def main():
             manager.sync_to_r2()
         if do_gdrive:
             manager.sync_to_gdrive()
+        if do_release:
+            manager.sync_to_release()
     elif args.command == "enrich":
         manager.run_enrichment(
             start=args.start,

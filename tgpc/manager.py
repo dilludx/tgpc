@@ -533,6 +533,49 @@ class Manager:
         except Exception as e:
             logger.error(f"GDrive sync error: {e}")
 
+    def sync_to_release(self):
+        """Upload rx.json to GitHub Release."""
+        tag = "rx-data"
+        file_path = str(self.file_manager.path)
+        repo = os.environ.get("GITHUB_REPOSITORY", "dilludx/tgpc")
+        try:
+            result = subprocess.run(
+                ["gh", "release", "view", tag, "--repo", repo],
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+            if result.returncode != 0:
+                logger.info(f"Creating release {tag}...")
+                subprocess.run(
+                    [
+                        "gh",
+                        "release",
+                        "create",
+                        tag,
+                        "--repo",
+                        repo,
+                        "--title",
+                        "rx.json",
+                        "--notes",
+                        "TGPC pharmacist registry data",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+            subprocess.run(
+                ["gh", "release", "upload", tag, file_path, "--repo", repo, "--clobber"],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            logger.info("Release sync complete")
+        except FileNotFoundError:
+            logger.error("gh CLI not installed")
+        except Exception as e:
+            logger.error(f"Release sync error: {e}")
+
     def run_enrichment(
         self,
         start: int = 1,
