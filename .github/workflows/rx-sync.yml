@@ -11,7 +11,7 @@ on:
 
 jobs:
   rx-sync:
-    runs-on: [self-hosted, macos, india]
+    runs-on: ubuntu-latest
     permissions:
       actions: write
       contents: read
@@ -22,9 +22,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python3 -m pip install --upgrade pip --break-system-packages
-        python3 -m pip install -e . --break-system-packages
-        python3 -m pip install supabase --break-system-packages
+        python3 -m pip install --upgrade pip
+        python3 -m pip install -e .
+        python3 -m pip install supabase
 
     - name: Create data directory
       run: |
@@ -66,16 +66,6 @@ jobs:
         else
           echo "♻️ STARTING TGPC DATA UPDATE..."
           python3 -m tgpc update
-        fi
-
-    - name: Sync rx.json to local repo
-      if: ${{ steps.update.outputs.success == 'True' }}
-      run: |
-        if [ -f data/rx.json ]; then
-          cp data/rx.json /Users/dinesh/tgpc/data/rx.json
-          echo "✅ Synced rx.json to local repo ($(wc -c < data/rx.json) bytes)"
-        else
-          echo "⚠️ No rx.json found to sync"
         fi
 
     - name: Sync to Supabase
