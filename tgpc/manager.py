@@ -545,7 +545,7 @@ class Manager:
         except Exception:
             count = 0
 
-        title = f"TGPC Rx Registry — {count:,} records"
+        title = f"{count:,} records — rx.json"
 
         try:
             result = subprocess.run(
