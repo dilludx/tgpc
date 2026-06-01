@@ -538,6 +538,15 @@ class Manager:
         tag = "rxjson"
         file_path = str(self.file_manager.data_dir / "rx.json")
         repo = os.environ.get("GITHUB_REPOSITORY", "dilludx/tgpc")
+
+        try:
+            with open(file_path) as f:
+                count = len(json.load(f))
+        except Exception:
+            count = 0
+
+        title = f"TGPC Rx Registry — {count:,} records"
+
         try:
             result = subprocess.run(
                 ["gh", "release", "view", tag, "--repo", repo],
@@ -556,21 +565,47 @@ class Manager:
                         "--repo",
                         repo,
                         "--title",
-                        "rx.json",
+                        title,
                         "--notes",
-                        "TGPC pharmacist registry data",
+                        f"TGPC pharmacist registry — {count:,} records",
                     ],
                     capture_output=True,
                     text=True,
                     timeout=30,
                 )
             subprocess.run(
-                ["gh", "release", "upload", tag, file_path, "--repo", repo, "--clobber"],
+                [
+                    "gh",
+                    "release",
+                    "upload",
+                    tag,
+                    file_path,
+                    "--repo",
+                    repo,
+                    "--clobber",
+                ],
                 capture_output=True,
                 text=True,
                 timeout=120,
             )
-            logger.info("Release sync complete")
+            subprocess.run(
+                [
+                    "gh",
+                    "release",
+                    "edit",
+                    tag,
+                    "--repo",
+                    repo,
+                    "--title",
+                    title,
+                    "--notes",
+                    f"TGPC pharmacist registry — {count:,} records",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            logger.info(f"Release sync complete ({count:,} records)")
         except FileNotFoundError:
             logger.error("gh CLI not installed")
         except Exception as e:
