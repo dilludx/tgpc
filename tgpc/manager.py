@@ -535,7 +535,7 @@ class Manager:
 
     def sync_to_release(self):
         """Upload rx.json to GitHub Release."""
-        tag = "rx-data"
+        tag = "rxjson"
         file_path = str(self.file_manager.data_dir / "rx.json")
         repo = os.environ.get("GITHUB_REPOSITORY", "dilludx/tgpc")
         try:
