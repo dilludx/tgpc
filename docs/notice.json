@@ -109,6 +109,18 @@
   },
   {
     "id": 10,
+    "date": "2024-11-15",
+    "source": "Circular",
+    "title": "Upskilling Programme – Candidate Registration and Enrolment Process on Skill India Digital Hub (SIDH)",
+    "links": [
+      {
+        "label": "Process Document",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/20241115SIDHCandidateRegistration.pdf"
+      }
+    ]
+  },
+  {
+    "id": 11,
     "date": "2024-11-06",
     "source": "News",
     "title": "TGPC Notice – Upskilling Training Registration Extended Until 20 Dec 2024 @ 5PM",
@@ -124,19 +136,19 @@
     ]
   },
   {
-    "id": 11,
+    "id": 12,
     "date": "2024-09-12",
     "source": "News",
     "title": "It is to inform that an Enquiry & Reception facility is being provided in the office of Telangana Pharmacy Council, situated at drugs control bhavan premises, Vengalraonagar, Hyderabad w.e.f 12-09-2024. For enquiry please call to the mobile number: 7330918124 during the office hours i.e. 10:30 am to 5 pm on working days."
   },
   {
-    "id": 12,
+    "id": 13,
     "date": "2024-06-01",
     "source": "News",
     "title": "All the Registered Pharmacists of Telangana residents are hereby informed that those who have not yet renewed their registration certificates ending with 31.12.2018 and below of A.P.Pharmacy Council (A.P.P.C) have to formally seek registration/renewal and surrender the said certificates (yellow) issued by APPC in Telangana Pharmacy Council as per Section 32(2) of The Pharmacy Act 1948 and to obtain new certificates from Telangana Pharmacy Council by applying on or before 31.03.2025 through online portal https://pharmacycouncil.telangana.gov.in"
   },
   {
-    "id": 13,
+    "id": 14,
     "date": "2024-05-18",
     "source": "News",
     "title": "Government of Telangana Order – Official State Abbreviation Changed from \"TS\" to \"TG\"",
@@ -148,37 +160,7 @@
     ]
   },
   {
-    "id": 14,
-    "date": "2018-07-16",
-    "source": "Index",
-    "title": "Telangana Pharmacy Council Starts from 16th July,2018"
-  },
-  {
     "id": 15,
-    "date": "2018-01-01",
-    "source": "Index",
-    "title": "Applications will be accepted from Monday to Friday, Timings 10.30 AM to 4.00 PM. Note : Lunch Timings 1.30 PM to 2.00 PM"
-  },
-  {
-    "id": 16,
-    "date": "2018-01-01",
-    "source": "Index",
-    "title": "Applications of D.Pharmacy failed (Memo's) candidates will not be entertained"
-  },
-  {
-    "id": 19,
-    "date": "2024-11-15",
-    "source": "Circular",
-    "title": "Upskilling Programme – Candidate Registration and Enrolment Process on Skill India Digital Hub (SIDH)",
-    "links": [
-      {
-        "label": "Process Document",
-        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/20241115SIDHCandidateRegistration.pdf"
-      }
-    ]
-  },
-  {
-    "id": 21,
     "date": "2023-12-15",
     "source": "Circular",
     "title": "Telangana State Pharmacy Council Elections 2023 – Declaration of Results of Six Elected Candidates",
@@ -188,5 +170,23 @@
         "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/20231215TSPCElectionResults.pdf"
       }
     ]
+  },
+  {
+    "id": 16,
+    "date": "2018-07-16",
+    "source": "Index",
+    "title": "Telangana Pharmacy Council Starts from 16th July,2018"
+  },
+  {
+    "id": 17,
+    "date": "2018-01-01",
+    "source": "Index",
+    "title": "Applications will be accepted from Monday to Friday, Timings 10.30 AM to 4.00 PM. Note : Lunch Timings 1.30 PM to 2.00 PM"
+  },
+  {
+    "id": 18,
+    "date": "2018-01-01",
+    "source": "Index",
+    "title": "Applications of D.Pharmacy failed (Memo's) candidates will not be entertained"
   }
 ]
