@@ -266,20 +266,6 @@ class Manager:
                         serialized = str(value)
                     f.write(f"{key}={serialized}\n")
 
-        details_path = Path(self.config.data_directory) / "update_details.json"
-        with open(details_path, "w", encoding="utf-8") as f:
-            json.dump(
-                {
-                    "new_details": defaults.get("new_details", []),
-                    "removed_details": defaults.get("removed_details", []),
-                    "modified_details": defaults.get("modified_details", []),
-                    "new_cat_stats": defaults.get("new_cat_stats", {}),
-                    "rem_cat_stats": defaults.get("rem_cat_stats", {}),
-                    "mod_cat_stats": defaults.get("mod_cat_stats", {}),
-                },
-                f,
-            )
-
     def run_daily_update(self):
         """Execute daily update workflow."""
         logger.info("Starting daily update...")

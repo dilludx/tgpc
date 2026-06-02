@@ -72,4 +72,3 @@ node_modules/
 .pytest_cache/
 .ruff_cache/
 tgpc-creds.sh
-data/update_details.json
