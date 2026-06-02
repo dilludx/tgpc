@@ -784,7 +784,6 @@ class Manager:
         stop: int = None,
         force: bool = False,
         skip_validation: bool = False,
-        skip_sync: bool = False,
     ):
         """
         Run enrichment for serial number range.
@@ -794,7 +793,6 @@ class Manager:
             stop: Stop at serial number (default: all)
             force: Re-extract even if already done
             skip_validation: Skip file validation checks (default False)
-            skip_sync: Skip Google Drive sync (default False)
         """
 
         # Health check
@@ -806,7 +804,7 @@ class Manager:
 
         # Load Data
         rx_records = self.file_manager.load("rx.json")
-        jsn_dir = Path(self.config.data_directory) / "jsn"
+        jsn_dir = Path("/Volumes/MEDIA/tgpc/jsn")
         jsn_dir.mkdir(parents=True, exist_ok=True)
 
         # Create lookup by registration number
@@ -827,7 +825,7 @@ class Manager:
         logger.info(f"Total pending: {total_pending} records")
 
         # Setup Photos Directory
-        img_dir = Path(self.config.data_directory) / "img"
+        img_dir = Path("/Volumes/MEDIA/tgpc/img")
         img_dir.mkdir(parents=True, exist_ok=True)
 
         # Filter by start/stop range - use serial_number from rx.json as position
@@ -919,46 +917,6 @@ class Manager:
                     validation_results["json_valid"],
                     validation_results["photo_valid"],
                 )
-
-        # Sync to MEDIA volume after all records are extracted (excluding rx.json)
-        if not skip_sync:
-            logger.info("Syncing to MEDIA volume...")
-            try:
-                # details
-                logger.info("  → Syncing details...")
-                result = subprocess.run(
-                    [
-                        "rsync",
-                        "-av",
-                        "--progress",
-                        str(self.file_manager.data_dir / "jsn") + "/",
-                        "/Volumes/MEDIA/tgpc/jsn/",
-                    ],
-                    capture_output=False,
-                )
-                if result.returncode != 0:
-                    logger.error("rsync details sync failed")
-                    raise subprocess.CalledProcessError(result.returncode, result.args)
-                logger.info("  → details: 100% ✓")
-                # photos
-                logger.info("  → Syncing photos...")
-                result = subprocess.run(
-                    [
-                        "rsync",
-                        "-av",
-                        "--progress",
-                        str(self.file_manager.data_dir / "img") + "/",
-                        "/Volumes/MEDIA/tgpc/img/",
-                    ],
-                    capture_output=False,
-                )
-                if result.returncode != 0:
-                    logger.error(f"rsync photos sync failed: {result.stderr}")
-                    raise subprocess.CalledProcessError(result.returncode, result.args, result.stdout, result.stderr)
-                logger.info("  → photos: 100% ✓")
-                logger.info("✅ Sync to MEDIA volume complete")
-            except subprocess.CalledProcessError as e:
-                logger.error(f"MEDIA volume sync failed: {e}")
 
         # Keep progress file for tracking
         if total_processed > 0:

@@ -76,7 +76,6 @@ def main():
     enrich_parser.add_argument("--stop", type=int, default=None, help="Stop at serial number (default: all)")
     enrich_parser.add_argument("--force", action="store_true", help="Re-extract even if already done")
     enrich_parser.add_argument("--skip-validation", action="store_true", help="Skip file validation checks")
-    enrich_parser.add_argument("--skip-sync", action="store_true", help="Skip Google Drive sync")
 
     args = parser.parse_args()
 
@@ -120,7 +119,6 @@ def main():
             stop=args.stop,
             force=args.force,
             skip_validation=args.skip_validation,
-            skip_sync=args.skip_sync,
         )
 
     else:
