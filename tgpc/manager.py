@@ -508,6 +508,8 @@ class Manager:
                     "put-object",
                     "--endpoint-url",
                     endpoint,
+                    "--region",
+                    "auto",
                     "--bucket",
                     "tgpc",
                     "--key",
