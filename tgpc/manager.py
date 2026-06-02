@@ -236,8 +236,6 @@ class Manager:
 
     def _write_update_outputs(self, **values) -> None:
         output_path = os.environ.get("GITHUB_OUTPUT")
-        if not output_path:
-            return
 
         defaults = {
             "update_status": "",
@@ -259,13 +257,14 @@ class Manager:
         }
         defaults.update(values)
 
-        with open(output_path, "a", encoding="utf-8") as f:
-            for key, value in defaults.items():
-                if isinstance(value, (dict, list)):
-                    serialized = json.dumps(value)
-                else:
-                    serialized = str(value)
-                f.write(f"{key}={serialized}\n")
+        if output_path:
+            with open(output_path, "a", encoding="utf-8") as f:
+                for key, value in defaults.items():
+                    if isinstance(value, (dict, list)):
+                        serialized = json.dumps(value)
+                    else:
+                        serialized = str(value)
+                    f.write(f"{key}={serialized}\n")
 
         details_path = Path(self.config.data_directory) / "update_details.json"
         with open(details_path, "w", encoding="utf-8") as f:
@@ -498,6 +497,9 @@ class Manager:
 
         endpoint = f"https://{account_id}.r2.cloudflarestorage.com"
         file_path = str(self.file_manager.data_dir / "rx.json")
+        env = os.environ.copy()
+        env["AWS_ACCESS_KEY_ID"] = access_key
+        env["AWS_SECRET_ACCESS_KEY"] = secret_key
         try:
             result = subprocess.run(
                 [
@@ -516,6 +518,7 @@ class Manager:
                 capture_output=True,
                 text=True,
                 timeout=120,
+                env=env,
             )
             if result.returncode == 0:
                 logger.info("R2 sync complete")
