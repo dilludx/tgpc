@@ -2,7 +2,6 @@
 .env
 .env.*
 !.env.example
-supabase-creds.sh
 
 # Python
 __pycache__/
@@ -72,3 +71,4 @@ node_modules/
 .cache/
 .pytest_cache/
 .ruff_cache/
+tgpc-creds.sh
