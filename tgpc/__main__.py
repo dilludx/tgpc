@@ -33,14 +33,9 @@ def main():
     # Update command
     update_parser = subparsers.add_parser("update", help="Run daily update process")
     update_parser.add_argument(
-        "--sync-supabase",
+        "--no-sync",
         action="store_true",
-        help="Also sync to Supabase after update",
-    )
-    update_parser.add_argument(
-        "--sync-all",
-        action="store_true",
-        help="Also sync to all destinations after update",
+        help="Skip sync to cloud destinations after update",
     )
 
     # Sync command
@@ -86,15 +81,13 @@ def main():
     if args.command == "update":
         status = manager.run_daily_update()
         if status in {"source_unavailable", "updated", "blocked"}:
-            if args.sync_all:
+            if not args.no_sync:
                 load_credentials()
                 manager.sync_to_supabase()
+                manager.sync_to_supabase_storage()
                 manager.sync_to_r2()
                 manager.sync_to_gdrive()
                 manager.sync_to_release()
-            elif args.sync_supabase:
-                load_credentials()
-                manager.sync_to_supabase()
             return
         raise SystemExit(1)
     elif args.command == "sync":

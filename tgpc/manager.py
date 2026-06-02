@@ -459,6 +459,33 @@ class Manager:
         except Exception as e:
             logger.error(f"Sync failed: {e}")
 
+    def sync_to_supabase_storage(self):
+        """Upload rx.json to Supabase Storage (tgpc bucket)."""
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_SECRET_KEY")
+        if not url or not key:
+            logger.error("Missing Supabase credentials")
+            return
+        file_path = self.file_manager.data_dir / "rx.json"
+        try:
+            with open(file_path, "rb") as f:
+                resp = requests.post(
+                    f"{url}/storage/v1/object/tgpc/rx.json",
+                    headers={
+                        "Authorization": f"Bearer {key}",
+                        "apikey": key,
+                        "x-upsert": "true",
+                    },
+                    data=f,
+                    timeout=120,
+                )
+            if resp.ok:
+                logger.info("Supabase Storage sync complete")
+            else:
+                logger.error(f"Supabase Storage sync failed: {resp.status_code} {resp.text}")
+        except Exception as e:
+            logger.error(f"Supabase Storage sync error: {e}")
+
     def sync_to_r2(self):
         """Sync rx.json to Cloudflare R2."""
         account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
