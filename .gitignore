@@ -35,7 +35,7 @@ data/progress/
 *.log
 debug_*.html
 
-# Dispatchlist PDFs (hosted on R2, not in git)
+# Dispatch PDFs (hosted on R2, not in git)
 docs/dispatch/
 docs/dispatchpdf/
 
