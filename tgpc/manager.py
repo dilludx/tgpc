@@ -391,6 +391,15 @@ class Manager:
             removed_count,
         )
 
+        self._last_update_details = {
+            "new_details": new_details,
+            "modified_details": modified_details,
+            "removed_details": removed_details,
+            "new_cat_stats": new_cat_stats,
+            "rem_cat_stats": rem_cat_stats,
+            "mod_cat_stats": mod_cat_stats,
+        }
+
         self._write_update_outputs(
             update_status="updated",
             success=True,
@@ -637,13 +646,10 @@ class Manager:
             logger.warning("Missing RESEND_API_KEY or NOTIFICATION_EMAIL")
             return
 
-        details_path = self.file_manager.data_dir / "update_details.json"
-        if not details_path.exists():
+        data = getattr(self, "_last_update_details", None)
+        if not data:
             logger.info("No update details found — skipping email")
             return
-
-        with open(details_path) as f:
-            data = json.load(f)
 
         new = data.get("new_details", [])
         mod = data.get("modified_details", [])
