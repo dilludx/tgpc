@@ -25,7 +25,7 @@ export default {
         // API: list dispatch files from R2
         if (path === '/api/dispatch') {
             try {
-                const listing = await env.DISPATCH_BUCKET.list({ prefix: 'dispatch/' });
+                const listing = await env.DISPATCH.list({ prefix: 'dispatch/' });
                 const files = listing.objects.map(obj => ({
                     name: obj.key.replace('dispatch/', ''),
                     size: obj.size
@@ -47,9 +47,9 @@ export default {
         }
 
         // Handle dispatch routes
-        if (path === '/dispatchlist' || path === '/dispatchlist/' || path === '/dispatch' || path === '/dispatch/') {
+        if (path === '/dispatch' || path === '/dispatch/') {
             const newUrl = new URL(request.url);
-            newUrl.pathname = '/dispatchlist.html';
+            newUrl.pathname = '/dispatch.html';
             const response = await env.ASSETS.fetch(newUrl.toString());
             return addSecurityHeaders(response);
         }

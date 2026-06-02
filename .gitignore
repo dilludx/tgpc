@@ -36,7 +36,7 @@ data/progress/
 debug_*.html
 
 # Dispatchlist PDFs (hosted on R2, not in git)
-docs/dispatchlist/
+docs/dispatch/
 docs/dispatchpdf/
 
 # Database files (we use Supabase cloud)
