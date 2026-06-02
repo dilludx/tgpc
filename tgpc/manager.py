@@ -638,6 +638,141 @@ class Manager:
         except Exception as e:
             logger.error(f"Release sync error: {e}")
 
+    def sync_to_email(self):
+        """Send update report via Resend email."""
+        api_key = os.environ.get("RESEND_API_KEY")
+        recipient = os.environ.get("NOTIFICATION_EMAIL")
+        if not api_key or not recipient:
+            logger.warning("Missing RESEND_API_KEY or NOTIFICATION_EMAIL")
+            return
+
+        details_path = self.file_manager.data_dir / "update_details.json"
+        if not details_path.exists():
+            logger.info("No update details found — skipping email")
+            return
+
+        with open(details_path) as f:
+            data = json.load(f)
+
+        new = data.get("new_details", [])
+        mod = data.get("modified_details", [])
+        rem = data.get("removed_details", [])
+
+        if not new and not mod and not rem:
+            logger.info("No changes — skipping email")
+            return
+
+        import re
+        from datetime import timezone, timedelta
+
+        ist = timezone(timedelta(hours=5, minutes=30))
+        now = datetime.now(ist)
+        sync_time = now.strftime("%d %B %Y, %A, %H:%M IST")
+        subj_time = now.strftime("%d%b%Y %a %H:%M IST").upper()
+
+        def cat(s):
+            m = re.search(r"\((.*?)\)", s)
+            if not m:
+                return "Other"
+            return {"BPHARM": "BPharm", "MPHARM": "MPharm", "DPHARM": "DPharm", "PHARMD": "PharmD"}.get(
+                m.group(1).upper(), m.group(1).title()
+            )
+
+        def reg_no(s):
+            m = re.search(r"(\d+)", s)
+            return int(m.group(1)) if m else 0
+
+        def fmt_html(title, items, color):
+            if not items:
+                return ""
+            grouped = {}
+            for i in items:
+                grouped.setdefault(cat(i), []).append(i)
+            html = f'<div style="margin-bottom:35px;"><h4 style="margin:0 0 16px;color:{color};font-size:14px;font-weight:700;text-transform:uppercase;border-bottom:2px solid {color};padding-bottom:6px;display:inline-block;letter-spacing:.5px;">{title} ({len(items)})</h4>'  # noqa: E501
+            for c in sorted(grouped):
+                recs = grouped[c]
+                html += f'<div style="margin-bottom:18px;"><div style="font-size:11px;font-weight:700;color:#111;text-transform:uppercase;margin-bottom:6px;letter-spacing:1px;">{c} ({len(recs)})</div>'  # noqa: E501
+                for r in sorted(recs, key=reg_no):
+                    parts = r.split(" - ", 1)
+                    reg = parts[0]
+                    name = re.sub(r"\s*\(.*?\)$", "", parts[1] if len(parts) > 1 else r).strip()
+                    html += f'<div style="font-size:13px;color:#6b7280;padding:4px 0;"><span style="font-family:ui-monospace,monospace;">{reg}</span> - {name}</div>'  # noqa: E501
+                html += "</div>"
+            return html + "</div>"
+
+        MAX_EMAIL = 200
+        new_t, mod_t, rem_t = new[:MAX_EMAIL], mod[:MAX_EMAIL], rem[:MAX_EMAIL]
+
+        text = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
+        html = (
+            '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>'
+            '<body style="font-family:-apple-system,sans-serif;background:#fff;padding:15px 20px;color:#333;line-height:1.3;margin:0;">'  # noqa: E501
+            '<div style="max-width:600px;">'
+            f'<h2 style="margin:0;font-size:17px;line-height:1.2;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">Rx</span> <span style="color:#808080;">Registry</span> Sync Report</h2>'  # noqa: E501
+            f'<div style="color:#666;font-size:12px;margin-bottom:30px;font-weight:500;">{sync_time}</div>'
+            f"{fmt_html('🌱 NEW', new_t, '#00cc66')}{fmt_html('🌀 CHANGES', mod_t, '#3b82f6')}{fmt_html('❌ REMOVALS', rem_t, '#ef4444')}"  # noqa: E501
+            '<div style="margin-top:15px;font-size:11px;color:#888;padding-top:10px;">'
+            '<div style="font-weight:700;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">Rx</span> <span style="color:#808080;">Registry</span></div>'  # noqa: E501
+            "<div>Open-Source TGPC Pharmacist Data</div></div></div></body></html>"
+        )
+        for label, items, total in [("NEW", new_t, new), ("CHANGES", mod_t, mod), ("REMOVALS", rem_t, rem)]:
+            if total:
+                text += (
+                    f"{label} ({len(total)}):\n" + "\n".join(sorted(items, key=lambda x: (cat(x), reg_no(x)))) + "\n\n"
+                )
+        text += "---\nTGPC Rx Registry\nOpen-Source TGPC Pharmacist Data"
+
+        parts = []
+        if new:
+            parts.append(f"🌱 {len(new)}")
+        if mod:
+            parts.append(f"🌀 {len(mod)}")
+        if rem:
+            parts.append(f"❌ {len(rem)}")
+        subject = " | ".join(parts + ["Rx Data Sync", subj_time])
+
+        import tempfile
+
+        payload = json.dumps(
+            {
+                "from": "Rx Data Sync <onboarding@resend.dev>",
+                "to": [recipient],
+                "subject": subject,
+                "text": text,
+                "html": html,
+            }
+        )
+        try:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+                f.write(payload)
+                f.flush()
+                tmp = f.name
+            result = subprocess.run(
+                [
+                    "curl",
+                    "-s",
+                    "-X",
+                    "POST",
+                    "https://api.resend.com/emails",
+                    "-H",
+                    f"Authorization: Bearer {api_key}",
+                    "-H",
+                    "Content-Type: application/json",
+                    "-d",
+                    f"@{tmp}",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            os.unlink(tmp)
+            if result.returncode == 0 and "error" not in result.stdout:
+                logger.info(f"Email sent: {result.stdout.strip()}")
+            else:
+                logger.warning(f"Resend API error: {result.stdout.strip()}")
+        except Exception as e:
+            logger.warning(f"Email send error: {e}")
+
     def run_enrichment(
         self,
         start: int = 1,

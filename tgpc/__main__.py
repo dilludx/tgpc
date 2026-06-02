@@ -88,6 +88,7 @@ def main():
                 manager.sync_to_r2()
                 manager.sync_to_gdrive()
                 manager.sync_to_release()
+                manager.sync_to_email()
             return
         raise SystemExit(1)
     elif args.command == "sync":
