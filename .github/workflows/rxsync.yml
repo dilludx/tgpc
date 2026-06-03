@@ -10,7 +10,7 @@ on:
         default: false
 
 jobs:
-  rx-sync:
+  rxsync:
     runs-on: ubuntu-latest
     permissions:
       actions: write

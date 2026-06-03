@@ -69,7 +69,7 @@ class ManagerEnrichmentTests(unittest.TestCase):
                 ]
             )
 
-            manager.run_enrichment(skip_validation=True, skip_sync=True)
+            manager.run_enrichment(skip_validation=True)
 
             detail_file = Path(temp_dir, "jsn", "RX001.json")
             self.assertTrue(detail_file.exists())
@@ -94,7 +94,7 @@ class ManagerEnrichmentTests(unittest.TestCase):
             manager.file_manager.save([record("RX001", serial=1)])
 
             with self.assertRaises(DataIntegrityError):
-                manager.run_enrichment(skip_validation=True, skip_sync=True)
+                manager.run_enrichment(skip_validation=True)
 
             self.assertFalse(Path(temp_dir, "jsn", "RX001.json").exists())
 

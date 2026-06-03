@@ -9,7 +9,7 @@ TGPC Pharmacist registry scraper, local data management, Supabase synchronisatio
 - Serves desktop and mobile search pages from `docs/`
 
 ## Workflows
-- `rx-sync.yml`: manual workflow — scrapes, syncs to Supabase + Cloudflare R2 + Google Drive, sends email notification
+- `rxsync.yml`: manual workflow — scrapes, syncs to Supabase + Cloudflare R2 + Google Drive, sends email notification
 
 ## Local Commands
 Install the package in a virtual environment:
@@ -42,7 +42,7 @@ python3 -m unittest discover -s tests -p 'test_*.py' -v
 
 The frontend uses the publishable key from `docs/config.js` — database access rules must stay locked down.
 
-> **Note:** `rx-sync.yml` sends a detailed HTML email (new/changed/removed records by category) after each successful sync via Resend.
+> **Note:** `rxsync.yml` sends a detailed HTML email (new/changed/removed records by category) after each successful sync via Resend.
 
 ## Data Artifacts
 - `data/rx.json`: canonical Pharmacist registry snapshot
