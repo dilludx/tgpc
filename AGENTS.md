@@ -1,6 +1,8 @@
 # TGPC v2 — Architecture & Context
 
 > **IMPORTANT:** Before making ANY code change to `v2/`, read this document fully and update the Change Log and Status sections at the bottom when done. This file is the single source of truth for context across sessions.
+>
+> For the full repo overview (Python pipeline, current frontend, deployment), see `ARCHITECTURE.md`.
 
 ## Stack
 - **Framework:** SvelteKit 5 + Cloudflare adapter (`@sveltejs/adapter-cloudflare`)
