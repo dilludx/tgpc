@@ -34,23 +34,14 @@ def record(reg_no, name="Name", father="Father", category="BPharm", serial=1):
     )
 
 
-def _redirect_media_path(temp_dir):
-    """Patch Path to redirect /Volumes/MEDIA/tgpc to temp_dir."""
-    original_path = Path
-
-    def mock_path(*args, **kwargs):
-        if args and isinstance(args[0], str) and args[0].startswith("/Volumes/MEDIA/tgpc"):
-            return original_path(args[0].replace("/Volumes/MEDIA/tgpc", temp_dir))
-        return original_path(*args, **kwargs)
-
-    return mock_path
-
-
 class ManagerEnrichmentTests(unittest.TestCase):
     def _make_manager(self, temp_dir: str, details_by_id):
-        self.enterContext(patch("tgpc.manager.Config.load", return_value=Config(data_directory=temp_dir)))
+        self.enterContext(
+            patch(
+                "tgpc.manager.Config.load", return_value=Config(data_directory=temp_dir, enrichment_directory=temp_dir)
+            )
+        )
         self.enterContext(patch("tgpc.manager.Scraper", return_value=DetailScraper(details_by_id)))
-        self.enterContext(patch("tgpc.manager.Path", side_effect=_redirect_media_path(temp_dir)))
         return Manager()
 
     def test_run_enrichment_saves_first_pending_record_in_sorted_order(self):

@@ -35,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
     checkConnection();
     loadAnalytics();
     loadStatsUpdated();
-    checkUrlQuery(); // Check if URL has a search query
     setupRealtimeUpdates(); // Subscribe to database changes
     setupScrollTop();
 });
@@ -446,12 +445,6 @@ function displayAnalytics(stats) {
     }
 }
 
-// Shareable URLs: DISABLED
-function checkUrlQuery() {
-    // Shareable links functionality removed
-    return;
-}
-
 // Filter current results by active category, then sort and display
 function applyFilter() {
     if (currentFilters.category === 'all') {
@@ -620,8 +613,6 @@ function resetSearch() {
     document.getElementById('error').innerHTML = '';
     document.getElementById('loading').style.display = 'none';
 
-    // Clear URL query parameter
-    // updateUrlQuery(''); // Removed: shareable links disabled
 }
 
 // Export results to PDF

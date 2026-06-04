@@ -42,6 +42,7 @@ class Config:
 
     # Storage
     data_directory: str = "data"
+    enrichment_directory: str = "data"
 
     # User Agent
     user_agent: str = (
@@ -55,8 +56,9 @@ class Config:
         proxy_url = (
             os.environ.get("TGPC_PROXY_URL") or os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY") or None
         )
+        enrichment_dir = os.environ.get("TGPC_ENRICHMENT_DIR", "data")
 
-        return cls(proxy_url=proxy_url)
+        return cls(proxy_url=proxy_url, enrichment_directory=enrichment_dir)
 
 
 # --- Logging ---

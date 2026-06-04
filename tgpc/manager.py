@@ -800,7 +800,7 @@ class Manager:
 
         # Load Data
         rx_records = self.file_manager.load("rx.json")
-        jsn_dir = Path("/Volumes/MEDIA/tgpc/jsn")
+        jsn_dir = Path(self.config.enrichment_directory) / "jsn"
         jsn_dir.mkdir(parents=True, exist_ok=True)
 
         # Create lookup by registration number
@@ -821,7 +821,7 @@ class Manager:
         logger.info(f"Total pending: {total_pending} records")
 
         # Setup Photos Directory
-        img_dir = Path("/Volumes/MEDIA/tgpc/img")
+        img_dir = Path(self.config.enrichment_directory) / "img"
         img_dir.mkdir(parents=True, exist_ok=True)
 
         # Filter by start/stop range - use serial_number from rx.json as position
