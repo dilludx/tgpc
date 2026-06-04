@@ -400,6 +400,10 @@ class Manager:
             "mod_cat_stats": mod_cat_stats,
         }
 
+        details_path = Path(self.file_manager.data_dir) / "update_details.json"
+        with open(details_path, "w", encoding="utf-8") as f:
+            json.dump(self._last_update_details, f, indent=2, ensure_ascii=False)
+
         self._write_update_outputs(
             update_status="updated",
             success=True,
