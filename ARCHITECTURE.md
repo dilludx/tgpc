@@ -2,7 +2,7 @@
 
 > **IMPORTANT:** Before making ANY code change, read this document fully and update the Change Log at the bottom when done. This file is the single source of truth for context across sessions.
 >
-> For the v2 rebuild plans (SvelteKit + Tailwind), see `AGENTS.md`.
+> For the v2 rebuild plans (SvelteKit + Tailwind), see `V2.md`.
 
 ## Project Overview
 
@@ -35,7 +35,7 @@ Unofficial tool that scrapes ~87K pharmacist records from the Telangana State Ph
 | `docs/` | Cloudflare Pages site (HTML, JS, CSS, Worker) |
 | `.github/workflows/` | CI — `rxsync.yml` |
 | `.husky/` | Pre-commit hooks (runs `pre-commit run`) |
-| `v2/` | _(future)_ SvelteKit rebuild (see AGENTS.md) |
+| `v2/` | _(future)_ SvelteKit rebuild (see V2.md) |
 
 ## Python Pipeline (`tgpc/`)
 
@@ -172,7 +172,7 @@ python3 -m tgpc enrich          # Fetch per-record details (education, photo)
 ## Deployment
 
 - **Current**: `docs/` directory deployed directly on Cloudflare Pages
-- **Future**: `v2/` SvelteKit build (see `AGENTS.md`)
+- **Future**: `v2/` SvelteKit build (see `V2.md`)
 - **Domain**: `tgpc.pages.dev` (via Cloudflare Pages)
 - **Worker**: `_worker.js` runs at the edge, adding security headers and routing
 
@@ -217,4 +217,4 @@ python3 -m unittest discover -s tests -p 'test_*.py' -v
 
 ## Status
 
-_This is a reference document for the current (v1) production codebase. For active v2 development tracking, see `AGENTS.md`._
+_This is a reference document for the current (v1) production codebase. For active v2 development tracking, see `V2.md`._
