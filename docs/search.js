@@ -9,6 +9,8 @@ let fullResults = [];
 let currentFilters = {
     category: 'all'
 };
+let currentPage = 1;
+const PAGE_SIZE = 50;
 // Date/Time constants (shared across functions)
 const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -447,6 +449,7 @@ function displayAnalytics(stats) {
 
 // Filter current results by active category, then sort and display
 function applyFilter() {
+    currentPage = 1;
     if (currentFilters.category === 'all') {
         currentResults = [...fullResults];
     } else {
@@ -483,7 +486,7 @@ function sortResults() {
         return regA.num - regB.num;
     });
     currentResults = sorted;
-    displayResults(sorted);
+    displayResults();
 }
 
 async function performSearch() {
@@ -534,15 +537,52 @@ async function performSearch() {
     }
 }
 
-// Display all results (no pagination)
-function displayResults(data) {
+function renderPagination() {
+    const totalPages = Math.ceil(currentResults.length / PAGE_SIZE) || 1;
+    const paginationEl = document.getElementById('pagination');
+    if (!paginationEl) return;
+
+    if (currentResults.length <= PAGE_SIZE) {
+        paginationEl.innerHTML = '';
+        return;
+    }
+
+    const start = (currentPage - 1) * PAGE_SIZE + 1;
+    const end = Math.min(currentPage * PAGE_SIZE, currentResults.length);
+
+    paginationEl.innerHTML = `
+        <div class="pagination-info">${start.toLocaleString()}-${end.toLocaleString()} of ${currentResults.length.toLocaleString()}</div>
+        <div class="pagination-controls">
+            <button class="btn btn-secondary pagination-btn" id="prevPageBtn" ${currentPage <= 1 ? 'disabled' : ''}>&larr; Previous</button>
+            <span class="pagination-pages">${currentPage} of ${totalPages.toLocaleString()}</span>
+            <button class="btn btn-secondary pagination-btn" id="nextPageBtn" ${currentPage >= totalPages ? 'disabled' : ''}>Next &rarr;</button>
+        </div>
+    `;
+
+    document.getElementById('prevPageBtn')?.addEventListener('click', () => goToPage(currentPage - 1));
+    document.getElementById('nextPageBtn')?.addEventListener('click', () => goToPage(currentPage + 1));
+}
+
+function goToPage(page) {
+    const totalPages = Math.ceil(currentResults.length / PAGE_SIZE) || 1;
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    displayPage();
+}
+
+function displayPage() {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const end = Math.min(start + PAGE_SIZE, currentResults.length);
+    const pageData = currentResults.slice(start, end);
+
     const resultsDiv = document.getElementById('results');
     const resultsCount = document.getElementById('resultsCount');
 
-    resultsCount.textContent = data.length.toLocaleString();
+    resultsCount.textContent = currentResults.length.toLocaleString();
 
-    if (data.length === 0) {
+    if (currentResults.length === 0) {
         resultsDiv.innerHTML = '<div class="empty-state">No results found. Try different search terms or filters.</div>';
+        document.getElementById('pagination').innerHTML = '';
         return;
     }
 
@@ -558,7 +598,7 @@ function displayResults(data) {
                 </tr>
             </thead>
             <tbody>
-                ${data.map(record => `
+                ${pageData.map(record => `
                     <tr>
                         <td><span class="reg-number">${escapeHtml(record.registration_number)}</span></td>
                         <td>${escapeHtml(record.name)}</td>
@@ -573,7 +613,7 @@ function displayResults(data) {
     // Mobile: Card view
     const cardsHtml = `
         <div class="mobile-cards">
-            ${data.map(record => `
+            ${pageData.map(record => `
                 <div class="mobile-card">
                     <div class="mobile-card-header">
                         <span class="mobile-card-reg">${escapeHtml(record.registration_number)}</span>
@@ -588,6 +628,12 @@ function displayResults(data) {
 
     // Render both - CSS shows/hides based on screen size
     resultsDiv.innerHTML = tableHtml + cardsHtml;
+    renderPagination();
+}
+
+function displayResults() {
+    currentPage = 1;
+    displayPage();
 }
 
 // Reset search

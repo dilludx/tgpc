@@ -440,6 +440,46 @@
             cursor: pointer;
         }
 
+        #mobilePagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 0 20px;
+        }
+
+        #mobilePagination:empty {
+            display: none;
+        }
+
+        .page-btn {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 999px;
+            background: #f8f9fa;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            color: #1a1a1a;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #eaeaea;
+            border-color: #00cc66;
+            color: #00cc66;
+        }
+
+        .page-num {
+            font-size: 13px;
+            color: #888;
+            font-variant-numeric: tabular-nums;
+        }
+
         /* Link */
         .link {
             text-align: center;
@@ -538,10 +578,11 @@
         Searching...
     </div>
 
-    <section id="resultsSection" class="results">
-        <div class="results-info"><span id="count">0</span> results</div>
-        <div id="list"></div>
-    </section>
+        <section id="resultsSection" class="results">
+            <div class="results-info"><span id="count">0</span> results</div>
+            <div id="list"></div>
+            <div id="mobilePagination"></div>
+        </section>
 
     <footer class="site-footer">
         ⚠️ <strong>DISCLAIMER:</strong> This is an unofficial tool for educational and research purposes only, not

@@ -1,6 +1,9 @@
 const mobileConfig = window.TGPC_CONFIG || {};
 let db;
 let cat = 'all';
+let allResults = [];
+let mobilePage = 1;
+const MOBILE_PAGE_SIZE = 25;
 
 const MOBILE_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MOBILE_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -110,6 +113,51 @@ async function loadStatusAndStats() {
     }
 }
 
+function renderPage() {
+    const start = (mobilePage - 1) * MOBILE_PAGE_SIZE;
+    const end = Math.min(start + MOBILE_PAGE_SIZE, allResults.length);
+    const pageData = allResults.slice(start, end);
+
+    document.getElementById('count').textContent = allResults.length;
+    const list = document.getElementById('list');
+
+    if (allResults.length === 0) {
+        list.innerHTML = '<div class="empty">No results</div>';
+        document.getElementById('mobilePagination').innerHTML = '';
+        return;
+    }
+
+    list.innerHTML = pageData.map(r => `
+        <div class="card">
+            <div class="card-row">
+                <span class="reg">${esc(r.registration_number)}</span>
+                <span class="tag ${esc(r.category).toLowerCase()}">${esc(r.category)}</span>
+            </div>
+            <div class="name">${esc(r.name)}</div>
+            ${r.father_name ? `<div class="father">FATHER NAME: ${esc(r.father_name)}</div>` : ''}
+        </div>
+    `).join('');
+
+    // Pagination
+    const totalPages = Math.ceil(allResults.length / MOBILE_PAGE_SIZE) || 1;
+    const pagEl = document.getElementById('mobilePagination');
+    if (!pagEl) return;
+
+    if (allResults.length <= MOBILE_PAGE_SIZE) {
+        pagEl.innerHTML = '';
+        return;
+    }
+
+    pagEl.innerHTML = `
+        <button class="page-btn" id="mobilePrevBtn" ${mobilePage <= 1 ? 'disabled' : ''}>&larr; Prev</button>
+        <span class="page-num">${mobilePage} / ${totalPages}</span>
+        <button class="page-btn" id="mobileNextBtn" ${mobilePage >= totalPages ? 'disabled' : ''}>Next &rarr;</button>
+    `;
+
+    document.getElementById('mobilePrevBtn')?.addEventListener('click', () => { mobilePage--; renderPage(); });
+    document.getElementById('mobileNextBtn')?.addEventListener('click', () => { mobilePage++; renderPage(); });
+}
+
 async function search() {
     const q = document.getElementById('q').value.trim();
     if (q.length < 2 || !db) {
@@ -130,7 +178,9 @@ async function search() {
         }
 
         const { data } = await query.limit(100000);
-        render(sortRecords(data || []));
+        allResults = sortRecords(data || []);
+        mobilePage = 1;
+        renderPage();
     } catch (error) {
         console.error('Mobile search error:', error);
         document.getElementById('list').innerHTML = '<div class="empty">Error searching</div>';
@@ -138,27 +188,6 @@ async function search() {
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('resultsSection').style.display = 'block';
-}
-
-function render(data) {
-    document.getElementById('count').textContent = data.length;
-    const list = document.getElementById('list');
-
-    if (data.length === 0) {
-        list.innerHTML = '<div class="empty">No results</div>';
-        return;
-    }
-
-    list.innerHTML = data.map(r => `
-        <div class="card">
-            <div class="card-row">
-                <span class="reg">${esc(r.registration_number)}</span>
-                <span class="tag ${esc(r.category).toLowerCase()}">${esc(r.category)}</span>
-            </div>
-            <div class="name">${esc(r.name)}</div>
-            ${r.father_name ? `<div class="father">FATHER NAME: ${esc(r.father_name)}</div>` : ''}
-        </div>
-    `).join('');
 }
 
 function resetSearch() {
@@ -169,6 +198,8 @@ function resetSearch() {
     allChip.classList.add('active');
     moveSlider(allChip);
     cat = 'all';
+    allResults = [];
+    mobilePage = 1;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
