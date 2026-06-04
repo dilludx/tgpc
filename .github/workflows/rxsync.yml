@@ -75,7 +75,7 @@ jobs:
         SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
       run: |
         echo "♻️ SYNCING DATA TO SUPABASE CLOUD DATABASE..."
-        python3 -m tgpc sync
+        python3 -m tgpc sync --supabase
 
     - name: Upload to Supabase Storage
       if: ${{ steps.update.outputs.success == 'True' }}

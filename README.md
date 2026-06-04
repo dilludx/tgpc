@@ -1,65 +1,86 @@
 # TGPC Pharmacist Registry
 
-TGPC Pharmacist registry scraper, local data management, Supabase synchronisation, and static search UI publishing.
+Scrapes the public [Telangana Pharmacy Council](https://www.pharmacycouncil.telangana.gov.in) pharmacist registry, syncs to Supabase + R2 + Google Drive + GitHub Release, and serves a public search UI at [tgpc.pages.dev](https://tgpc.pages.dev).
 
 ## What This Repo Does
-- Scrapes the public TGPC Pharmacist registry into `data/rx.json`
-- Syncs the latest dataset to Supabase for the public search UI
-- Supports local enrichment into `data/jsn/` (per-record JSON) plus `data/img/` (photos)
-- Serves desktop and mobile search pages from `docs/`
 
-## Workflows
-- `rxsync.yml`: manual workflow — scrapes, syncs to Supabase + Cloudflare R2 + Google Drive, sends email notification
+1. **Scrapes** the public TGPC registry website → `data/rx.json` (JSON array)
+2. **Syncs** to Supabase (`rx` table) + Cloudflare R2 + Google Drive + GitHub Release
+3. **Enriches** records with photos and detailed info from individual detail pages
+4. **Serves** a static search frontend from `docs/` via Cloudflare Pages + `_worker.js`
 
-## Local Commands
-Install the package in a virtual environment:
+## Stack
 
-```bash
-python3 -m venv venv
-./venv/bin/pip install -e .
-```
+| Layer | Technology |
+|---|---|
+| Scraper | Python 3.9+ (requests, beautifulsoup4, tenacity, supabase-py) |
+| Database | Supabase (PostgreSQL + REST API + Storage) |
+| Cloud storage | Cloudflare R2 + Google Drive |
+| Frontend | Vanilla HTML/JS/CSS + jsPDF + Supabase JS client |
+| Hosting | Cloudflare Pages + Workers |
+| CI/CD | GitHub Actions (manual `workflow_dispatch`) |
+| Notifications | Resend (email) |
 
-Run the main commands:
-
-```bash
-python3 -m tgpc update
-python3 -m tgpc sync
-python3 -m tgpc enrich
-```
-
-Run tests locally:
+## CLI Commands
 
 ```bash
-python3 -m unittest discover -s tests -p 'test_*.py' -v
+python3 -m venv venv && ./venv/bin/pip install -e .
+
+python3 -m tgpc update                          # Scrape → data/rx.json → sync all destinations
+python3 -m tgpc update --no-sync                # Scrape only, skip cloud sync
+python3 -m tgpc sync --supabase                 # Sync data/rx.json → Supabase
+python3 -m tgpc sync --all                      # Sync to all 4 destinations
+python3 -m tgpc enrich --start 1 --stop 100     # Enrich records with detail pages
+python3 -m unittest discover -s tests -p 'test_*.py' -v  # 13 tests
 ```
 
-## Required Environment Variables / GitHub Secrets
-- `SUPABASE_URL`: project URL used by the sync command
-- `SUPABASE_SECRET_KEY`: secret key used by the sync command
-- `RESEND_API_KEY`: Resend API key for sync notification emails
-- `NOTIFICATION_EMAIL`: recipient email address for sync notifications
-- `TGPC_PROXY_URL`: optional outbound proxy for TGPC scraping
+## Required Environment Variables
 
-The frontend uses the publishable key from `docs/config.js` — database access rules must stay locked down.
+| Variable | Used By | Purpose |
+|---|---|---|
+| `SUPABASE_URL` | `sync` command, CI | Supabase project URL |
+| `SUPABASE_SECRET_KEY` | `sync` command, CI | Supabase service role key |
+| `CLOUDFLARE_ACCOUNT_ID` | `sync --r2`, CI | R2 endpoint account ID |
+| `R2_ACCESS_KEY_ID` | `sync --r2`, CI | R2 S3-compatible access key |
+| `R2_SECRET_ACCESS_KEY` | `sync --r2`, CI | R2 S3-compatible secret key |
+| `RCLONE_GDRIVE_CONFIG` | `sync --gdrive`, CI | Base64-encoded rclone Google Drive config |
+| `RESEND_API_KEY` | `sync --email`, CI | Resend.com API key |
+| `NOTIFICATION_EMAIL` | `sync --email`, CI | Email recipient |
 
-> **Note:** `rxsync.yml` sends a detailed HTML email (new/changed/removed records by category) after each successful sync via Resend.
+The frontend embeds its own Supabase anon key in `docs/config.js` — this is safe because RLS restricts access to `SELECT` only.
 
-## Data Artifacts
-- `data/rx.json`: canonical Pharmacist registry snapshot
-- `data/jsn/`: optional enrichment output (`<registration_number>.json`)
-- `data/img/`: optional photo cache (`<registration_number>.jpg`/`.png`/`.webp`)
+## CI Pipeline (`.github/workflows/rxsync.yml`)
+
+Single `rxsync` job (manual trigger). Steps:
+
+1. Restore `data/rx.json` from artifact cache
+2. Run `python3 -m tgpc update`
+3. Sync to Supabase DB + Storage
+4. Upload to Cloudflare R2
+5. Upload to Google Drive
+6. Upload artifact for next run
+7. Send HTML email via Resend with categorized change details
+
+## Data Artifacts (all gitignored)
+
+- `data/rx.json` — Canonical JSON array of all pharmacist records (`registration_number`, `name`, `father_name`, `category`, `serial_number`)
+- `data/update_details.json` — Sync diff written by `run_daily_update()` (consumed by CI summary + email)
+- `data/backups/` — Timestamped backups of rx.json (cleaned after 30 days)
+- `data/jsn/` — Per-record enrichment JSON files
+- `data/img/` — Per-record photos from enrichment
 
 ## Operational Notes
-- `update` refuses to replace data if the new scrape drops below 90% of the existing count
+
+- `update` refuses to replace data if fresh scrape < 90% of existing count
 - `enrich` aborts on registration mismatches to prevent corrupt data
-- `data/jsn/` and `data/img/` are local working artifacts, ignored by Git
-- Desktop and mobile UIs both read from Supabase and share the same config
+- Frontend: 3-char min query desktop, 2-char mobile. 50/page desktop, 25/page mobile.
+- Category filter chips + PDF/CSV export (desktop only)
 
 ## License & Disclaimer
 
 **NO LIABILITY**: The creator, repository owner, contributors, and hosting platform assume **no liability** for any damages, data loss, or legal consequences arising from the use or existence of this repository.
 
-- **Code**: MIT License.
+- **Code**: MIT License
 - **Data**: Belongs to the respective authority. Educational purposes only.
 - **Usage**: Full responsibility rests with the user.
 
