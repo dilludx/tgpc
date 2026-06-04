@@ -20,7 +20,7 @@ venv/
 env/
 .venv/
 
-# Data files (keep main data, ignore backups and temp)
+# Data files (generated/temp — not tracked; code-only repo)
 data/rx.json
 data/backups/
 data/detailed/
@@ -29,6 +29,7 @@ data/metadata/
 data/rxdetails.json
 data/img/
 data/progress/
+data/update_details.json
 *.backup
 *.bak
 *.tmp
