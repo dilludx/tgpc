@@ -1,88 +1,79 @@
 <script lang="ts">
   import '../app.css';
-  import type { Stats, ConnectionStatus } from '$lib/types';
+  import type { ConnectionStatus } from '$lib/types';
   import { getStats } from '$lib/api';
-  import StatusPill from '$lib/components/StatusPill.svelte';
-  import StatsBar from '$lib/components/StatsBar.svelte';
-  import SyncRow from '$lib/components/SyncRow.svelte';
-  import Skeleton from '$lib/components/Skeleton.svelte';
 
   let { children } = $props();
 
   let now = $state(new Date());
   let status = $state<ConnectionStatus>('Busy');
-  let stats = $state<Stats>({ total: 0, bpharm: 0, dpharm: 0, mpharm: 0, pharmd: 0, qc: 0, qp: 0 });
-  let statsLoading = $state(true);
+  let total = $state<number | null>(null);
 
   async function loadStats() {
     status = 'Busy';
-    statsLoading = true;
     const data = await getStats();
     if (data) {
-      stats = data;
+      total = data.total;
       status = 'Live';
     } else {
       status = 'Offline';
     }
-    statsLoading = false;
   }
 
   $effect(() => {
     loadStats();
-    const poll = setInterval(loadStats, 300_000);
-    return () => clearInterval(poll);
+    const id = setInterval(loadStats, 300_000);
+    return () => clearInterval(id);
   });
 
   $effect(() => {
     const id = setInterval(() => now = new Date(), 1000);
     return () => clearInterval(id);
   });
+
+  let statusConfig = $derived.by(() => ({
+    Live: { bg: '#dcfce7', text: '#16a34a', dot: '#00cc66' },
+    Busy: { bg: '#fff7ed', text: '#9a3412', dot: '#f97316' },
+    Offline: { bg: '#fee2e2', text: '#dc2626', dot: '#ef4444' }
+  })[status]);
+
+  let h = $derived(String(now.getHours()).padStart(2,'0'));
+  let m = $derived(String(now.getMinutes()).padStart(2,'0'));
 </script>
 
-<div class="min-h-screen flex flex-col bg-[#f0f2f5]">
-  <!-- Header -->
-  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-tgpc-gray-border shadow-sm">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-      <div class="flex items-center justify-between flex-wrap gap-3">
-        <div class="flex items-center gap-3">
-          <a href="/" class="no-underline flex items-center gap-2" aria-label="Home">
-            <div class="w-9 h-9 rounded-xl bg-[#00cc66] flex items-center justify-center shadow-sm">
-              <span class="text-white font-bold text-sm">T</span>
-            </div>
-            <div>
-              <span class="text-[1.2rem] font-bold tracking-tight" style="line-height:1.2">
-                <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">Rx</span>
-              </span>
-              <div class="text-[0.6rem] text-tgpc-gray-muted font-medium uppercase tracking-widest" style="margin-top:-1px">Registry</div>
-            </div>
-          </a>
-          <StatusPill {status} />
-        </div>
+<div class="min-h-screen flex flex-col bg-white">
+  <header class="sticky top-0 z-50 bg-white border-b border-[#e5e7eb]">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between">
+      <a href="/" class="no-underline flex items-center gap-1.5">
+        <span class="text-[1.1rem] font-bold tracking-tight" style="color:#111">
+          <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">Rx</span>
+        </span>
+      </a>
+      <div class="flex items-center gap-3">
+        <span class="text-[0.75rem] text-[#6b7280] tabular-nums">
+          {total ? total.toLocaleString() : '—'} records
+        </span>
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.6rem] font-semibold"
+              style="background:{statusConfig.bg};color:{statusConfig.text}">
+          <span class="w-1.5 h-1.5 rounded-full" style="background:{statusConfig.dot}"></span>
+          {status}
+        </span>
       </div>
-
-      <div class="mt-4">
-        <StatsBar {stats} loading={statsLoading} />
-      </div>
-
-      <div class="mt-3"><SyncRow {now} /></div>
     </div>
   </header>
 
-  <!-- Main -->
-  <main class="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-24">
+  <main class="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 pb-20">
     {@render children()}
   </main>
 
-  <!-- Footer -->
-  <footer class="fixed bottom-0 w-full bg-white/90 backdrop-blur-sm border-t border-tgpc-gray-border px-4 py-3 text-center text-[0.6rem] text-tgpc-gray-muted leading-relaxed"
-          style="padding-bottom:calc(0.75rem + env(safe-area-inset-bottom, 0px))">
-    <span class="inline-flex items-center gap-1.5">
-      <span class="w-1 h-1 rounded-full bg-tgpc-gray-muted inline-block"></span>
-      DISCLAIMER: This is an unofficial tool for reference only. No liability for errors or omissions.
-      <span class="w-1 h-1 rounded-full bg-tgpc-gray-muted inline-block"></span>
-      Fair Dealing, Section 52, Indian Copyright Act 1957
-      <span class="w-1 h-1 rounded-full bg-tgpc-gray-muted inline-block"></span>
-      &copy; {new Date().getFullYear()} TGPC Rx Registry
-    </span>
+  <footer class="fixed bottom-0 w-full bg-white border-t border-[#e5e7eb]">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-between text-[0.65rem] text-[#9ca3af]">
+      <span>{h}:{m} IST</span>
+      <div class="flex items-center gap-3">
+        <a href="/notice" class="no-underline text-[#6b7280] hover:text-[#111] transition-colors font-medium">Notices</a>
+        <a href="/dispatch" class="no-underline text-[#6b7280] hover:text-[#111] transition-colors font-medium">Dispatch</a>
+        <span class="text-[#9ca3af]">&copy; {new Date().getFullYear()}</span>
+      </div>
+    </div>
   </footer>
 </div>

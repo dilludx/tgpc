@@ -1,110 +1,141 @@
 <script lang="ts">
-  import type { PharmacistRecord, CategoryFilter } from '$lib/types';
+  import type { PharmacistRecord, Category, CategoryFilter } from '$lib/types';
   import { searchRecords } from '$lib/api';
-  import SearchBar from '$lib/components/SearchBar.svelte';
-  import FilterChips from '$lib/components/FilterChips.svelte';
-  import ResultsTable from '$lib/components/ResultsTable.svelte';
-  import MobileCards from '$lib/components/MobileCards.svelte';
-  import Pagination from '$lib/components/Pagination.svelte';
-  import ExportButtons from '$lib/components/ExportButtons.svelte';
-  import EmptyState from '$lib/components/EmptyState.svelte';
-  import Skeleton from '$lib/components/Skeleton.svelte';
 
   let query = $state('');
   let category = $state<CategoryFilter>('all');
   let page = $state(1);
   let loading = $state(false);
-  let allResults = $state<PharmacistRecord[]>([]);
-  let searching = $state(false);
-  let searchKey = $state(0);
+  let results = $state<PharmacistRecord[]>([]);
+  let searched = $state(false);
 
   const PER_PAGE = 50;
+  const CATEGORIES: CategoryFilter[] = ['all', 'BPharm', 'DPharm', 'MPharm', 'PharmD', 'QC', 'QP'];
 
-  let filtered = $derived(
-    category === 'all'
-      ? allResults
-      : allResults.filter(r => r.category === category)
-  );
+  const badgeColors: Record<Category, string> = {
+    BPharm: '#166534', DPharm: '#854d0e', MPharm: '#5b21b6',
+    PharmD: '#991b1b', QC: '#1e40af', QP: '#9a3412'
+  };
 
+  let filtered = $derived(category === 'all' ? results : results.filter(r => r.category === category));
   let totalPages = $derived(Math.max(1, Math.ceil(filtered.length / PER_PAGE)));
   let paginated = $derived(filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE));
+  let start = $derived(filtered.length === 0 ? 0 : (page - 1) * PER_PAGE + 1);
+  let end = $derived(Math.min(page * PER_PAGE, filtered.length));
 
   async function doSearch() {
     const q = query.trim();
     if (q.length < 3) return;
     loading = true;
-    searching = true;
+    searched = true;
     page = 1;
-    allResults = await searchRecords(query);
-    searchKey++;
+    results = await searchRecords(query);
     loading = false;
   }
 
-  function setCategory(cat: CategoryFilter) {
-    category = cat;
-    page = 1;
-  }
-
-  function resetSearch() {
+  function reset() {
     query = '';
     category = 'all';
     page = 1;
-    allResults = [];
-    searching = false;
+    results = [];
+    searched = false;
   }
 </script>
 
-<div class="space-y-5">
-  <!-- Search Section -->
-  <div class="bg-white border border-tgpc-gray-border rounded-2xl p-5 shadow-sm card-hover">
-    <SearchBar bind:query {onSearch} {onReset} {searching} {loading} />
-
-    {#if searching}
-      <div class="mt-4 pt-4 border-t border-tgpc-gray-border">
-        <FilterChips active={category} onSelect={setCategory} />
-      </div>
-    {/if}
+<div class="space-y-4">
+  <!-- Search -->
+  <div class="flex items-center gap-2">
+    <div class="relative flex-1">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input
+        type="text"
+        bind:value={query}
+        onkeydown={(e) => e.key === 'Enter' && doSearch()}
+        placeholder="Search by name or registration number"
+        aria-label="Search"
+        class="w-full pl-9 pr-4 py-2.5 border-b-2 border-[#e5e7eb] text-[0.95rem] bg-transparent outline-none transition-colors focus:border-[#00cc66] max-sm:text-base"
+      />
+    </div>
+    <button onclick={doSearch} disabled={query.trim().length < 3}
+      class="px-4 py-2 rounded text-[0.8rem] font-semibold transition-all cursor-pointer border-none disabled:opacity-30 disabled:cursor-not-allowed"
+      style="background:{query.trim().length >= 3 ? '#00cc66' : '#e5e7eb'};color:{query.trim().length >= 3 ? '#fff' : '#9ca3af'}">
+      {loading ? '…' : 'Search'}
+    </button>
   </div>
 
+  <!-- Chips -->
+  {#if searched}
+    <div class="flex items-center gap-1 text-[0.75rem]">
+      {#each CATEGORIES as cat}
+        <button onclick={() => { category = cat; page = 1; }}
+          class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none"
+          style={cat === category ? 'background:#111;color:#fff' : 'background:#f3f4f6;color:#6b7280'}>
+          {cat === 'all' ? 'All' : cat}
+        </button>
+      {/each}
+      <button onclick={reset}
+        class="ml-2 px-2.5 py-1 rounded text-[0.7rem] font-medium text-[#9ca3af] hover:text-[#111] transition-colors cursor-pointer border-none bg-transparent">
+        Clear
+      </button>
+    </div>
+  {/if}
+
   <!-- Results -->
-  {#if searching}
-    <div class="bg-white border border-tgpc-gray-border rounded-2xl p-5 shadow-sm"
-         style="max-height:calc(100vh - 275px);overflow-y:auto">
-      <div class="flex items-center justify-between mb-4 pb-4 border-b border-tgpc-gray-border">
-        <span class="text-[0.85rem] font-semibold text-tgpc-gray-muted tabular-nums">
-          {filtered.length} result{filtered.length !== 1 ? 's' : ''}
-        </span>
-        <ExportButtons records={filtered} keyword={query} />
+  {#if searched}
+    {#if loading}
+      <div class="space-y-3 py-4">
+        {#each Array(5) as _}
+          <div class="h-4 bg-[#f3f4f6] rounded" style="width:{70 + Math.random() * 30}%"></div>
+        {/each}
+      </div>
+    {:else if filtered.length === 0}
+      <p class="text-[0.85rem] text-[#9ca3af] py-8 text-center">No results</p>
+    {:else}
+      <div class="text-[0.75rem] text-[#9ca3af] mb-1 tabular-nums">{start}–{end} of {filtered.length}</div>
+
+      <div style="max-height:calc(100vh - 240px);overflow-y:auto">
+        <!-- Desktop -->
+        <div class="hidden md:block">
+          {#each paginated as r}
+            <div class="flex items-center gap-3 py-2.5 border-b border-[#f3f4f6] text-[0.875rem]">
+              <span class="font-semibold text-[#2563eb] w-36 flex-shrink-0">{r.registration_number}</span>
+              <span class="flex-1">{r.name}</span>
+              <span class="w-36 flex-shrink-0 text-[#6b7280] hidden lg:block">{r.father_name || '—'}</span>
+              <span class="w-16 flex-shrink-0 text-right text-[0.75rem] font-semibold" style="color:{badgeColors[r.category]}">
+                {r.category}
+              </span>
+            </div>
+          {/each}
+        </div>
+
+        <!-- Mobile -->
+        <div class="md:hidden space-y-0.5">
+          {#each paginated as r}
+            <div class="py-2.5 border-b border-[#f3f4f6]">
+              <div class="flex items-center justify-between">
+                <span class="font-semibold text-[#2563eb] text-[0.875rem]">{r.registration_number}</span>
+                <span class="text-[0.7rem] font-semibold" style="color:{badgeColors[r.category]}">{r.category}</span>
+              </div>
+              <div class="text-[0.875rem] mt-0.5">{r.name}</div>
+            </div>
+          {/each}
+        </div>
       </div>
 
-      {#if loading}
-        <div class="space-y-3">
-          <Skeleton height="3rem" width="100%" />
-          <Skeleton height="1.2rem" width="60%" />
-          <Skeleton height="1.2rem" width="80%" />
-          <Skeleton height="1.2rem" width="45%" />
-          <Skeleton height="1.2rem" width="70%" />
-          <Skeleton height="1.2rem" width="55%" />
+      <!-- Pagination -->
+      {#if filtered.length > PER_PAGE}
+        <div class="flex items-center justify-between pt-3 text-[0.8rem] text-[#6b7280]">
+          <button onclick={() => { if (page > 1) page--; }} disabled={page <= 1}
+            class="px-3 py-1 rounded text-[0.75rem] font-medium transition-all cursor-pointer border disabled:opacity-30 disabled:cursor-not-allowed bg-white"
+            style="border-color:#e5e7eb;color:#111">← Prev</button>
+          <span class="tabular-nums">{page} / {totalPages}</span>
+          <button onclick={() => { if (page < totalPages) page++; }} disabled={page >= totalPages}
+            class="px-3 py-1 rounded text-[0.75rem] font-medium transition-all cursor-pointer border disabled:opacity-30 disabled:cursor-not-allowed bg-white"
+            style="border-color:#e5e7eb;color:#111">Next →</button>
         </div>
-      {:else if filtered.length === 0}
-        <EmptyState message="No results found" />
-      {:else}
-        <div class="hidden md:block">
-          <ResultsTable records={paginated} />
-        </div>
-        <div class="md:hidden">
-          <MobileCards records={paginated} />
-        </div>
-
-        <Pagination
-          {page}
-          totalPages={totalPages}
-          total={filtered.length}
-          perPage={PER_PAGE}
-          onPrev={() => { if (page > 1) page--; }}
-          onNext={() => { if (page < totalPages) page++; }}
-        />
       {/if}
-    </div>
+    {/if}
   {/if}
 </div>

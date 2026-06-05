@@ -1,92 +1,22 @@
 @import "tailwindcss";
 
 @theme {
-  --color-tgpc-green: #00cc66;
-  --color-tgpc-green-hover: #00b359;
-  --color-tgpc-green-light: #e6faf0;
-  --color-tgpc-red: #ef4444;
-  --color-tgpc-gray-light: #808080;
-  --color-tgpc-gray-muted: #9ca3af;
-  --color-tgpc-gray-border: #e5e7eb;
-  --color-tgpc-table-border: #f4f4f5;
-  --color-tgpc-text: #1a1a1a;
-  --color-tgpc-text-secondary: #6b7280;
-  --color-tgpc-bg: #f0f2f5;
-  --color-tgpc-bg-section: #fafafa;
-  --color-tgpc-bg-hover: #eaeaea;
-  --color-tgpc-blue: #2563eb;
-  --color-tgpc-purple: #7c3aed;
-  --color-tgpc-orange: #ea580c;
+  --color-pg: #00cc66;
+  --color-pg-dark: #00b359;
+  --color-red: #ef4444;
+  --color-muted: #6b7280;
+  --color-muted-light: #9ca3af;
+  --color-border: #e5e7eb;
+  --color-row: #f4f4f5;
+  --color-text: #111827;
+  --color-bg: #ffffff;
 }
-
-* { box-sizing: border-box; }
-
-html { overscroll-behavior: none; }
 
 body {
   margin: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: var(--color-tgpc-bg);
-  color: var(--color-tgpc-text);
-  line-height: 1.6;
-}
-
-::selection {
-  background: #00cc6620;
-  color: var(--color-tgpc-text);
-}
-
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
-
-.card-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-}
-
-@keyframes fade-slide-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.stagger > * {
-  animation: fade-slide-in 0.3s ease both;
-}
-.stagger > *:nth-child(1) { animation-delay: 0ms; }
-.stagger > *:nth-child(2) { animation-delay: 40ms; }
-.stagger > *:nth-child(3) { animation-delay: 80ms; }
-.stagger > *:nth-child(4) { animation-delay: 120ms; }
-.stagger > *:nth-child(5) { animation-delay: 160ms; }
-.stagger > *:nth-child(6) { animation-delay: 200ms; }
-.stagger > *:nth-child(7) { animation-delay: 240ms; }
-.stagger > *:nth-child(8) { animation-delay: 280ms; }
-.stagger > *:nth-child(n+9) { animation-delay: 320ms; }
-
-@keyframes pulse-border {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-@keyframes shimmer {
-  0% { background-position: -200px 0; }
-  100% { background-position: calc(200px + 100%) 0; }
-}
-.skeleton {
-  background: #e5e7eb;
-  background-image: linear-gradient(90deg, #e5e7eb 0px, #f3f4f6 80px, #e5e7eb 160px);
-  background-size: 200px 100%;
-  background-repeat: no-repeat;
-  animation: shimmer 1.2s ease-in-out infinite;
-  border-radius: 6px;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.5); opacity: 0.6; }
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
 }
