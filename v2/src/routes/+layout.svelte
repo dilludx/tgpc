@@ -39,37 +39,50 @@
   });
 </script>
 
-<div class="min-h-screen flex flex-col bg-tgpc-bg">
-  <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-      <div class="flex items-center justify-between flex-wrap gap-y-2">
-        <div class="flex items-center gap-2">
-          <a href="/" class="no-underline" aria-label="Home">
-            <span class="text-[1.3rem] max-md:text-[1.15rem] max-sm:text-[1.05rem] font-bold tracking-tight">
-              <span style="color:#00cc66">TGPC</span>
-              <span style="color:#ef4444">Rx</span>
-              <span style="color:#808080">Registry</span>
-            </span>
+<div class="min-h-screen flex flex-col bg-[#f0f2f5]">
+  <!-- Header -->
+  <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-tgpc-gray-border shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <a href="/" class="no-underline flex items-center gap-2" aria-label="Home">
+            <div class="w-9 h-9 rounded-xl bg-[#00cc66] flex items-center justify-center shadow-sm">
+              <span class="text-white font-bold text-sm">T</span>
+            </div>
+            <div>
+              <span class="text-[1.2rem] font-bold tracking-tight" style="line-height:1.2">
+                <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">Rx</span>
+              </span>
+              <div class="text-[0.6rem] text-tgpc-gray-muted font-medium uppercase tracking-widest" style="margin-top:-1px">Registry</div>
+            </div>
           </a>
           <StatusPill {status} />
         </div>
       </div>
 
-      <div class="mt-3">
+      <div class="mt-4">
         <StatsBar {stats} loading={statsLoading} />
       </div>
 
-      <div class="mt-2"><SyncRow {now} /></div>
+      <div class="mt-3"><SyncRow {now} /></div>
     </div>
   </header>
 
-  <main class="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 pb-20">
+  <!-- Main -->
+  <main class="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-24">
     {@render children()}
   </main>
 
-  <footer class="fixed bottom-0 w-full bg-white/80 backdrop-blur-sm border-t border-tgpc-gray-border py-2 px-4 text-center text-[0.55rem] text-tgpc-gray-muted leading-relaxed"
-          style="padding-bottom:calc(0.5rem + env(safe-area-inset-bottom, 0px))">
-    &#9888; DISCLAIMER: This is an unofficial tool. Data is for reference only. &#128683; No liability for errors or omissions.
-    &#9878; Indian Copyright Act, 1957 — Section 52 (Fair Dealing). &copy; {new Date().getFullYear()}
+  <!-- Footer -->
+  <footer class="fixed bottom-0 w-full bg-white/90 backdrop-blur-sm border-t border-tgpc-gray-border px-4 py-3 text-center text-[0.6rem] text-tgpc-gray-muted leading-relaxed"
+          style="padding-bottom:calc(0.75rem + env(safe-area-inset-bottom, 0px))">
+    <span class="inline-flex items-center gap-1.5">
+      <span class="w-1 h-1 rounded-full bg-tgpc-gray-muted inline-block"></span>
+      DISCLAIMER: This is an unofficial tool for reference only. No liability for errors or omissions.
+      <span class="w-1 h-1 rounded-full bg-tgpc-gray-muted inline-block"></span>
+      Fair Dealing, Section 52, Indian Copyright Act 1957
+      <span class="w-1 h-1 rounded-full bg-tgpc-gray-muted inline-block"></span>
+      &copy; {new Date().getFullYear()} TGPC Rx Registry
+    </span>
   </footer>
 </div>

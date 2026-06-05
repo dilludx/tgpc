@@ -54,22 +54,24 @@
   }
 </script>
 
-<div class="space-y-4">
-  <div class="bg-white border border-tgpc-gray-border rounded-xl p-3 sm:p-4 shadow-sm card-hover">
+<div class="space-y-5">
+  <!-- Search Section -->
+  <div class="bg-white border border-tgpc-gray-border rounded-2xl p-5 shadow-sm card-hover">
     <SearchBar bind:query {onSearch} {onReset} {searching} {loading} />
 
     {#if searching}
-      <div class="mt-3 pt-3 border-t border-tgpc-table-border">
+      <div class="mt-4 pt-4 border-t border-tgpc-gray-border">
         <FilterChips active={category} onSelect={setCategory} />
       </div>
     {/if}
   </div>
 
+  <!-- Results -->
   {#if searching}
-    <div class="bg-white border border-tgpc-gray-border rounded-xl p-3 sm:p-4 shadow-sm"
+    <div class="bg-white border border-tgpc-gray-border rounded-2xl p-5 shadow-sm"
          style="max-height:calc(100vh - 275px);overflow-y:auto">
-      <div class="flex items-center justify-between mb-3 pb-3 border-b border-tgpc-table-border">
-        <span class="text-[0.8rem] text-tgpc-gray-muted tabular-nums">
+      <div class="flex items-center justify-between mb-4 pb-4 border-b border-tgpc-gray-border">
+        <span class="text-[0.85rem] font-semibold text-tgpc-gray-muted tabular-nums">
           {filtered.length} result{filtered.length !== 1 ? 's' : ''}
         </span>
         <ExportButtons records={filtered} keyword={query} />
@@ -77,11 +79,12 @@
 
       {#if loading}
         <div class="space-y-3">
-          <Skeleton height="2rem" width="100%" />
-          <Skeleton height="1rem" width="60%" />
-          <Skeleton height="1rem" width="80%" />
-          <Skeleton height="1rem" width="45%" />
-          <Skeleton height="1rem" width="70%" />
+          <Skeleton height="3rem" width="100%" />
+          <Skeleton height="1.2rem" width="60%" />
+          <Skeleton height="1.2rem" width="80%" />
+          <Skeleton height="1.2rem" width="45%" />
+          <Skeleton height="1.2rem" width="70%" />
+          <Skeleton height="1.2rem" width="55%" />
         </div>
       {:else if filtered.length === 0}
         <EmptyState message="No results found" />
