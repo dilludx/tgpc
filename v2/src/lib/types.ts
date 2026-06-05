@@ -1,15 +1,50 @@
 export interface PharmacistRecord {
   registration_number: string;
   name: string;
-  father_name: string;
-  category: string;
-  serial_number?: number | null;
+  father_name: string | null;
+  category: Category;
+  serial_number?: number;
 }
 
+export type Category = 'BPharm' | 'DPharm' | 'MPharm' | 'PharmD' | 'QC' | 'QP';
+
 export interface Notice {
-  id: number;
   date: string;
-  source: string;
   title: string;
-  links?: { label: string; url: string }[];
+  links: NoticeLink[];
 }
+
+export interface NoticeLink {
+  url: string;
+  label: string;
+}
+
+export interface DispatchFile {
+  name: string;
+  size?: number;
+  parsed?: {
+    d: string;
+    mo: string;
+    y: string;
+    date: Date;
+  } | null;
+}
+
+export interface Stats {
+  total: number;
+  bpharm: number;
+  dpharm: number;
+  mpharm: number;
+  pharmd: number;
+  qc: number;
+  qp: number;
+}
+
+export type ConnectionStatus = 'Live' | 'Busy' | 'Offline';
+
+export interface BadgeColor {
+  bg: string;
+  text: string;
+}
+
+export type CategoryFilter = 'all' | Category;

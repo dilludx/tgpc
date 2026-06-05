@@ -1,0 +1,74 @@
+import type { PharmacistRecord, Notice, DispatchFile, Stats } from './types';
+import { supabase } from './supabase';
+
+export async function searchRecords(query: string): Promise<PharmacistRecord[]> {
+  if (query.trim().length < 3) return [];
+  try {
+    const { data } = await supabase
+      .from('rx')
+      .select('registration_number, name, father_name, category')
+      .or(`registration_number.ilike.%${query}%,name.ilike.%${query}%,father_name.ilike.%${query}%`)
+      .limit(100000);
+    return sortRecords(data || []);
+  } catch {
+    return [];
+  }
+}
+
+export async function getStats(): Promise<Stats | null> {
+  try {
+    const { data, error } = await supabase.rpc('get_rx_counts');
+    if (error) throw error;
+    if (data && typeof data === 'object') {
+      const d = data as Record<string, number>;
+      return {
+        total: (d.bpharm ?? 0) + (d.dpharm ?? 0) + (d.mpharm ?? 0) + (d.pharmd ?? 0) + (d.qc ?? 0) + (d.qp ?? 0),
+        bpharm: d.bpharm ?? 0,
+        dpharm: d.dpharm ?? 0,
+        mpharm: d.mpharm ?? 0,
+        pharmd: d.pharmd ?? 0,
+        qc: d.qc ?? 0,
+        qp: d.qp ?? 0
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchNotices(): Promise<Notice[]> {
+  try {
+    const resp = await fetch('/api/notice');
+    if (!resp.ok) throw new Error('Failed to load notices');
+    const data = await resp.json();
+    data.sort((a: Notice, b: Notice) => b.date.localeCompare(a.date));
+    return data;
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchDispatchFiles(): Promise<DispatchFile[]> {
+  try {
+    const resp = await fetch('/api/dispatch');
+    if (!resp.ok) throw new Error('API unavailable');
+    return await resp.json();
+  } catch {
+    return [];
+  }
+}
+
+function parseReg(reg: string): { prefix: string; num: number } {
+  const m = reg.match(/^([A-Z]+)(\d+)$/);
+  return m ? { prefix: m[1], num: parseInt(m[2], 10) } : { prefix: reg, num: 0 };
+}
+
+function sortRecords(data: PharmacistRecord[]): PharmacistRecord[] {
+  return [...data].sort((a, b) => {
+    const ra = parseReg(a.registration_number);
+    const rb = parseReg(b.registration_number);
+    if (ra.prefix !== rb.prefix) return ra.prefix.localeCompare(rb.prefix);
+    return ra.num - rb.num;
+  });
+}
