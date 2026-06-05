@@ -1,10 +1,15 @@
 <script lang="ts">
-  import { escapeHtml, fmtNumber } from '$lib/utils';
+  import { escapeHtml } from '$lib/utils';
+  import { supabase } from '$lib/supabase';
 
   let query = $state('');
   let category = $state('all');
   let page = $state(1);
-  const PER_PAGE = $derived(window.innerWidth <= 768 ? 25 : 50);
+  let loading = $state(false);
+  let allResults = $state<any[]>([]);
+  let searching = $state(false);
+
+  const PER_PAGE = 50;
 
   const CATEGORIES = ['all', 'BPharm', 'DPharm', 'MPharm', 'PharmD', 'QC', 'QP'];
 
@@ -17,23 +22,10 @@
     QP: { bg: '#fed7aa', text: '#9a3412' }
   };
 
-  const mockResults = [
-    { registration_number: 'TS12345', name: 'John Doe', father_name: 'Richard Doe', category: 'BPharm' },
-    { registration_number: 'TG67890', name: 'Jane Smith', father_name: 'Robert Smith', category: 'DPharm' },
-    { registration_number: 'TSDR1111', name: 'Alice Johnson', father_name: 'Michael Johnson', category: 'MPharm' },
-    { registration_number: 'TGDR2222', name: 'Bob Williams', father_name: 'David Williams', category: 'PharmD' },
-    { registration_number: 'TG33333', name: 'Carol Brown', father_name: 'James Brown', category: 'QC' },
-    { registration_number: 'TS44444', name: 'Dave Miller', father_name: 'John Miller', category: 'QP' },
-    { registration_number: 'TG55555', name: 'Eve Davis', father_name: 'Thomas Davis', category: 'BPharm' },
-    { registration_number: 'TS66666', name: 'Frank Wilson', father_name: 'Charles Wilson', category: 'DPharm' },
-    { registration_number: 'TG77777', name: 'Grace Taylor', father_name: 'George Taylor', category: 'MPharm' },
-    { registration_number: 'TS88888', name: 'Henry Anderson', father_name: 'Edward Anderson', category: 'PharmD' },
-  ];
-
   let filtered = $derived(
     category === 'all'
-      ? mockResults
-      : mockResults.filter(r => r.category === category)
+      ? allResults
+      : allResults.filter(r => r.category === category)
   );
 
   let totalPages = $derived(Math.max(1, Math.ceil(filtered.length / PER_PAGE)));
@@ -41,8 +33,40 @@
   let start = $derived(filtered.length === 0 ? 0 : (page - 1) * PER_PAGE + 1);
   let end = $derived(Math.min(page * PER_PAGE, filtered.length));
 
-  function doSearch() {
+  function sortRecords(data: any[]) {
+    return [...data].sort((a, b) => {
+      const parseReg = (reg: string) => {
+        const m = reg.match(/^([A-Z]+)(\d+)$/);
+        return m ? { prefix: m[1], num: parseInt(m[2], 10) } : { prefix: reg, num: 0 };
+      };
+      const ra = parseReg(a.registration_number);
+      const rb = parseReg(b.registration_number);
+      if (ra.prefix !== rb.prefix) return ra.prefix.localeCompare(rb.prefix);
+      return ra.num - rb.num;
+    });
+  }
+
+  async function doSearch() {
+    const q = query.trim();
+    if (q.length < 3) return;
+
+    loading = true;
+    searching = true;
     page = 1;
+
+    try {
+      const { data } = await supabase
+        .from('rx')
+        .select('registration_number, name, father_name, category')
+        .or(`registration_number.ilike.%${q}%,name.ilike.%${q}%,father_name.ilike.%${q}%`)
+        .limit(100000);
+
+      allResults = sortRecords(data || []);
+    } catch {
+      allResults = [];
+    }
+
+    loading = false;
   }
 
   function setCategory(cat: string) {
@@ -56,6 +80,14 @@
 
   function nextPage() {
     if (page < totalPages) page++;
+  }
+
+  function resetSearch() {
+    query = '';
+    category = 'all';
+    page = 1;
+    allResults = [];
+    searching = false;
   }
 </script>
 
@@ -79,41 +111,35 @@
       <div class="flex gap-2 flex-wrap">
         <button onclick={doSearch}
           class="px-4 py-2 rounded-full text-[0.8125rem] font-medium bg-tgpc-green text-white hover:bg-tgpc-green-hover transition-colors cursor-pointer border-none">
-          Search
+          {loading ? 'Searching...' : 'Search'}
         </button>
-        <button onclick={() => { query = ''; category = 'all'; page = 1; }}
+        <button onclick={resetSearch}
           class="px-4 py-2 rounded-full text-[0.8125rem] font-medium bg-gray-200 text-tgpc-text-secondary hover:bg-tgpc-bg-hover transition-colors cursor-pointer border-none">
           Reset
-        </button>
-        <button disabled
-          class="px-4 py-2 rounded-full text-[0.8125rem] font-medium bg-gray-100 text-tgpc-gray-muted cursor-not-allowed border-none">
-          PDF
-        </button>
-        <button disabled
-          class="px-4 py-2 rounded-full text-[0.8125rem] font-medium bg-gray-100 text-tgpc-gray-muted cursor-not-allowed border-none">
-          CSV
         </button>
       </div>
     </div>
 
     <!-- Filter Chips -->
-    <div class="flex gap-2 mt-3 overflow-x-auto pb-1" style="scrollbar-width:none;-ms-overflow-style:none">
-      {#each CATEGORIES as cat}
-        <button
-          onclick={() => setCategory(cat)}
-          class="flex-shrink-0 px-3 py-1.5 rounded-full text-[0.75rem] font-medium transition-colors cursor-pointer border-none"
-          style={cat === category
-            ? 'background:#00cc66;color:#fff'
-            : 'background:transparent;color:#6b7280;border:1px solid #e5e7eb'}
-        >
-          {cat === 'all' ? 'All' : cat}
-        </button>
-      {/each}
-    </div>
+    {#if searching}
+      <div class="flex gap-2 mt-3 overflow-x-auto pb-1" style="scrollbar-width:none">
+        {#each CATEGORIES as cat}
+          <button
+            onclick={() => setCategory(cat)}
+            class="flex-shrink-0 px-3 py-1.5 rounded-full text-[0.75rem] font-medium transition-colors cursor-pointer border-none"
+            style={cat === category
+              ? 'background:#00cc66;color:#fff'
+              : 'background:transparent;color:#6b7280;border:1px solid #e5e7eb'}
+          >
+            {cat === 'all' ? 'All' : cat}
+          </button>
+        {/each}
+      </div>
+    {/if}
   </div>
 
   <!-- Results Section -->
-  {#if query.length >= 3 || filtered.length > 0}
+  {#if searching}
     <div class="bg-white border border-tgpc-gray-border rounded-lg p-2.5 sm:p-3"
          style="max-height:calc(100vh - 275px);overflow-y:auto">
       <div class="text-[0.8rem] text-tgpc-gray-muted mb-2 pb-2 border-b border-tgpc-table-border">

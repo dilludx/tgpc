@@ -1,30 +1,64 @@
 <script lang="ts">
   import '../app.css';
-  import { fmtDate, fmtTime } from '$lib/utils';
+  import { supabase } from '$lib/supabase';
+  import { fmtNumber, fmtDate, fmtTime } from '$lib/utils';
+
+  let { children } = $props();
+
+  type Status = 'Live' | 'Busy' | 'Offline';
+  type StatEntry = { label: string; value: number };
 
   let now = $state(new Date());
+  let status = $state<Status>('Offline');
+  let stats = $state<StatEntry[]>([
+    { label: 'Total Rx', value: 0 },
+    { label: 'BPharm', value: 0 },
+    { label: 'DPharm', value: 0 },
+    { label: 'MPharm', value: 0 },
+    { label: 'PharmD', value: 0 },
+    { label: 'QC', value: 0 },
+    { label: 'QP', value: 0 }
+  ]);
 
-  let mounted = $state(false);
+  const STATUS_DOT: Record<Status, string> = {
+    Live: 'bg-tgpc-green',
+    Busy: 'bg-gray-400',
+    Offline: 'bg-red-500'
+  };
+
+  async function loadStats() {
+    status = 'Busy';
+    try {
+      const { data, error } = await supabase.rpc('get_rx_counts');
+      if (error) throw error;
+      if (data && typeof data === 'object') {
+        const d = data as Record<string, number>;
+        stats = [
+          { label: 'Total Rx', value: (d.bpharm ?? 0) + (d.dpharm ?? 0) + (d.mpharm ?? 0) + (d.pharmd ?? 0) + (d.qc ?? 0) + (d.qp ?? 0) },
+          { label: 'BPharm', value: d.bpharm ?? 0 },
+          { label: 'DPharm', value: d.dpharm ?? 0 },
+          { label: 'MPharm', value: d.mpharm ?? 0 },
+          { label: 'PharmD', value: d.pharmd ?? 0 },
+          { label: 'QC', value: d.qc ?? 0 },
+          { label: 'QP', value: d.qp ?? 0 }
+        ];
+      }
+      status = 'Live';
+    } catch {
+      status = 'Offline';
+    }
+  }
 
   $effect(() => {
-    if (!mounted) return;
+    loadStats();
+    const poll = setInterval(loadStats, 300_000);
+    return () => clearInterval(poll);
+  });
+
+  $effect(() => {
     const id = setInterval(() => now = new Date(), 1000);
     return () => clearInterval(id);
   });
-
-  $effect(() => {
-    mounted = true;
-  });
-
-  const stats = [
-    { label: 'Total Rx', value: 87212 },
-    { label: 'BPharm', value: 57955 },
-    { label: 'DPharm', value: 16141 },
-    { label: 'MPharm', value: 2354 },
-    { label: 'PharmD', value: 6393 },
-    { label: 'QC', value: 29 },
-    { label: 'QP', value: 231 }
-  ];
 </script>
 
 <div class="min-h-screen flex flex-col bg-tgpc-bg">
@@ -39,9 +73,10 @@
             <span style="color:#ef4444">Rx</span>
             <span style="color:#808080">Registry</span>
           </span>
-          <span class="ml-3 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[0.625rem] max-md:text-[0.7rem] font-medium bg-gray-100 text-gray-500">
-            <span class="inline-block w-1.5 h-1.5 rounded-full bg-gray-400 animate-[pulse-scale_1.5s_ease-in-out_infinite]"></span>
-            Busy
+          <span class="ml-3 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[0.625rem] max-md:text-[0.7rem] font-medium"
+             style="background:{status === 'Live' ? '#dcfce7' : status === 'Offline' ? '#fee2e2' : '#f3f4f6'};color:{status === 'Live' ? '#16a34a' : status === 'Offline' ? '#dc2626' : '#6b7280'}">
+            <span class="inline-block w-1.5 h-1.5 rounded-full {STATUS_DOT[status]}"></span>
+            {status}
           </span>
         </div>
       </div>
