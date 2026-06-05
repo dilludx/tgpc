@@ -1,0 +1,6 @@
+name = "tgpc-v2"
+compatibility_date = "2026-06-05"
+
+[[r2_buckets]]
+binding = "DISPATCH"
+bucket_name = "dispatch"
