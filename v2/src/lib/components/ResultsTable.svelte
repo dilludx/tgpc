@@ -16,21 +16,22 @@
 
 <table class="w-full text-[0.875rem]" aria-label="Search results">
   <thead>
-    <tr class="text-[0.75rem] uppercase font-semibold tracking-wider text-tgpc-text-secondary border-b border-tgpc-table-border">
-      <th class="text-left py-2 px-3" scope="col">Registration Number</th>
-      <th class="text-left py-2 px-3" scope="col">Name</th>
-      <th class="text-left py-2 px-3" scope="col">Father's Name</th>
-      <th class="text-left py-2 px-3" scope="col">Category</th>
+    <tr class="text-[0.7rem] uppercase font-semibold tracking-wider text-tgpc-text-secondary border-b border-tgpc-table-border bg-tgpc-bg/50">
+      <th class="text-left py-2.5 px-4" scope="col">Registration Number</th>
+      <th class="text-left py-2.5 px-4" scope="col">Name</th>
+      <th class="text-left py-2.5 px-4 hidden sm:table-cell" scope="col">Father's Name</th>
+      <th class="text-left py-2.5 px-4" scope="col">Category</th>
     </tr>
   </thead>
-  <tbody>
-    {#each records as result (result.registration_number)}
-      <tr class="border-b border-tgpc-table-border hover:bg-tgpc-bg-hover/30 transition-colors">
-        <td class="py-2.5 px-3 font-medium text-tgpc-blue">{escapeHtml(result.registration_number)}</td>
-        <td class="py-2.5 px-3">{escapeHtml(result.name)}</td>
-        <td class="py-2.5 px-3 text-tgpc-text-secondary">{escapeHtml(result.father_name || '—')}</td>
-        <td class="py-2.5 px-3">
-          <span class="inline-block px-2 py-0.5 text-[0.8125rem] font-semibold rounded-md"
+  <tbody class="stagger">
+    {#each records as result, i (result.registration_number)}
+      <tr class="border-b border-tgpc-table-border transition-colors hover:bg-tgpc-green-light/40"
+          style="animation-delay:{i * 30}ms">
+        <td class="py-3 px-4 font-medium text-tgpc-blue">{escapeHtml(result.registration_number)}</td>
+        <td class="py-3 px-4">{escapeHtml(result.name)}</td>
+        <td class="py-3 px-4 text-tgpc-text-secondary hidden sm:table-cell">{escapeHtml(result.father_name || '—')}</td>
+        <td class="py-3 px-4">
+          <span class="inline-block px-2.5 py-0.5 text-[0.75rem] font-semibold rounded-md"
                 style="background:{badgeColors[result.category].bg};color:{badgeColors[result.category].text}">
             {result.category}
           </span>
@@ -38,7 +39,7 @@
       </tr>
     {:else}
       <tr>
-        <td colspan="4" class="text-center py-8 text-tgpc-gray-muted">No results</td>
+        <td colspan="4" class="text-center py-10 text-tgpc-gray-muted">No results</td>
       </tr>
     {/each}
   </tbody>

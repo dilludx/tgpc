@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { DispatchFile } from '$lib/types';
   import { fetchDispatchFiles } from '$lib/api';
-  import Spinner from '$lib/components/Spinner.svelte';
+  import Skeleton from '$lib/components/Skeleton.svelte';
   import EmptyState from '$lib/components/EmptyState.svelte';
 
   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -66,46 +66,58 @@
 </script>
 
 <div class="space-y-4">
-  <div class="bg-white border border-tgpc-gray-border rounded-lg p-3">
+  <div class="bg-white border border-tgpc-gray-border rounded-xl p-3 sm:p-4 shadow-sm">
     <div class="flex items-center justify-between flex-wrap gap-2">
-      <h2 class="text-[1.1rem] max-md:text-[0.9rem] font-semibold">
+      <h2 class="text-[1.15rem] font-semibold">
         <span class="text-tgpc-gray-light">Dispatch Lists</span>
       </h2>
       {#if !loading}
-        <span class="text-[0.8rem] text-tgpc-gray-muted">{files.length} file{files.length !== 1 ? 's' : ''}</span>
+        <span class="text-[0.8rem] text-tgpc-gray-muted tabular-nums">{files.length} file{files.length !== 1 ? 's' : ''}</span>
       {/if}
     </div>
   </div>
 
-  <div class="bg-white border border-tgpc-gray-border rounded-lg p-3 space-y-3">
+  <div class="bg-white border border-tgpc-gray-border rounded-xl p-3 sm:p-4 shadow-sm space-y-3">
     <div class="flex items-center gap-2 flex-wrap">
       <div class="flex-1 min-w-0 relative">
-        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tgpc-gray-muted pointer-events-none" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-tgpc-gray-muted pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
-        <input type="text" bind:value={query} placeholder="Search files..."
+        <input type="text" bind:value={query} placeholder="Search files…"
           aria-label="Search dispatch files"
-          class="w-full pl-9 pr-4 py-2 border border-tgpc-gray-border rounded-full text-[0.85rem] bg-tgpc-bg outline-none focus:border-tgpc-green focus:ring-3 focus:ring-tgpc-green/20 transition-all max-sm:text-base" />
+          class="w-full pl-9 pr-4 py-2 border border-tgpc-gray-border rounded-xl text-[0.85rem] bg-white outline-none transition-all max-sm:text-base"
+          onfocus={(e) => { e.currentTarget.style.borderColor = '#00cc66'; e.currentTarget.style.boxShadow = '0 0 0 3px #00cc6620'; }}
+          onblur={(e) => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.boxShadow = ''; }} />
       </div>
       {#if query}
-        <span class="text-[0.8rem] text-tgpc-gray-muted">{filtered.length} of {files.length} files</span>
+        <span class="text-[0.8rem] text-tgpc-gray-muted tabular-nums">{filtered.length} / {files.length}</span>
       {/if}
     </div>
 
-    <div class="flex gap-1 overflow-x-auto pb-0.5" style="scrollbar-width:none" role="tablist" aria-label="Filter by year">
+    <div class="flex gap-1.5 overflow-x-auto pb-0.5" style="scrollbar-width:none" role="tablist" aria-label="Filter by year">
       {#each years as year}
         <button role="tab" aria-selected={year === activeTab} onclick={() => activeTab = year}
-          class="flex-shrink-0 px-3 py-1.5 rounded-lg text-[0.8rem] font-medium transition-colors cursor-pointer border-none"
-          style={year === activeTab ? 'background:#00cc66;color:#fff' : 'background:transparent;color:#4a4a5a;border:1px solid #e2e8f0'}>
+          class="flex-shrink-0 px-3.5 py-1.5 rounded-lg text-[0.8rem] font-medium transition-all cursor-pointer border-none active:scale-95"
+          style={year === activeTab ? 'background:#00cc66;color:#fff;box-shadow:0 1px 4px #00cc6640' : 'background:transparent;color:#4a4a5a;border:1px solid #e2e8f0'}>
           {year}
-          <span class="opacity-60 text-[0.7rem]"> ({files.filter(f => f.parsed?.y === year).length})</span>
+          <span class="opacity-60 text-[0.65rem]"> ({files.filter(f => f.parsed?.y === year).length})</span>
         </button>
       {/each}
     </div>
   </div>
 
   {#if loading}
-    <Spinner label="Loading dispatch lists…" />
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5">
+      {#each Array(10) as _}
+        <div class="flex items-center gap-2 p-2 border border-tgpc-gray-border rounded-xl">
+          <Skeleton width="32px" height="40px" />
+          <div class="flex-1 space-y-1.5">
+            <Skeleton height="0.8rem" width="80%" />
+            <Skeleton height="0.6rem" width="50%" />
+          </div>
+        </div>
+      {/each}
+    </div>
   {:else if filtered.length === 0}
     <EmptyState message="No files match your search" />
   {:else}
@@ -114,19 +126,19 @@
         {#each years as year}
           {@const fy = filtered.filter(f => f.parsed?.y === year)}
           {#if fy.length > 0}
-            <div class="col-span-full text-[0.75rem] font-semibold uppercase tracking-wider text-tgpc-gray-muted px-2 py-2 border-b border-tgpc-gray-border mb-1">
+            <div class="col-span-full text-[0.7rem] font-semibold uppercase tracking-wider text-tgpc-gray-muted px-2 py-2 border-b border-tgpc-gray-border mb-1">
               {year} &mdash; {fy.length} file{fy.length !== 1 ? 's' : ''}
             </div>
             {#each fy as f}
               <a href={`${BASE_URL}/${f.name}`} target="_blank" rel="noopener"
-                class="flex items-center gap-2 p-2 border border-tgpc-gray-border rounded-lg no-underline text-tgpc-text transition-all hover:bg-[#f0fdf4] hover:border-tgpc-green"
-                aria-label="Download dispatch list {fmt(f.parsed!)}">
+                class="card-hover flex items-center gap-2.5 p-2.5 border border-tgpc-gray-border rounded-xl no-underline text-tgpc-text bg-white"
+                aria-label="Download {fmt(f.parsed!)}">
                 <div class="w-8 h-10 flex items-center justify-center flex-shrink-0">
                   <img src="/pdf.png" alt="" width="28" height="28" class="block" />
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="text-[0.85rem] font-medium truncate">{fmt(f.parsed!)}</div>
-                  <div class="text-[0.7rem] text-tgpc-gray-muted mt-0.5">{sizeMap[f.name] ? formatSize(sizeMap[f.name]) : ''}</div>
+                  <div class="text-[0.65rem] text-tgpc-gray-muted mt-0.5 tabular-nums">{sizeMap[f.name] ? formatSize(sizeMap[f.name]) : ''}</div>
                 </div>
               </a>
             {/each}
@@ -135,14 +147,14 @@
       {:else}
         {#each filtered as f}
           <a href={`${BASE_URL}/${f.name}`} target="_blank" rel="noopener"
-            class="flex items-center gap-2 p-2 border border-tgpc-gray-border rounded-lg no-underline text-tgpc-text transition-all hover:bg-[#f0fdf4] hover:border-tgpc-green"
-            aria-label="Download dispatch list {fmt(f.parsed!)}">
+            class="card-hover flex items-center gap-2.5 p-2.5 border border-tgpc-gray-border rounded-xl no-underline text-tgpc-text bg-white"
+            aria-label="Download {fmt(f.parsed!)}">
             <div class="w-8 h-10 flex items-center justify-center flex-shrink-0">
               <img src="/pdf.png" alt="" width="28" height="28" class="block" />
             </div>
             <div class="flex-1 min-w-0">
               <div class="text-[0.85rem] font-medium truncate">{fmt(f.parsed!)}</div>
-              <div class="text-[0.7rem] text-tgpc-gray-muted mt-0.5">{sizeMap[f.name] ? formatSize(sizeMap[f.name]) : ''}</div>
+              <div class="text-[0.65rem] text-tgpc-gray-muted mt-0.5 tabular-nums">{sizeMap[f.name] ? formatSize(sizeMap[f.name]) : ''}</div>
             </div>
           </a>
         {/each}
