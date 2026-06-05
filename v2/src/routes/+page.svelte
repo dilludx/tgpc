@@ -82,6 +82,67 @@
     if (page < totalPages) page++;
   }
 
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  function exportPDF() {
+    if (filtered.length === 0) return;
+    const keyword = query.trim() || '(empty)';
+    const now = new Date();
+    const fds = String(now.getDate()).padStart(2,'0') + String(now.getMonth()+1).padStart(2,'0') + now.getFullYear();
+    const fs = `${DAYS[now.getDay()]}, ${String(now.getDate()).padStart(2,'0')} ${MONTHS[now.getMonth()]} ${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const title = `TGPC Rx Registry - Search Keyword: ${keyword} - ${fs}`;
+    const tableData = filtered.map(r => [r.registration_number, r.name, r.father_name || 'N/A', r.category]);
+
+    import('jspdf').then(({ default: jsPDF }) => {
+      import('jspdf-autotable').then(() => {
+        const doc = new jsPDF({ format: 'a4', unit: 'mm' });
+        (doc as any).autoTable({
+          startY: 15,
+          head: [['Registration Number', 'Name', "Father's Name", 'Category']],
+          body: tableData,
+          theme: 'striped',
+          headStyles: { fillColor: [0, 204, 102], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+          bodyStyles: { fontSize: 8, cellPadding: 2 },
+          alternateRowStyles: { fillColor: [250, 250, 250] },
+          margin: { top: 12, left: 10, right: 10, bottom: 12 },
+          tableWidth: 'auto',
+          didDrawPage: function(data: any) {
+            doc.setFontSize(14);
+            doc.setTextColor(0, 204, 102);
+            doc.text(title, 10, 10);
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text(`Page ${data.pageNumber} / ${data.pageCount}`, doc.internal.pageSize.width / 2, doc.internal.pageSize.height - 10, { align: 'center' });
+          }
+        });
+        doc.save(`TGPC-RX-SEARCH-${keyword}-${fds}.pdf`);
+      });
+    });
+  }
+
+  function exportCSV() {
+    if (filtered.length === 0) return;
+    const keyword = query.trim() || '(empty)';
+    const now = new Date();
+    const fds = String(now.getDate()).padStart(2,'0') + String(now.getMonth()+1).padStart(2,'0') + now.getFullYear();
+    const fs = `${DAYS[now.getDay()]}, ${String(now.getDate()).padStart(2,'0')} ${MONTHS[now.getMonth()]} ${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const meta = `# TGPC Rx Registry - Search Keyword: ${keyword} - ${fs}`;
+    const headers = ['Registration Number', 'Name', 'Father Name', 'Category'];
+    const rows = [meta, headers.join(',')];
+    filtered.forEach(r => {
+      rows.push(`"${r.registration_number || ''}","${(r.name || '').replace(/"/g, '""')}","${(r.father_name || '').replace(/"/g, '""')}","${r.category || ''}"`);
+    });
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `TGPC-RX-SEARCH-${keyword}-${fds}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  }
+
   function resetSearch() {
     query = '';
     category = 'all';
@@ -116,6 +177,16 @@
         <button onclick={resetSearch}
           class="px-4 py-2 rounded-full text-[0.8125rem] font-medium bg-gray-200 text-tgpc-text-secondary hover:bg-tgpc-bg-hover transition-colors cursor-pointer border-none">
           Reset
+        </button>
+        <button onclick={exportPDF} disabled={filtered.length === 0}
+          class="px-4 py-2 rounded-full text-[0.8125rem] font-medium transition-colors cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed"
+          style="background:{filtered.length > 0 ? 'var(--color-tgpc-bg)' : '#f3f4f6'};color:{filtered.length > 0 ? 'var(--color-tgpc-text)' : '#9ca3af'}">
+          PDF
+        </button>
+        <button onclick={exportCSV} disabled={filtered.length === 0}
+          class="px-4 py-2 rounded-full text-[0.8125rem] font-medium transition-colors cursor-pointer border-none disabled:opacity-40 disabled:cursor-not-allowed"
+          style="background:{filtered.length > 0 ? 'var(--color-tgpc-bg)' : '#f3f4f6'};color:{filtered.length > 0 ? 'var(--color-tgpc-text)' : '#9ca3af'}">
+          CSV
         </button>
       </div>
     </div>
