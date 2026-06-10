@@ -364,6 +364,10 @@ jobs:
             sys.exit(1)
         EOF
 
+    - name: Clean up update details
+      if: always()
+      run: rm -f data/update_details.json
+
     - name: Notify on failure
       if: failure()
       run: |
