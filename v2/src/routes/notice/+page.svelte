@@ -58,11 +58,13 @@
     </div>
   </div>
 
-  <div class="flex items-center gap-1 text-[0.75rem]">
+  <div class="flex items-center gap-1 flex-wrap text-[0.8rem]">
     {#each years as y}
       <button onclick={() => tab = y}
-        class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none"
-        style={y === tab ? 'background:#111;color:#fff' : 'background:#f3f4f6;color:#6b7280'}>
+        class="px-3 py-1.5 rounded-[10px] text-[0.8rem] font-medium transition-all cursor-pointer"
+        style={y === tab ? 'background:#00cc66;color:#fff;border:1px solid #00cc66' : 'background:#f8f9fa;color:#4a4a5a;border:1px solid #e2e8f0'}
+        onmouseenter={(e) => { if (y !== tab) { e.currentTarget.style.borderColor = '#00cc66'; e.currentTarget.style.color = '#00cc66'; }}}
+        onmouseleave={(e) => { if (y !== tab) { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#4a4a5a'; }}}>
         {y} <span class="opacity-50">({notices.filter(n => getYr(n.date) === y).length})</span>
       </button>
     {/each}
@@ -77,27 +79,36 @@
   {:else if filtered.length === 0}
     <p class="text-[0.85rem] text-[#9ca3af] py-8 text-center">No notices</p>
   {:else}
-    <div style="max-height:calc(100vh - 240px);overflow-y:auto">
+    <div style="max-height:calc(100vh - 240px);overflow-x:hidden;overflow-y:auto">
       <div class="hidden md:block">
+        <div style="display:grid;grid-template-columns:96px 1fr 160px;gap:12px;align-items:center;justify-items:center;padding:6px 0;border-bottom:1px solid #d1d5db;font-size:0.65rem;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px">
+          <span>Date</span>
+          <span>Title / Description</span>
+          <span style="justify-self:start">Links</span>
+        </div>
         {#if tab === null}
           {#each years as y}
             {@const fy = filtered.filter(n => getYr(n.date) === y)}
             {#if fy.length > 0}
               <div class="text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider py-2 px-1">{y} — {fy.length}</div>
               {#each fy as n}
-                <div class="flex items-start gap-3 py-2.5 border-b border-[#f3f4f6] text-[0.875rem]">
-                  <span class="w-24 flex-shrink-0 text-[#6b7280] tabular-nums">{fmtDate(n.date)}</span>
-                  <span class="flex-1">{n.title}</span>
-                  <span class="flex-shrink-0 flex gap-1.5">
-                    {#each n.links || [] as link}
-                      <a href={resolve(link.url)} target="_blank" rel="noopener"
-                        class="px-2 py-0.5 rounded text-[0.7rem] font-medium no-underline transition-colors"
-                        style="color:{linkType(link.url)};background:{linkType(link.url)}10"
-                        onmouseenter={(e) => e.currentTarget.style.background = linkType(link.url) + '20'}
-                        onmouseleave={(e) => e.currentTarget.style.background = linkType(link.url) + '10'}>
-                        {link.label}
-                      </a>
-                    {/each}
+                <div style="display:grid;grid-template-columns:96px 1fr 160px;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:0.875rem">
+                  <span class="text-[#6b7280] tabular-nums">{fmtDate(n.date)}</span>
+                  <span style="min-width:0">{n.title}</span>
+                  <span class="flex gap-1 flex-wrap" style="min-width:0">
+                    {#if n.links?.length}
+                      {#each n.links as link}
+                        <a href={resolve(link.url)} target="_blank" rel="noopener"
+                          class="px-2 py-0.5 rounded text-[0.7rem] font-medium no-underline transition-colors"
+                          style="color:{linkType(link.url)};background:{linkType(link.url)}10"
+                          onmouseenter={(e) => e.currentTarget.style.background = linkType(link.url) + '20'}
+                          onmouseleave={(e) => e.currentTarget.style.background = linkType(link.url) + '10'}>
+                          {link.label}
+                        </a>
+                      {/each}
+                    {:else}
+                      <span class="text-[#d1d5db]">—</span>
+                    {/if}
                   </span>
                 </div>
               {/each}
@@ -105,19 +116,23 @@
           {/each}
         {:else}
           {#each filtered as n}
-            <div class="flex items-start gap-3 py-2.5 border-b border-[#f3f4f6] text-[0.875rem]">
-              <span class="w-24 flex-shrink-0 text-[#6b7280] tabular-nums">{fmtDate(n.date)}</span>
-              <span class="flex-1">{n.title}</span>
-              <span class="flex-shrink-0 flex gap-1.5">
-                {#each n.links || [] as link}
-                  <a href={resolve(link.url)} target="_blank" rel="noopener"
-                    class="px-2 py-0.5 rounded text-[0.7rem] font-medium no-underline transition-colors"
-                    style="color:{linkType(link.url)};background:{linkType(link.url)}10"
-                    onmouseenter={(e) => e.currentTarget.style.background = linkType(link.url) + '20'}
-                    onmouseleave={(e) => e.currentTarget.style.background = linkType(link.url) + '10'}>
-                    {link.label}
-                  </a>
-                {/each}
+            <div style="display:grid;grid-template-columns:96px 1fr 160px;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:0.875rem">
+              <span class="text-[#6b7280] tabular-nums">{fmtDate(n.date)}</span>
+              <span style="min-width:0">{n.title}</span>
+              <span class="flex gap-1 flex-wrap" style="min-width:0">
+                {#if n.links?.length}
+                  {#each n.links as link}
+                    <a href={resolve(link.url)} target="_blank" rel="noopener"
+                      class="px-2 py-0.5 rounded text-[0.7rem] font-medium no-underline transition-colors"
+                      style="color:{linkType(link.url)};background:{linkType(link.url)}10"
+                      onmouseenter={(e) => e.currentTarget.style.background = linkType(link.url) + '20'}
+                      onmouseleave={(e) => e.currentTarget.style.background = linkType(link.url) + '10'}>
+                      {link.label}
+                    </a>
+                  {/each}
+                {:else}
+                  <span class="text-[#d1d5db]">—</span>
+                {/if}
               </span>
             </div>
           {/each}

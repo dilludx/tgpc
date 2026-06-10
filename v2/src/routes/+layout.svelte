@@ -1,77 +1,218 @@
 <script lang="ts">
   import '../app.css';
-  import type { ConnectionStatus } from '$lib/types';
+  import type { ConnectionStatus, Stats } from '$lib/types';
   import { getStats } from '$lib/api';
+  import { supabase } from '$lib/supabase';
+  import { onMount } from 'svelte';
+  import { page } from '$app/stores';
+  import { CATEGORY_COLORS, CATEGORIES, CATEGORY_KEYS } from '$lib/colors';
 
   let { children } = $props();
 
-  let now = $state(new Date());
   let status = $state<ConnectionStatus>('Busy');
-  let total = $state<number | null>(null);
+  let stats = $state<Stats | null>(null);
+  let lastSync = $state<string>('');
+  let tick = $state(0);
+
+  const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+
+  let dateStr = $derived.by(() => {
+    tick;
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2,'0')} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  });
+  let timeStr = $derived.by(() => {
+    tick;
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+  });
+  let year = $derived.by(() => { tick; return new Date().getFullYear(); });
 
   async function loadStats() {
     status = 'Busy';
     const data = await getStats();
     if (data) {
-      total = data.total;
+      stats = data;
       status = 'Live';
     } else {
       status = 'Offline';
     }
   }
 
+  async function loadLastSync() {
+    try {
+      const { data, error } = await supabase
+        .from('metadata')
+        .select('value')
+        .eq('key', 'last_sync')
+        .single();
+      if (!error && data?.value) {
+        const d = new Date(data.value);
+        const s = d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        lastSync = s.toUpperCase().replace(/,/g, '');
+      }
+    } catch {}
+  }
+
   $effect(() => {
     loadStats();
+    loadLastSync();
     const id = setInterval(loadStats, 300_000);
     return () => clearInterval(id);
   });
 
-  $effect(() => {
-    const id = setInterval(() => now = new Date(), 1000);
+  onMount(() => {
+    tick = Date.now();
+    const id = setInterval(() => tick = Date.now(), 1000);
     return () => clearInterval(id);
   });
 
   let statusConfig = $derived.by(() => ({
-    Live: { bg: '#dcfce7', text: '#16a34a', dot: '#00cc66' },
-    Busy: { bg: '#fff7ed', text: '#9a3412', dot: '#f97316' },
-    Offline: { bg: '#fee2e2', text: '#dc2626', dot: '#ef4444' }
+    Live: { bg: 'rgba(34,197,94,0.05)', border: '#86efac', text: '#166534', dot: '#22c55e' },
+    Busy: { bg: 'rgba(239,68,68,0.05)', border: '#fca5a5', text: '#991b1b', dot: '#ef4444' },
+    Offline: { bg: 'rgba(239,68,68,0.05)', border: '#fca5a5', text: '#991b1b', dot: '#ef4444' }
   })[status]);
 
-  let m = $derived(String(now.getMinutes()).padStart(2,'0'));
+  function val(key: keyof Stats): string {
+    return stats ? stats[key].toLocaleString() : '—';
+  }
+
+  let activeTab = $derived($page.url.pathname === '/' ? 'search' : $page.url.pathname === '/notice' ? 'notice' : 'dispatch');
 </script>
 <div class="min-h-screen flex flex-col bg-white">
-  <header class="sticky top-0 z-50 bg-white border-b border-[#e5e7eb]">
-    <div class="w-full px-4 sm:px-6 py-2.5 flex items-center justify-between">
-      <a href="/" class="no-underline flex items-center gap-1.5">
-          <span class="text-[1.1rem] font-bold tracking-tight" style="color:#111">
-            <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">Rx</span>
+  <header class="sticky top-0 z-50 bg-white">
+    <div class="w-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
+      <div class="flex flex-col gap-0.5">
+        <a href="/" class="no-underline">
+          <span class="text-[1.4rem] font-bold tracking-tight flex items-center gap-1" style="color:#111">
+            <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">Rx</span><span class="text-[#9ca3af]">Registry</span>
           </span>
         </a>
-        <div class="flex items-center gap-3">
-          <a href="/notice" class="no-underline text-[#6b7280] hover:text-[#111] transition-colors font-medium text-[0.75rem]">Notices</a>
-          <a href="/dispatch" class="no-underline text-[#6b7280] hover:text-[#111] transition-colors font-medium text-[0.75rem]">Dispatch</a>
-          <span class="w-px h-3 bg-[#e5e7eb]"></span>
-          <span class="text-[0.7rem] text-[#9ca3af] tabular-nums">
-            {total ? total.toLocaleString() : '—'} records
-          </span>
-          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.6rem] font-semibold"
-                style="background:{statusConfig.bg};color:{statusConfig.text}">
-            <span class="w-1.5 h-1.5 rounded-full" style="background:{statusConfig.dot}"></span>
-            {status}
+        <span class="text-[0.65rem] text-[#9ca3af] font-medium">Open-Source TGPC Pharmacist Data</span>
+        <div class="flex items-center gap-2 text-[0.7rem] mt-0.5">
+          <span class="inline-flex items-center gap-1 h-5 px-1.5 rounded-full text-[0.625rem] font-medium"
+                style="background:{statusConfig.bg};border:1px solid {statusConfig.border};color:{statusConfig.text}">
+            <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:{statusConfig.dot}"></span>
+            <span class="text-[10px] font-medium leading-[18px]">{status}</span>
+            <span class="opacity-40 leading-[18px]">|</span>
+            <span class="opacity-80 leading-[18px] tabular-nums whitespace-nowrap">{dateStr} {timeStr}</span>
           </span>
         </div>
+      </div>
+      <div style="background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px 4px 10px;display:flex;flex-direction:column;gap:0;flex-shrink:0">
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="border-right:1px solid #e5e7eb;padding-right:12px">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#808080">Total <span style="color:#ef4444;text-transform:none">Rx</span></div>
+              <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val('total')}</div>
+            </div>
+          </div>
+          {#each CATEGORIES as cat, i}
+            <div style="border-right:{i < 5 ? '1px solid #e5e7eb' : 'none'};padding-right:{i < 5 ? '12px' : '0'}">
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:{CATEGORY_COLORS[cat]}">{cat}</div>
+                <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val(CATEGORY_KEYS[i] as keyof Stats)}</div>
+              </div>
+            </div>
+          {/each}
+        </div>
+        <div style="font-size:0.5rem;color:#a1a1aa;font-weight:500;letter-spacing:0.3px;text-transform:uppercase;margin-top:4px;padding-top:4px;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="display:inline-flex;align-items:center;gap:3px;background:rgba(0,204,102,0.1);padding:1px 6px 1px 4px;border-radius:10px">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:10px;height:10px;background:#00cc66;border-radius:50%;color:white;font-size:6px;font-weight:bold">&#10003;</span>
+            <span style="color:#00cc66;font-size:0.45rem;font-weight:600;text-transform:uppercase;letter-spacing:0.3px">Synced</span>
+          </span>
+          <span style="background:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">{lastSync || `${dateStr} ${timeStr}`}</span>
+          <span style="opacity:0.4">|</span>
+          <span style="color:#9ca3af">Unofficial data — Not for legal use</span>
+        </div>
+      </div>
+    </div>
+    <div class="w-full px-4 sm:px-6 border-b border-[#e5e7eb]" style="display:flex;gap:3px;background:#f8f9fa">
+      <a href="/"
+        style="padding:4px 14px 5px;font-size:0.75rem;font-weight:{activeTab === 'search' ? '600' : '500'};text-decoration:none;border-radius:8px;background:{activeTab === 'search' ? '#fff' : 'transparent'};color:{activeTab === 'search' ? '#00cc66' : '#6b7280'};margin-bottom:{activeTab === 'search' ? '-1px' : '0'};z-index:{activeTab === 'search' ? '2' : '1'};position:relative;transition:color 0.15s">
+        SEARCH
+      </a>
+      <a href="/notice"
+        style="padding:4px 14px 5px;font-size:0.75rem;font-weight:{activeTab === 'notice' ? '600' : '500'};text-decoration:none;border-radius:8px;background:{activeTab === 'notice' ? '#fff' : 'transparent'};color:{activeTab === 'notice' ? '#00cc66' : '#6b7280'};margin-bottom:{activeTab === 'notice' ? '-1px' : '0'};z-index:{activeTab === 'notice' ? '2' : '1'};position:relative;transition:color 0.15s">
+        NOTICES
+      </a>
+      <a href="/dispatch"
+        style="padding:4px 14px 5px;font-size:0.75rem;font-weight:{activeTab === 'dispatch' ? '600' : '500'};text-decoration:none;border-radius:8px;background:{activeTab === 'dispatch' ? '#fff' : 'transparent'};color:{activeTab === 'dispatch' ? '#00cc66' : '#6b7280'};margin-bottom:{activeTab === 'dispatch' ? '-1px' : '0'};z-index:{activeTab === 'dispatch' ? '2' : '1'};position:relative;transition:color 0.15s;display:inline-flex;align-items:center;gap:4px">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        DISPATCH LIST
+      </a>
+      <div style="flex:1"></div>
     </div>
   </header>
 
-  <main class="flex-1 w-full px-4 sm:px-6 py-6 pb-20">
+  <main class="flex-1 w-full px-4 sm:px-6 pt-3 pb-14">
     {@render children()}
   </main>
 
-  <footer class="fixed bottom-0 w-full bg-white border-t border-[#e5e7eb] py-2 text-[0.55rem] text-[#9ca3af] leading-relaxed"
-          style="padding-bottom:calc(0.5rem + env(safe-area-inset-bottom, 0px))">
+  <footer class="fixed bottom-0 w-full bg-white border-t border-[#e5e7eb] py-1 text-[0.5rem] text-[#9ca3af] leading-tight"
+          style="padding-bottom:calc(0.25rem + env(safe-area-inset-bottom, 0px))">
     <div class="w-full px-4 sm:px-6 flex items-center justify-between gap-4">
-      <span class="text-left flex-1 pr-4" style="text-wrap:balance">DISCLAIMER: This is an unofficial, third-party tool not affiliated with TGPC or any government body. Data is for reference only — verify all information from official sources before use. Users assume all risk.<br>No warranty as to accuracy, completeness, or timeliness. No liability for errors, omissions, or actions taken based on this content. Operated under fair dealing (Indian Copyright Act, 1957, Section 52).</span>
-      <span class="text-right whitespace-nowrap font-semibold flex-shrink-0 text-[0.65rem]">TGPC Rx Registry &copy; 2026</span>
+      <span class="text-left flex-1 pr-4" style="text-wrap:balance"><span style="color:#ef4444">DISCLAIMER:</span> This is an unofficial, third-party tool not affiliated with TGPC or any government body. Data is for reference only — verify all information from official sources before use. Users assume all risk.<br>No warranty as to accuracy, completeness, or timeliness. No liability for errors, omissions, or actions taken based on this content. Operated under fair dealing (Indian Copyright Act, 1957, Section 52).</span>
+      <span class="text-right whitespace-nowrap font-semibold flex-shrink-0 text-[0.7rem]">TGPC Rx Registry &copy; {year}</span>
     </div>
   </footer>
 </div>
+
+<style>
+  .notice-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    height: 20px;
+    padding: 0 7px;
+    border-radius: 50px;
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: #7c3aed;
+    background: #f3f0ff;
+    text-decoration: none;
+    transition: background 0.15s;
+    box-sizing: border-box;
+  }
+  .notice-btn:hover {
+    background: #e8e3ff;
+  }
+
+  .dispatch-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    height: 20px;
+    padding: 0 7px;
+    border-radius: 50px;
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: #ef4444;
+    background: #fef2f2;
+    text-decoration: none;
+    transition: background 0.15s;
+    box-sizing: border-box;
+  }
+  .dispatch-btn:hover {
+    background: #fee2e2;
+  }
+
+  .search-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    height: 20px;
+    padding: 0 7px;
+    border-radius: 50px;
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: #00cc66;
+    background: #d9f7eb;
+    text-decoration: none;
+    transition: background 0.15s;
+    box-sizing: border-box;
+  }
+  .search-btn:hover {
+    background: #b3efd6;
+  }
+</style>

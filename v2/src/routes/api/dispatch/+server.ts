@@ -11,17 +11,24 @@ const FALLBACK_DATA = [
   'DL18042019.pdf', 'DL21022018.pdf', 'DL30032019.pdf', 'DL31012025.pdf'
 ];
 
-export async function GET({ platform }) {
+const LIVE_API = 'https://tgpc.pages.dev/api/dispatch';
+
+export async function GET({ platform, fetch }) {
   try {
     const bucket: any = platform?.env?.DISPATCH;
-    if (bucket) {
+    if (bucket && typeof bucket.list === 'function') {
       const listing = await bucket.list({ prefix: 'dispatch/' });
       const files = listing.objects.map((obj: any) => ({
         name: obj.key.replace('dispatch/', ''),
         size: obj.size
       }));
-      return json(files);
+      if (files.length > 0) return json(files);
     }
+  } catch {}
+
+  try {
+    const resp = await fetch(LIVE_API);
+    if (resp.ok) return json(await resp.json());
   } catch {}
 
   const fallback = FALLBACK_DATA.map(n => ({

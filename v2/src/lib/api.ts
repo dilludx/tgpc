@@ -17,18 +17,18 @@ export async function searchRecords(query: string): Promise<PharmacistRecord[]> 
 
 export async function getStats(): Promise<Stats | null> {
   try {
-    const { data, error } = await supabase.rpc('get_rx_counts');
+    const { data, error } = await supabase.rpc('get_rx_stats');
     if (error) throw error;
     if (data && typeof data === 'object') {
-      const d = data as Record<string, number>;
+      const d = data as { total: number; categories: Record<string, number> };
       return {
-        total: (d.bpharm ?? 0) + (d.dpharm ?? 0) + (d.mpharm ?? 0) + (d.pharmd ?? 0) + (d.qc ?? 0) + (d.qp ?? 0),
-        bpharm: d.bpharm ?? 0,
-        dpharm: d.dpharm ?? 0,
-        mpharm: d.mpharm ?? 0,
-        pharmd: d.pharmd ?? 0,
-        qc: d.qc ?? 0,
-        qp: d.qp ?? 0
+        total: d.total ?? 0,
+        bpharm: d.categories?.BPharm ?? d.categories?.bpharm ?? 0,
+        dpharm: d.categories?.DPharm ?? d.categories?.dpharm ?? 0,
+        mpharm: d.categories?.MPharm ?? d.categories?.mpharm ?? 0,
+        pharmd: d.categories?.PharmD ?? d.categories?.pharmd ?? 0,
+        qc: d.categories?.QC ?? d.categories?.qc ?? 0,
+        qp: d.categories?.QP ?? d.categories?.qp ?? 0
       };
     }
     return null;

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PharmacistRecord, Category, CategoryFilter } from '$lib/types';
   import { searchRecords } from '$lib/api';
+  import { CATEGORY_COLORS, CATEGORY_BG, CATEGORIES as CAT_NAMES } from '$lib/colors';
 
   let query = $state('');
   let category = $state<CategoryFilter>('all');
@@ -10,12 +11,7 @@
   let searched = $state(false);
 
   const PER_PAGE = 50;
-  const CATEGORIES: CategoryFilter[] = ['all', 'BPharm', 'DPharm', 'MPharm', 'PharmD', 'QC', 'QP'];
-
-  const badgeColors: Record<Category, string> = {
-    BPharm: '#166534', DPharm: '#854d0e', MPharm: '#5b21b6',
-    PharmD: '#991b1b', QC: '#1e40af', QP: '#9a3412'
-  };
+  const CATEGORY_FILTERS: CategoryFilter[] = ['all', ...CAT_NAMES];
 
   let filtered = $derived(category === 'all' ? results : results.filter(r => r.category === category));
   let totalPages = $derived(Math.max(1, Math.ceil(filtered.length / PER_PAGE)));
@@ -31,6 +27,11 @@
     page = 1;
     results = await searchRecords(query);
     loading = false;
+  }
+
+  function chipStyle(cat: CategoryFilter): string {
+    if (cat !== category) return 'background:#f3f4f6;color:#6b7280';
+    return cat === 'all' ? 'background:#111;color:#fff' : 'background:' + CATEGORY_COLORS[cat as Category] + ';color:#fff';
   }
 
   function reset() {
@@ -68,10 +69,10 @@
   <!-- Chips -->
   {#if searched}
     <div class="flex items-center gap-1 text-[0.75rem]">
-      {#each CATEGORIES as cat}
+      {#each CATEGORY_FILTERS as cat}
         <button onclick={() => { category = cat; page = 1; }}
           class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none"
-          style={cat === category ? 'background:#111;color:#fff' : 'background:#f3f4f6;color:#6b7280'}>
+          style={chipStyle(cat)}>
           {cat === 'all' ? 'All' : cat}
         </button>
       {/each}
@@ -103,7 +104,7 @@
               <span class="font-semibold text-[#2563eb] w-36 flex-shrink-0">{r.registration_number}</span>
               <span class="flex-1">{r.name}</span>
               <span class="w-36 flex-shrink-0 text-[#6b7280] hidden lg:block">{r.father_name || '—'}</span>
-              <span class="w-16 flex-shrink-0 text-right text-[0.75rem] font-semibold" style="color:{badgeColors[r.category]}">
+              <span class="inline-flex items-center px-1.5 rounded-full text-[0.65rem] font-semibold leading-[18px]" style="background:{CATEGORY_BG[r.category]};color:{CATEGORY_COLORS[r.category]}">
                 {r.category}
               </span>
             </div>
@@ -116,7 +117,7 @@
             <div class="py-2.5 border-b border-[#f3f4f6]">
               <div class="flex items-center justify-between">
                 <span class="font-semibold text-[#2563eb] text-[0.875rem]">{r.registration_number}</span>
-                <span class="text-[0.7rem] font-semibold" style="color:{badgeColors[r.category]}">{r.category}</span>
+                <span class="inline-flex items-center px-1.5 rounded-full text-[0.6rem] font-semibold leading-[18px]" style="background:{CATEGORY_BG[r.category]};color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
               </div>
               <div class="text-[0.875rem] mt-0.5">{r.name}</div>
             </div>
