@@ -58,13 +58,11 @@
     </div>
   </div>
 
-  <div class="flex items-center gap-1 flex-wrap text-[0.8rem]">
+  <div class="flex items-center gap-1 text-[0.75rem]">
     {#each years as y}
       <button onclick={() => tab = y}
-        class="px-3 py-1.5 rounded-[10px] text-[0.8rem] font-medium transition-all cursor-pointer"
-        style={y === tab ? 'background:#00cc66;color:#fff;border:1px solid #00cc66' : 'background:#f8f9fa;color:#4a4a5a;border:1px solid #e2e8f0'}
-        onmouseenter={(e) => { if (y !== tab) { e.currentTarget.style.borderColor = '#00cc66'; e.currentTarget.style.color = '#00cc66'; }}}
-        onmouseleave={(e) => { if (y !== tab) { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.color = '#4a4a5a'; }}}>
+        class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none"
+        style={y === tab ? 'background:#00cc66;color:#fff' : 'background:#f3f4f6;color:#6b7280'}>
         {y} <span class="opacity-50">({notices.filter(n => getYr(n.date) === y).length})</span>
       </button>
     {/each}

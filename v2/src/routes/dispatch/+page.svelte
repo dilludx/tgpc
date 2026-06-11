@@ -65,7 +65,7 @@
     {#each years as y}
       <button onclick={() => tab = y}
         class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none"
-        style={y === tab ? 'background:#111;color:#fff' : 'background:#f3f4f6;color:#6b7280'}>
+        style={y === tab ? 'background:#00cc66;color:#fff' : 'background:#f3f4f6;color:#6b7280'}>
         {y} <span class="opacity-50">({files.filter(f => f.parsed?.y === y).length})</span>
       </button>
     {/each}

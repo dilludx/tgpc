@@ -127,21 +127,12 @@
         </div>
       </div>
     </div>
-    <div class="w-full px-4 sm:px-6 border-b border-[#e5e7eb]" style="display:flex;gap:3px;background:#f8f9fa">
-      <a href="/"
-        style="padding:4px 14px 5px;font-size:0.75rem;font-weight:{activeTab === 'search' ? '600' : '500'};text-decoration:none;border-radius:8px;background:{activeTab === 'search' ? '#fff' : 'transparent'};color:{activeTab === 'search' ? '#00cc66' : '#6b7280'};margin-bottom:{activeTab === 'search' ? '-1px' : '0'};z-index:{activeTab === 'search' ? '2' : '1'};position:relative;transition:color 0.15s">
-        SEARCH
-      </a>
-      <a href="/notice"
-        style="padding:4px 14px 5px;font-size:0.75rem;font-weight:{activeTab === 'notice' ? '600' : '500'};text-decoration:none;border-radius:8px;background:{activeTab === 'notice' ? '#fff' : 'transparent'};color:{activeTab === 'notice' ? '#00cc66' : '#6b7280'};margin-bottom:{activeTab === 'notice' ? '-1px' : '0'};z-index:{activeTab === 'notice' ? '2' : '1'};position:relative;transition:color 0.15s">
-        NOTICES
-      </a>
-      <a href="/dispatch"
-        style="padding:4px 14px 5px;font-size:0.75rem;font-weight:{activeTab === 'dispatch' ? '600' : '500'};text-decoration:none;border-radius:8px;background:{activeTab === 'dispatch' ? '#fff' : 'transparent'};color:{activeTab === 'dispatch' ? '#00cc66' : '#6b7280'};margin-bottom:{activeTab === 'dispatch' ? '-1px' : '0'};z-index:{activeTab === 'dispatch' ? '2' : '1'};position:relative;transition:color 0.15s;display:inline-flex;align-items:center;gap:4px">
-        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        DISPATCH LIST
-      </a>
-      <div style="flex:1"></div>
+    <div class="w-full px-4 sm:px-6 border-b border-[#e5e7eb]" style="display:flex;align-items:center;gap:2px;background:#f8f9fa;font-size:0.7rem;padding-top:3px;padding-bottom:3px;overflow-x:auto">
+      <a href="/" style="text-decoration:none;padding:2px 4px;font-weight:500;color:{activeTab === 'search' ? '#00cc66' : '#6b7280'};white-space:nowrap">SEARCH</a>
+      <span style="color:#d1d5db;font-weight:300;padding:0 2px;user-select:none">/</span>
+      <a href="/notice" style="text-decoration:none;padding:2px 4px;font-weight:500;color:{activeTab === 'notice' ? '#00cc66' : '#6b7280'};white-space:nowrap">NOTICES</a>
+      <span style="color:#d1d5db;font-weight:300;padding:0 2px;user-select:none">/</span>
+      <a href="/dispatch" style="text-decoration:none;padding:2px 4px;font-weight:500;color:{activeTab === 'dispatch' ? '#00cc66' : '#6b7280'};white-space:nowrap">DISPATCH LIST</a>
     </div>
   </header>
 

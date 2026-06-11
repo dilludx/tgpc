@@ -31,7 +31,7 @@
 
   function chipStyle(cat: CategoryFilter): string {
     if (cat !== category) return 'background:#f3f4f6;color:#6b7280';
-    return cat === 'all' ? 'background:#111;color:#fff' : 'background:' + CATEGORY_COLORS[cat as Category] + ';color:#fff';
+    return 'background:#00cc66;color:#fff';
   }
 
   function reset() {
