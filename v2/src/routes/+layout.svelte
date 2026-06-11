@@ -78,6 +78,19 @@
   }
 
   let activeTab = $derived($page.url.pathname === '/' ? 'search' : $page.url.pathname === '/notice' ? 'notice' : 'dispatch');
+
+  let searchRef: HTMLAnchorElement | undefined;
+  let noticeRef: HTMLAnchorElement | undefined;
+  let dispatchRef: HTMLAnchorElement | undefined;
+  let sliderStyle = $state('');
+
+  $effect(() => {
+    const tab = activeTab;
+    let el = tab === 'search' ? searchRef : tab === 'notice' ? noticeRef : dispatchRef;
+    if (el) {
+      sliderStyle = `transform:translateX(${el.offsetLeft}px);width:${el.offsetWidth}px`;
+    }
+  });
 </script>
 <div class="min-h-screen flex flex-col bg-white">
   <header class="sticky top-0 z-50 bg-white">
@@ -127,12 +140,13 @@
         </div>
       </div>
     </div>
-    <div class="w-full px-4 sm:px-6 border-b border-[#e5e7eb]" style="display:flex;align-items:center;gap:2px;background:#f8f9fa;font-size:0.7rem;padding-top:3px;padding-bottom:3px;overflow-x:auto">
-      <a href="/" style="text-decoration:none;padding:2px 4px;font-weight:500;color:{activeTab === 'search' ? '#00cc66' : '#6b7280'};white-space:nowrap">SEARCH</a>
+    <div class="w-full px-4 sm:px-6 border-b border-[#e5e7eb]" style="display:flex;align-items:center;gap:2px;background:#f8f9fa;font-size:0.7rem;padding-top:3px;padding-bottom:3px;overflow-x:auto;position:relative">
+      <a href="/" bind:this={searchRef} style="text-decoration:none;padding:2px 4px;font-weight:500;color:{activeTab === 'search' ? '#00cc66' : '#6b7280'};white-space:nowrap">SEARCH</a>
       <span style="color:#d1d5db;font-weight:300;padding:0 2px;user-select:none">/</span>
-      <a href="/notice" style="text-decoration:none;padding:2px 4px;font-weight:500;color:{activeTab === 'notice' ? '#00cc66' : '#6b7280'};white-space:nowrap">NOTICES</a>
+      <a href="/notice" bind:this={noticeRef} style="text-decoration:none;padding:2px 4px;font-weight:500;color:{activeTab === 'notice' ? '#00cc66' : '#6b7280'};white-space:nowrap">NOTICES</a>
       <span style="color:#d1d5db;font-weight:300;padding:0 2px;user-select:none">/</span>
-      <a href="/dispatch" style="text-decoration:none;padding:2px 4px;font-weight:500;color:{activeTab === 'dispatch' ? '#00cc66' : '#6b7280'};white-space:nowrap">DISPATCH LIST</a>
+      <a href="/dispatch" bind:this={dispatchRef} style="text-decoration:none;padding:2px 4px;font-weight:500;color:{activeTab === 'dispatch' ? '#00cc66' : '#6b7280'};white-space:nowrap">DISPATCH LIST</a>
+      <div style="position:absolute;bottom:0;left:0;height:2px;background:#00cc66;border-radius:1px;transition:transform 0.25s ease-out,width 0.25s ease-out;will-change:transform,width;{sliderStyle}"></div>
     </div>
   </header>
 
