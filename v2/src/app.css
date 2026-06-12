@@ -14,6 +14,8 @@
 
 html {
   overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
 }
 
 body {
@@ -24,4 +26,6 @@ body {
   color: var(--color-text);
   line-height: 1.5;
   overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
 }

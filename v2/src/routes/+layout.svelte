@@ -83,6 +83,19 @@
   let noticeRef: HTMLAnchorElement | undefined;
   let dispatchRef: HTMLAnchorElement | undefined;
   let sliderStyle = $state('');
+  let headingEl: HTMLAnchorElement | undefined;
+  let headingWidth = $state(0);
+
+  $effect(() => {
+    if (!headingEl) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        headingWidth = entry.contentRect.width;
+      }
+    });
+    ro.observe(headingEl);
+    return () => ro.disconnect();
+  });
 
   $effect(() => {
     const tab = activeTab;
@@ -92,18 +105,18 @@
     }
   });
 </script>
-<div class="min-h-screen flex flex-col bg-white">
+<div class="h-screen flex flex-col bg-white overflow-hidden">
   <header class="sticky top-0 z-50 bg-white">
     <div class="w-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
-      <div class="flex flex-col gap-0.5">
-        <a href="/" class="no-underline">
-          <span class="text-[1.4rem] font-bold tracking-tight flex items-center gap-1" style="color:#111">
+      <div class="flex flex-col gap-0.5" style={headingWidth ? `width:${headingWidth}px` : ''}>
+        <a href="/" bind:this={headingEl} class="no-underline inline-flex flex-col w-fit">
+          <span class="text-[1.4rem] font-bold tracking-tight flex items-center gap-1" style="color:#111;white-space:nowrap">
             <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">Rx</span><span class="text-[#9ca3af]">Registry</span>
           </span>
+          <span class="block text-[0.6rem] text-[#9ca3af] font-medium truncate">Open-Source TGPC Pharmacist Data</span>
         </a>
-        <span class="text-[0.65rem] text-[#9ca3af] font-medium">Open-Source TGPC Pharmacist Data</span>
-        <div class="flex items-center gap-2 text-[0.7rem] mt-0.5">
-          <span class="inline-flex items-center gap-1 h-5 px-1.5 rounded-full text-[0.625rem] font-medium"
+        <div class="flex items-center gap-2 text-[0.7rem]">
+          <span class="flex w-full items-center gap-1 h-5 px-1.5 rounded-full text-[0.625rem] font-medium"
                 style="background:{statusConfig.bg};border:1px solid {statusConfig.border};color:{statusConfig.text}">
             <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:{statusConfig.dot}"></span>
             <span class="text-[10px] font-medium leading-[18px]">{status}</span>
@@ -150,7 +163,7 @@
     </div>
   </header>
 
-  <main class="flex-1 w-full px-4 sm:px-6 pt-3 pb-14">
+  <main class="flex-1 w-full px-4 sm:px-6 pt-1 pb-14 overflow-hidden">
     {@render children()}
   </main>
 
