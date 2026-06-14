@@ -128,8 +128,7 @@
     <div class="flex items-center min-w-0 border-b-2 border-[#e5e7eb] transition-colors focus-within:border-[#00cc66]"
          class:flex-1={!searched}
          class:max-w-[25vw]={searched}>
-      <div class="relative min-w-0 min-h-[2.5rem]" style="display:{searched ? 'inline-grid' : 'grid'};grid-template-columns:1fr"
-           class:flex-1={searched}>
+      <div class="relative min-w-0 min-h-[2.5rem] flex-1" style="display:{searched ? 'inline-grid' : 'grid'};grid-template-columns:1fr">
         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] pointer-events-none z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
