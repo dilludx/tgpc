@@ -37,7 +37,7 @@ class PharmacistRecord:
     work_experience: Optional[Dict[str, str]] = None
 
     def to_dict(self):
-        """Convert to dictionary, strictly maintaining the 5-field schema for rx.json."""
+        """Convert to dictionary, strictly maintaining the 5-field schema for rph.json."""
         return {
             "registration_number": self.registration_number,
             "name": self.name,

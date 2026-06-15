@@ -97,7 +97,7 @@ class FileManager:
         self.data_dir = Path(config.data_directory)
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-    def save(self, records: List[PharmacistRecord], filename: str = "rx.json") -> Path:
+    def save(self, records: List[PharmacistRecord], filename: str = "rph.json") -> Path:
         """Save records to JSON."""
         path = self.data_dir / filename
         data = [r.to_dict() for r in records]
@@ -107,7 +107,7 @@ class FileManager:
         logger.info(f"Saved {len(records)} records to {path}")
         return path
 
-    def load(self, filename: str = "rx.json") -> List[PharmacistRecord]:
+    def load(self, filename: str = "rph.json") -> List[PharmacistRecord]:
         """Load records from JSON."""
         path = self.data_dir / filename
         if not path.exists():
@@ -132,7 +132,7 @@ class BackupManager:
             return ""
 
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        dest = self.backup_dir / f"rx_backup_{ts}.json"
+        dest = self.backup_dir / f"rph_backup_{ts}.json"
         shutil.copy2(source, dest)
         logger.info(f"Backup created: {dest}")
         return str(dest)
@@ -141,7 +141,7 @@ class BackupManager:
         """Remove old backups. Returns count of deleted files."""
         cutoff = datetime.now() - timedelta(days=days)
         deleted = 0
-        for f in self.backup_dir.glob("rx_backup_*.json"):
+        for f in self.backup_dir.glob("rph_backup_*.json"):
             try:
                 ts = f.stem.split("_", 2)[2]
                 if datetime.strptime(ts, "%Y%m%d_%H%M%S") < cutoff:
@@ -282,8 +282,8 @@ class Manager:
             return "blocked"
 
         # 1. Backup existing
-        rx_path = Path(self.config.data_directory) / "rx.json"
-        self.backup_manager.create(rx_path)
+        rph_path = Path(self.config.data_directory) / "rph.json"
+        self.backup_manager.create(rph_path)
         existing_records = self.file_manager.load()
 
         # 2. Scrape fresh data
@@ -442,7 +442,7 @@ class Manager:
             batch_size = 1000
             for i in range(0, len(records), batch_size):
                 batch = [r.to_dict() for r in records[i : i + batch_size]]
-                supabase.table("rx").upsert(batch, on_conflict="registration_number").execute()
+                supabase.table("rph").upsert(batch, on_conflict="registration_number").execute()
                 logger.info(f"Synced batch {i // batch_size + 1}")
 
             # Update last_sync timestamp in metadata table
@@ -459,17 +459,17 @@ class Manager:
             logger.error(f"Sync failed: {e}")
 
     def sync_to_supabase_storage(self):
-        """Upload rx.json to Supabase Storage (tgpc bucket)."""
+        """Upload rph.json to Supabase Storage (tgpc bucket)."""
         url = os.environ.get("SUPABASE_URL")
         key = os.environ.get("SUPABASE_SECRET_KEY")
         if not url or not key:
             logger.error("Missing Supabase credentials")
             return
-        file_path = self.file_manager.data_dir / "rx.json"
+        file_path = self.file_manager.data_dir / "rph.json"
         try:
             with open(file_path, "rb") as f:
                 resp = requests.post(
-                    f"{url}/storage/v1/object/tgpc/rx.json",
+                    f"{url}/storage/v1/object/tgpc/rph.json",
                     headers={
                         "Authorization": f"Bearer {key}",
                         "apikey": key,
@@ -486,7 +486,7 @@ class Manager:
             logger.error(f"Supabase Storage sync error: {e}")
 
     def sync_to_r2(self):
-        """Sync rx.json to Cloudflare R2."""
+        """Sync rph.json to Cloudflare R2."""
         account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
         access_key = os.environ.get("R2_ACCESS_KEY_ID")
         secret_key = os.environ.get("R2_SECRET_ACCESS_KEY")
@@ -496,7 +496,7 @@ class Manager:
             return
 
         endpoint = f"https://{account_id}.r2.cloudflarestorage.com"
-        file_path = str(self.file_manager.data_dir / "rx.json")
+        file_path = str(self.file_manager.data_dir / "rph.json")
         env = os.environ.copy()
         env["AWS_ACCESS_KEY_ID"] = access_key
         env["AWS_SECRET_ACCESS_KEY"] = secret_key
@@ -513,7 +513,7 @@ class Manager:
                     "--bucket",
                     "tgpc",
                     "--key",
-                    "rx.json",
+                    "rph.json",
                     "--body",
                     file_path,
                 ],
@@ -532,7 +532,7 @@ class Manager:
             logger.error(f"R2 sync error: {e}")
 
     def sync_to_gdrive(self):
-        """Sync rx.json to Google Drive via rclone."""
+        """Sync rph.json to Google Drive via rclone."""
         gdrive_config_b64 = os.environ.get("RCLONE_GDRIVE_CONFIG")
         if not gdrive_config_b64:
             logger.error("Missing RCLONE_GDRIVE_CONFIG")
@@ -547,8 +547,8 @@ class Manager:
                 [
                     "rclone",
                     "copyto",
-                    str(self.file_manager.data_dir / "rx.json"),
-                    "gdrive:tgpc/rx.json",
+                    str(self.file_manager.data_dir / "rph.json"),
+                    "gdrive:tgpc/rph.json",
                 ],
                 capture_output=True,
                 text=True,
@@ -566,9 +566,9 @@ class Manager:
             logger.error(f"GDrive sync error: {e}")
 
     def sync_to_release(self):
-        """Upload rx.json to GitHub Release."""
-        tag = "rxjson"
-        file_path = str(self.file_manager.data_dir / "rx.json")
+        """Upload rph.json to GitHub Release."""
+        tag = "rphjson"
+        file_path = str(self.file_manager.data_dir / "rph.json")
         repo = os.environ.get("GITHUB_REPOSITORY", "dilludx/tgpc")
 
         try:
@@ -577,7 +577,7 @@ class Manager:
         except Exception:
             count = 0
 
-        title = f"{count:,} records — rx.json"
+        title = f"{count:,} records — rph.json"
 
         try:
             result = subprocess.run(
@@ -705,16 +705,16 @@ class Manager:
         MAX_EMAIL = 200
         new_t, mod_t, rem_t = new[:MAX_EMAIL], mod[:MAX_EMAIL], rem[:MAX_EMAIL]
 
-        text = f"TGPC Rx Registry Sync Report\n{sync_time}\n\n"
+        text = f"TGPC RPh Registry Sync Report\n{sync_time}\n\n"
         html = (
             '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>'
             '<body style="font-family:-apple-system,sans-serif;background:#fff;padding:15px 20px;color:#333;line-height:1.3;margin:0;">'  # noqa: E501
             '<div style="max-width:600px;">'
-            f'<h2 style="margin:0;font-size:17px;line-height:1.2;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">Rx</span> <span style="color:#808080;">Registry</span> Sync Report</h2>'  # noqa: E501
+            f'<h2 style="margin:0;font-size:17px;line-height:1.2;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">RPh</span> <span style="color:#808080;">Registry</span> Sync Report</h2>'  # noqa: E501
             f'<div style="color:#666;font-size:12px;margin-bottom:30px;font-weight:500;">{sync_time}</div>'
             f"{fmt_html('🌱 NEW', new_t, '#00cc66')}{fmt_html('🌀 CHANGES', mod_t, '#3b82f6')}{fmt_html('❌ REMOVALS', rem_t, '#ef4444')}"  # noqa: E501
             '<div style="margin-top:15px;font-size:11px;color:#888;padding-top:10px;">'
-            '<div style="font-weight:700;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">Rx</span> <span style="color:#808080;">Registry</span></div>'  # noqa: E501
+            '<div style="font-weight:700;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">RPh</span> <span style="color:#808080;">Registry</span></div>'  # noqa: E501
             "<div>Open-Source TGPC Pharmacist Data</div></div></div></body></html>"
         )
         for label, items, total in [("NEW", new_t, new), ("CHANGES", mod_t, mod), ("REMOVALS", rem_t, rem)]:
@@ -722,7 +722,7 @@ class Manager:
                 text += (
                     f"{label} ({len(total)}):\n" + "\n".join(sorted(items, key=lambda x: (cat(x), reg_no(x)))) + "\n\n"
                 )
-        text += "---\nTGPC Rx Registry\nOpen-Source TGPC Pharmacist Data"
+        text += "---\nTGPC RPh Registry\nOpen-Source TGPC Pharmacist Data"
 
         parts = []
         if new:
@@ -731,13 +731,13 @@ class Manager:
             parts.append(f"🌀 {len(mod)}")
         if rem:
             parts.append(f"❌ {len(rem)}")
-        subject = " | ".join(parts + ["Rx Data Sync", subj_time])
+        subject = " | ".join(parts + ["RPh Data Sync", subj_time])
 
         import tempfile
 
         payload = json.dumps(
             {
-                "from": "Rx Data Sync <onboarding@resend.dev>",
+                "from": "RPh Data Sync <onboarding@resend.dev>",
                 "to": [recipient],
                 "subject": subject,
                 "text": text,
@@ -779,8 +779,6 @@ class Manager:
         self,
         start: int = 1,
         stop: int = None,
-        force: bool = False,
-        skip_validation: bool = False,
     ):
         """
         Run enrichment for serial number range.
@@ -788,8 +786,6 @@ class Manager:
         Args:
             start: Start from serial number (default: 1)
             stop: Stop at serial number (default: all)
-            force: Re-extract even if already done
-            skip_validation: Skip file validation checks (default False)
         """
 
         # Health check
@@ -800,18 +796,18 @@ class Manager:
         logger.info("Starting enrichment...")
 
         # Load Data
-        rx_records = self.file_manager.load("rx.json")
+        rph_records = self.file_manager.load("rph.json")
         jsn_dir = Path(self.config.enrichment_directory) / "jsn"
         jsn_dir.mkdir(parents=True, exist_ok=True)
 
         # Create lookup by registration number
-        rx_lookup = {r.serial_number: r for r in rx_records}
+        rph_lookup = {r.serial_number: r for r in rph_records}
 
         # Identify Pending - check for existing individual detail files
         done_ids = {f.stem for f in jsn_dir.glob("*.json")}
 
         # Sort by serial number ascending (start from serial 1)
-        pending_records = [r for r in rx_records if r.registration_number not in done_ids]
+        pending_records = [r for r in rph_records if r.registration_number not in done_ids]
         pending_records.sort(key=lambda r: r.serial_number or 0)
 
         if not pending_records:
@@ -825,25 +821,19 @@ class Manager:
         img_dir = Path(self.config.enrichment_directory) / "img"
         img_dir.mkdir(parents=True, exist_ok=True)
 
-        # Filter by start/stop range - use serial_number from rx.json as position
+        # Filter by start/stop range - use serial_number from rph.json as position
         if start or stop:
-            rx_records_all = self.file_manager.load("rx.json")
-            rx_records_all.sort(key=lambda r: r.serial_number or 0)
+            rph_records_all = self.file_manager.load("rph.json")
+            rph_records_all.sort(key=lambda r: r.serial_number or 0)
 
             filtered = []
-            for i, r in enumerate(rx_records_all):
+            for i, r in enumerate(rph_records_all):
                 if start and i + 1 < start:
                     continue
                 if stop and i + 1 > stop:
                     break
-                if not force and r.registration_number in done_ids:
-                    continue
                 filtered.append(r)
             pending_records = filtered
-
-            if force:
-                already_done = len([r for r in pending_records if r.registration_number in done_ids])
-                logger.info("--force: re-extracting %d already done records", already_done)
 
             start_str = f"serial {start}" if start else "all"
             stop_str = f"serial {stop}" if stop else "end"
@@ -854,66 +844,65 @@ class Manager:
             return
 
         # Process records sequentially
-        total_processed = self._process_records_sequential(pending_records, rx_lookup, jsn_dir, img_dir)
+        total_processed = self._process_records_sequential(pending_records, rph_lookup, jsn_dir, img_dir)
 
-        # Validate all files before GDrive sync (if validation was enabled)
-        if not skip_validation:
-            logger.info("Validating files...")
-            registration_numbers = [record.registration_number for record in pending_records]
-            validation_results = validate_batch_files(jsn_dir, img_dir, registration_numbers)
+        # Validate all files before GDrive sync
+        logger.info("Validating files...")
+        registration_numbers = [record.registration_number for record in pending_records]
+        validation_results = validate_batch_files(jsn_dir, img_dir, registration_numbers)
 
-            if validation_results["errors"]:
-                # Separate errors into critical (JSON-related) and minor (photo-related)
-                critical_errors = [e for e in validation_results["errors"] if "JSON" in e or "json" in e.lower()]
-                photo_errors = [e for e in validation_results["errors"] if "Photo" in e or "photo" in e.lower()]
+        if validation_results["errors"]:
+            # Separate errors into critical (JSON-related) and minor (photo-related)
+            critical_errors = [e for e in validation_results["errors"] if "JSON" in e or "json" in e.lower()]
+            photo_errors = [e for e in validation_results["errors"] if "Photo" in e or "photo" in e.lower()]
 
-                if critical_errors:
-                    # Block sync for critical errors (JSON corruption, data integrity issues)
-                    n_crit = len(critical_errors)
-                    logger.error(
-                        "CRITICAL: %d critical validation errors. GDrive sync aborted to prevent corrupt data.",
-                        n_crit,
-                    )
-                    logger.error("Critical errors:")
-                    for error in critical_errors[:20]:
-                        logger.error("  - %s", error)
-                    if len(critical_errors) > 20:
-                        logger.error("  ... and %d more", len(critical_errors) - 20)
-                    logger.info(
-                        "Validation summary: %d valid JSON, %d valid photos, %d missing JSON, %d missing photos",
-                        validation_results["json_valid"],
-                        validation_results["photo_valid"],
-                        validation_results["json_missing"],
-                        validation_results["photo_missing"],
-                    )
-                    raise TGPCError(
-                        f"Critical validation errors detected. GDrive sync aborted. {len(critical_errors)} errors."
-                    )
-                else:
-                    # Allow sync for photo errors only (missing/invalid photos from source)
-                    n_photo = len(photo_errors)
-                    logger.warning(
-                        "WARNING: %d photo errors (missing/invalid from source). Proceeding with MEDIA volume sync.",
-                        n_photo,
-                    )
-                    logger.warning("Photo errors:")
-                    for error in photo_errors[:20]:
-                        logger.warning("  - %s", error)
-                    if len(photo_errors) > 20:
-                        logger.warning("  ... and %d more", len(photo_errors) - 20)
-                    logger.info(
-                        "Validation summary: %d valid JSON, %d valid photos, %d missing JSON, %d missing photos",
-                        validation_results["json_valid"],
-                        validation_results["photo_valid"],
-                        validation_results["json_missing"],
-                        validation_results["photo_missing"],
-                    )
-            else:
+            if critical_errors:
+                # Block sync for critical errors (JSON corruption, data integrity issues)
+                n_crit = len(critical_errors)
+                logger.error(
+                    "CRITICAL: %d critical validation errors. GDrive sync aborted to prevent corrupt data.",
+                    n_crit,
+                )
+                logger.error("Critical errors:")
+                for error in critical_errors[:20]:
+                    logger.error("  - %s", error)
+                if len(critical_errors) > 20:
+                    logger.error("  ... and %d more", len(critical_errors) - 20)
                 logger.info(
-                    "Validation passed: All %d JSON and %d photos valid",
+                    "Validation summary: %d valid JSON, %d valid photos, %d missing JSON, %d missing photos",
                     validation_results["json_valid"],
                     validation_results["photo_valid"],
+                    validation_results["json_missing"],
+                    validation_results["photo_missing"],
                 )
+                raise TGPCError(
+                    f"Critical validation errors detected. GDrive sync aborted. {len(critical_errors)} errors."
+                )
+            else:
+                # Allow sync for photo errors only (missing/invalid photos from source)
+                n_photo = len(photo_errors)
+                logger.warning(
+                    "WARNING: %d photo errors (missing/invalid from source). Proceeding with MEDIA volume sync.",
+                    n_photo,
+                )
+                logger.warning("Photo errors:")
+                for error in photo_errors[:20]:
+                    logger.warning("  - %s", error)
+                if len(photo_errors) > 20:
+                    logger.warning("  ... and %d more", len(photo_errors) - 20)
+                logger.info(
+                    "Validation summary: %d valid JSON, %d valid photos, %d missing JSON, %d missing photos",
+                    validation_results["json_valid"],
+                    validation_results["photo_valid"],
+                    validation_results["json_missing"],
+                    validation_results["photo_missing"],
+                )
+        else:
+            logger.info(
+                "Validation passed: All %d JSON and %d photos valid",
+                validation_results["json_valid"],
+                validation_results["photo_valid"],
+            )
 
         # Keep progress file for tracking
         if total_processed > 0:
@@ -921,7 +910,7 @@ class Manager:
         else:
             logger.info("No records processed")
 
-    def _process_records_sequential(self, pending_records, rx_lookup, jsn_dir, img_dir, ip_rotation_interval=500):
+    def _process_records_sequential(self, pending_records, rph_lookup, jsn_dir, img_dir, ip_rotation_interval=500):
         """Process records sequentially."""
         total_processed = 0
 
@@ -934,8 +923,8 @@ class Manager:
                 if not details:
                     continue
 
-                # Get basic info from rx.json lookup for validation
-                basic_info = rx_lookup.get(serial)
+                # Get basic info from rph.json lookup for validation
+                basic_info = rph_lookup.get(serial)
 
                 # CRITICAL SAFETY CHECK - Validate all details match
                 mismatches = []
@@ -968,7 +957,7 @@ class Manager:
                     f"✅ DATA VALIDATION PASSED: serial {serial} ({reg_no}) - {details.name} ({details.category})"
                 )
 
-                basic_info = rx_lookup.get(serial)
+                basic_info = rph_lookup.get(serial)
                 if not basic_info:
                     logger.warning(f"Basic info not found for {reg_no}, using scraped data")
 

@@ -31,7 +31,7 @@ def load_credentials():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="TGPC Rx Registry Manager")
+    parser = argparse.ArgumentParser(description="TGPC RPh Registry Manager")
     subparsers = parser.add_subparsers(dest="command", help="Available commands", required=True)
 
     # Update command
@@ -43,39 +43,12 @@ def main():
     )
 
     # Sync command
-    sync_parser = subparsers.add_parser("sync", help="Sync data to cloud destinations")
-    sync_parser.add_argument(
-        "--supabase",
-        action="store_true",
-        help="Sync to Supabase",
-    )
-    sync_parser.add_argument(
-        "--r2",
-        action="store_true",
-        help="Sync to Cloudflare R2",
-    )
-    sync_parser.add_argument(
-        "--gdrive",
-        action="store_true",
-        help="Sync to Google Drive",
-    )
-    sync_parser.add_argument(
-        "--release",
-        action="store_true",
-        help="Upload rx.json to GitHub Release",
-    )
-    sync_parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Sync to all destinations (Supabase + R2 + GDrive + Release)",
-    )
+    subparsers.add_parser("sync", help="Sync rph.json to all cloud destinations")
 
     # Enrich command
     enrich_parser = subparsers.add_parser("enrich", help="Run enrichment pipeline")
     enrich_parser.add_argument("--start", type=int, default=1, help="Start from serial number (default: 1)")
     enrich_parser.add_argument("--stop", type=int, default=None, help="Stop at serial number (default: all)")
-    enrich_parser.add_argument("--force", action="store_true", help="Re-extract even if already done")
-    enrich_parser.add_argument("--skip-validation", action="store_true", help="Skip file validation checks")
 
     args = parser.parse_args()
 
@@ -96,29 +69,16 @@ def main():
         raise SystemExit(1)
     elif args.command == "sync":
         load_credentials()
-        do_supabase = args.all or args.supabase
-        do_r2 = args.all or args.r2
-        do_gdrive = args.all or args.gdrive
-        do_release = args.all or args.release
-
-        if not any([do_supabase, do_r2, do_gdrive, do_release]):
-            print("Specify a destination: --supabase, --r2, --gdrive, --release, or --all")
-            raise SystemExit(1)
-
-        if do_supabase:
-            manager.sync_to_supabase()
-        if do_r2:
-            manager.sync_to_r2()
-        if do_gdrive:
-            manager.sync_to_gdrive()
-        if do_release:
-            manager.sync_to_release()
+        manager.sync_to_supabase()
+        manager.sync_to_supabase_storage()
+        manager.sync_to_r2()
+        manager.sync_to_gdrive()
+        manager.sync_to_release()
+        manager.sync_to_email()
     elif args.command == "enrich":
         manager.run_enrichment(
             start=args.start,
             stop=args.stop,
-            force=args.force,
-            skip_validation=args.skip_validation,
         )
 
     else:

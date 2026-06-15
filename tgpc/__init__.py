@@ -1,5 +1,5 @@
 """
-TGPC Rx Registry System
+TGPC RPh Registry System
 """
 
 from tgpc.utils import Config, setup_logging
