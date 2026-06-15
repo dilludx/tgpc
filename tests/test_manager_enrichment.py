@@ -63,7 +63,13 @@ class ManagerEnrichmentTests(unittest.TestCase):
                             }
                         ],
                         work_experience={"address": "Clinic Street"},
-                    )
+                    ),
+                    "RPH002": PharmacistRecord(
+                        registration_number="RPH002",
+                        name="Name",
+                        father_name="Father",
+                        category="BPharm",
+                    ),
                 },
             )
             manager.file_manager.save(
