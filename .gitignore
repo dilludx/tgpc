@@ -21,12 +21,12 @@ env/
 .venv/
 
 # Data files (generated/temp — not tracked; code-only repo)
-data/rx.json
+data/rph.json
 data/backups/
 data/detailed/
 data/jsn/
 data/metadata/
-data/rxdetails.json
+data/rphdetails.json
 data/img/
 data/progress/
 data/update_details.json
