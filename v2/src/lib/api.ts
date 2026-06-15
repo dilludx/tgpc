@@ -5,7 +5,7 @@ export async function searchRecords(query: string): Promise<PharmacistRecord[]> 
   if (query.trim().length < 3) return [];
   try {
     const { data } = await supabase
-      .from('rx')
+      .from('rph')
       .select('registration_number, name, father_name, category')
       .or(`registration_number.ilike.%${query}%,name.ilike.%${query}%,father_name.ilike.%${query}%`)
       .limit(100000);
@@ -17,7 +17,7 @@ export async function searchRecords(query: string): Promise<PharmacistRecord[]> 
 
 export async function getStats(): Promise<Stats | null> {
   try {
-    const { data, error } = await supabase.rpc('get_rx_stats');
+    const { data, error } = await supabase.rpc('get_rph_stats');
     if (error) throw error;
     if (data && typeof data === 'object') {
       const d = data as { total: number; categories: Record<string, number> };

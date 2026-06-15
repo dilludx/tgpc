@@ -70,7 +70,7 @@
     const doc = new jsPDF({ format: 'a4', unit: 'mm' });
     const now = new Date();
     const kw = query.trim() || '(all)';
-    const title = `TGPC Rx Registry - Search: ${kw} - ${fmtDate(now)}`;
+    const title = `TGPC RPh Registry - Search: ${kw} - ${fmtDate(now)}`;
     const body = filtered.map(r => [r.registration_number, r.name, r.father_name || '—', r.category.toUpperCase()]);
     autoTable(doc, {
       startY: 15,
@@ -96,7 +96,7 @@
       doc.text(`Page ${i} / ${total}`, doc.internal.pageSize.width - 10, 10, { align: 'right' });
       doc.text(`Page ${i} / ${total}`, doc.internal.pageSize.width - 10, doc.internal.pageSize.height - 10, { align: 'right' });
     }
-    doc.save(`TGPC-RX-SEARCH-${kw}-${fileDateStr(now)}.pdf`);
+    doc.save(`TGPC-RPH-SEARCH-${kw}-${fileDateStr(now)}.pdf`);
   }
 
   function exportCSV() {
@@ -110,11 +110,11 @@
       `"${(r.father_name || '').replace(/"/g, '""')}"`,
       `"${r.category.toUpperCase()}"`
     ]);
-    const csv = [`# TGPC Rx Registry - Search: ${kw} - ${fmtDate(now)}`, header.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const csv = [`# TGPC RPh Registry - Search: ${kw} - ${fmtDate(now)}`, header.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `TGPC-RX-SEARCH-${kw}-${fileDateStr(now)}.csv`;
+    a.download = `TGPC-RPH-SEARCH-${kw}-${fileDateStr(now)}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

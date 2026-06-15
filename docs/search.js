@@ -204,7 +204,7 @@ async function checkConnection() {
 
         // Try a simple query to check connection
         const { error } = await supabaseClient
-            .from('rx')
+            .from('rph')
             .select('id')
             .limit(1);
 
@@ -384,7 +384,7 @@ async function loadAnalytics() {
 
     try {
         // Single RPC call to get all stats (production grade)
-        const { data: stats, error } = await supabaseClient.rpc('get_rx_stats');
+        const { data: stats, error } = await supabaseClient.rpc('get_rph_stats');
 
         if (error) throw error;
 
@@ -515,7 +515,7 @@ async function performSearch() {
 
     try {
         const { data, error } = await supabaseClient
-            .from('rx')
+            .from('rph')
             .select('registration_number,name,father_name,category')
             .or(`registration_number.ilike.%${queryText}%,name.ilike.%${queryText}%,father_name.ilike.%${queryText}%`)
             .limit(100000);
@@ -683,7 +683,7 @@ function exportResults() {
     const formattedDate = `${dayName}, ${dayNum} ${monthName} ${year} ${hours}:${minutes}`;
 
     // Title
-    const title = `TGPC Rx Registry - Search Keyword: ${keyword} - ${formattedDate}`;
+    const title = `TGPC RPh Registry - Search Keyword: ${keyword} - ${formattedDate}`;
 
     // Prepare table data
     const tableData = currentResults.map(record => [
@@ -732,7 +732,7 @@ function exportResults() {
 
     // Save PDF
     const fileDateStr = dayNum + String(now.getMonth()+1).padStart(2,'0') + year;
-    doc.save(`TGPC-RX-SEARCH-${keyword}-${fileDateStr}.pdf`);
+    doc.save(`TGPC-RPH-SEARCH-${keyword}-${fileDateStr}.pdf`);
 }
 
 // Export results to CSV
@@ -755,7 +755,7 @@ function exportCSV() {
     const formattedDate = `${dayName}, ${dayNum} ${monthName} ${year} ${hours}:${minutes}`;
 
     // Metadata row
-    const metadata = `# TGPC Rx Registry - Search Keyword: ${keyword} - ${formattedDate}`;
+    const metadata = `# TGPC RPh Registry - Search Keyword: ${keyword} - ${formattedDate}`;
 
     // CSV header
     const headers = ['Registration Number', 'Name', 'Father Name', 'Category'];
@@ -780,7 +780,7 @@ function exportCSV() {
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     const fileDateStr = dayNum + String(now.getMonth()+1).padStart(2,'0') + year;
-    link.download = `TGPC-RX-SEARCH-${keyword}-${fileDateStr}.csv`;
+    link.download = `TGPC-RPH-SEARCH-${keyword}-${fileDateStr}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

@@ -86,7 +86,7 @@ async function loadStatusAndStats() {
     }
 
     try {
-        await db.from('rx').select('id').limit(1);
+        await db.from('rph').select('id').limit(1);
         const statusEl = document.getElementById('status');
         statusEl.classList.add('live');
         statusEl.innerHTML = `<span class="dot"></span><span>Live</span><span class="sep">|</span><span class="date">${getDateText()} <span id="liveTime"></span></span>`;
@@ -96,7 +96,7 @@ async function loadStatusAndStats() {
     }
 
     try {
-        const { data } = await db.rpc('get_rx_stats');
+        const { data } = await db.rpc('get_rph_stats');
         if (data) {
             document.getElementById('total').textContent = fmt(data.total);
             if (data.categories) {
@@ -169,7 +169,7 @@ async function search() {
     document.getElementById('resultsSection').style.display = 'none';
 
     try {
-        let query = db.from('rx')
+        let query = db.from('rph')
             .select('registration_number,name,father_name,category')
             .or(`registration_number.ilike.%${q}%,name.ilike.%${q}%,father_name.ilike.%${q}%`);
 

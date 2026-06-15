@@ -111,7 +111,7 @@
       <div class="flex flex-col gap-0.5" style={headingWidth ? `width:${headingWidth}px` : ''}>
         <a href="/" bind:this={headingEl} class="no-underline inline-flex flex-col w-fit">
           <span class="text-[1.4rem] font-bold tracking-tight flex items-center gap-1" style="color:#111;white-space:nowrap">
-            <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">Rx</span><span class="text-[#9ca3af]">Registry</span>
+            <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">RPh</span><span class="text-[#9ca3af]">Registry</span>
           </span>
           <span class="block text-[0.6rem] text-[#9ca3af] font-medium truncate">Open-Source TGPC Pharmacist Data</span>
         </a>
@@ -129,7 +129,7 @@
         <div style="display:flex;gap:10px;align-items:center">
           <div style="border-right:1px solid #e5e7eb;padding-right:12px">
             <div style="display:flex;flex-direction:column;gap:4px">
-              <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#808080">Total <span style="color:#ef4444;text-transform:none">Rx</span></div>
+              <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#808080">Total <span style="color:#ef4444;text-transform:none">RPh</span></div>
               <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val('total')}</div>
             </div>
           </div>
@@ -171,7 +171,7 @@
           style="padding-bottom:calc(0.25rem + env(safe-area-inset-bottom, 0px))">
     <div class="w-full px-4 sm:px-6 flex items-center justify-between gap-4">
       <span class="text-left flex-1 pr-4" style="text-wrap:balance"><span style="color:#ef4444">DISCLAIMER:</span> This is an unofficial, third-party tool not affiliated with TGPC or any government body. Data is for reference only — verify all information from official sources before use. Users assume all risk.<br>No warranty as to accuracy, completeness, or timeliness. No liability for errors, omissions, or actions taken based on this content. Operated under fair dealing (Indian Copyright Act, 1957, Section 52).</span>
-      <span class="text-right whitespace-nowrap font-semibold flex-shrink-0 text-[0.7rem]">TGPC Rx Registry &copy; {year}</span>
+      <span class="text-right whitespace-nowrap font-semibold flex-shrink-0 text-[0.7rem]">TGPC RPh Registry &copy; {year}</span>
     </div>
   </footer>
 </div>
