@@ -47,13 +47,13 @@ class ScraperParsingTests(unittest.TestCase):
                     <th>S.No</th><th>Reg No</th><th>Name</th><th>Father Name</th><th>Category</th>
                 </tr>
                 <tr>
-                    <td>BAD</td><td>RX001</td><td>Alice</td><td>Parent One</td><td>BPharm</td>
+                    <td>BAD</td><td>RPH001</td><td>Alice</td><td>Parent One</td><td>BPharm</td>
                 </tr>
                 <tr>
-                    <td>2</td><td>RX002</td><td>Bob</td><td>Parent Two</td>
+                    <td>2</td><td>RPH002</td><td>Bob</td><td>Parent Two</td>
                 </tr>
                 <tr>
-                    <td>3</td><td>RX003</td><td>Carol</td><td>Parent Three</td><td>DPharm</td><td>Ignored</td>
+                    <td>3</td><td>RPH003</td><td>Carol</td><td>Parent Three</td><td>DPharm</td><td>Ignored</td>
                 </tr>
             </table>
         </body>
@@ -65,9 +65,9 @@ class ScraperParsingTests(unittest.TestCase):
             records = scraper.extract_basic_records()
 
         self.assertEqual(len(records), 2)
-        self.assertEqual(records[0].registration_number, "RX001")
+        self.assertEqual(records[0].registration_number, "RPH001")
         self.assertIsNone(records[0].serial_number)
-        self.assertEqual(records[1].registration_number, "RX003")
+        self.assertEqual(records[1].registration_number, "RPH003")
         self.assertEqual(records[1].serial_number, 3)
 
     def test_extract_basic_records_returns_empty_when_no_table_exists(self):
@@ -88,7 +88,7 @@ class ScraperParsingTests(unittest.TestCase):
             "_request",
             return_value=make_response("<html><body>No Records Found</body></html>"),
         ):
-            record = scraper.extract_detailed_info("RX404")
+            record = scraper.extract_detailed_info("RPH404")
 
         self.assertIsNone(record)
 
@@ -108,7 +108,7 @@ class ScraperParsingTests(unittest.TestCase):
                     <th>Photo</th>
                 </tr>
                 <tr>
-                    <td>RX123</td>
+                    <td>RPH123</td>
                     <td>Jane Pharmacist</td>
                     <td>Parent Name</td>
                     <td>Female</td>
@@ -143,10 +143,10 @@ class ScraperParsingTests(unittest.TestCase):
 
         scraper = Scraper()
         with patch.object(scraper, "_request", return_value=make_response(html)):
-            record = scraper.extract_detailed_info("RX123")
+            record = scraper.extract_detailed_info("RPH123")
 
         self.assertIsNotNone(record)
-        self.assertEqual(record.registration_number, "RX123")
+        self.assertEqual(record.registration_number, "RPH123")
         self.assertEqual(record.name, "Jane Pharmacist")
         self.assertEqual(record.father_name, "Parent Name")
         self.assertEqual(record.category, "BPharm")
@@ -205,7 +205,7 @@ class ScraperParsingTests(unittest.TestCase):
 
         scraper = Scraper()
         with patch.object(scraper, "_request", return_value=make_response(html)):
-            record = scraper.extract_detailed_info("RX123")
+            record = scraper.extract_detailed_info("RPH123")
 
         self.assertIsNotNone(record)
         self.assertEqual(
@@ -237,7 +237,7 @@ class ScraperParsingTests(unittest.TestCase):
 
         scraper = Scraper()
         with patch.object(scraper, "_request", return_value=make_response(html)):
-            record = scraper.extract_detailed_info("RX321")
+            record = scraper.extract_detailed_info("RPH321")
 
         self.assertIsNone(record)
 

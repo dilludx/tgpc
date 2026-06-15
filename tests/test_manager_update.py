@@ -61,8 +61,8 @@ class ManagerUpdateTests(unittest.TestCase):
 
     def test_safety_guard_blocks_large_drop(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            existing = [record(f"RX{i:03d}", f"Name{i}", f"Father{i}", "BPharm", i) for i in range(1, 101)]
-            fresh = [record(f"RX{i:03d}", f"Name{i}", f"Father{i}", "BPharm", i) for i in range(1, 81)]
+            existing = [record(f"RPH{i:03d}", f"Name{i}", f"Father{i}", "BPharm", i) for i in range(1, 101)]
+            fresh = [record(f"RPH{i:03d}", f"Name{i}", f"Father{i}", "BPharm", i) for i in range(1, 81)]
 
             manager = self._make_manager(temp_dir, fresh)
             manager.file_manager.save(existing)
@@ -71,8 +71,8 @@ class ManagerUpdateTests(unittest.TestCase):
 
             final_records = manager.file_manager.load()
             self.assertEqual(len(final_records), 100)
-            self.assertEqual(final_records[0].registration_number, "RX001")
-            self.assertEqual(final_records[-1].registration_number, "RX100")
+            self.assertEqual(final_records[0].registration_number, "RPH001")
+            self.assertEqual(final_records[-1].registration_number, "RPH100")
 
     def test_update_writes_sorted_deduped_data_and_github_outputs(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -104,7 +104,7 @@ class ManagerUpdateTests(unittest.TestCase):
                 else:
                     os.environ["GITHUB_OUTPUT"] = old_env
 
-            saved = json.loads(Path(temp_dir, "rx.json").read_text(encoding="utf-8"))
+            saved = json.loads(Path(temp_dir, "rph.json").read_text(encoding="utf-8"))
             self.assertEqual([r["registration_number"] for r in saved], ["C3", "A1", "B2"])
             self.assertEqual(saved[1]["name"], "Alpha New")
 
@@ -203,7 +203,7 @@ class ManagerUpdateTests(unittest.TestCase):
     def test_update_soft_skips_when_source_is_unavailable(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             existing = [
-                record("RX001", "Existing", "Parent", "BPharm", 1),
+                record("RPH001", "Existing", "Parent", "BPharm", 1),
             ]
             scraper = FailingScraper(
                 TGPCError(
@@ -228,7 +228,7 @@ class ManagerUpdateTests(unittest.TestCase):
                     os.environ["GITHUB_OUTPUT"] = old_env
 
             self.assertEqual(status, "source_unavailable")
-            saved = json.loads(Path(temp_dir, "rx.json").read_text(encoding="utf-8"))
+            saved = json.loads(Path(temp_dir, "rph.json").read_text(encoding="utf-8"))
             self.assertEqual(saved, [existing[0].to_dict()])
 
             output_lines = Path(github_output).read_text(encoding="utf-8").splitlines()

@@ -49,8 +49,8 @@ class ManagerEnrichmentTests(unittest.TestCase):
             manager = self._make_manager(
                 temp_dir,
                 {
-                    "RX001": PharmacistRecord(
-                        registration_number="RX001",
+                    "RPH001": PharmacistRecord(
+                        registration_number="RPH001",
                         name="Alpha",
                         father_name="Parent",
                         category="BPharm",
@@ -68,14 +68,14 @@ class ManagerEnrichmentTests(unittest.TestCase):
             )
             manager.file_manager.save(
                 [
-                    record("RX002", serial=2),
-                    record("RX001", name="Alpha", father="Parent", serial=1),
+                    record("RPH002", serial=2),
+                    record("RPH001", name="Alpha", father="Parent", serial=1),
                 ]
             )
 
-            manager.run_enrichment(skip_validation=True)
+            manager.run_enrichment()
 
-            detail_file = Path(temp_dir, "jsn", "RX001.json")
+            detail_file = Path(temp_dir, "jsn", "RPH001.json")
             self.assertTrue(detail_file.exists())
             details = json.loads(detail_file.read_text(encoding="utf-8"))
             self.assertEqual(details["validity_date"], "2026-12-31")
@@ -87,7 +87,7 @@ class ManagerEnrichmentTests(unittest.TestCase):
             manager = self._make_manager(
                 temp_dir,
                 {
-                    "RX001": PharmacistRecord(
+                    "RPH001": PharmacistRecord(
                         registration_number="WRONG001",
                         name="Wrong Record",
                         father_name="Parent",
@@ -95,12 +95,12 @@ class ManagerEnrichmentTests(unittest.TestCase):
                     )
                 },
             )
-            manager.file_manager.save([record("RX001", serial=1)])
+            manager.file_manager.save([record("RPH001", serial=1)])
 
             with self.assertRaises(DataIntegrityError):
-                manager.run_enrichment(skip_validation=True)
+                manager.run_enrichment()
 
-            self.assertFalse(Path(temp_dir, "jsn", "RX001.json").exists())
+            self.assertFalse(Path(temp_dir, "jsn", "RPH001.json").exists())
 
 
 if __name__ == "__main__":
