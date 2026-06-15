@@ -6,7 +6,7 @@
 
 ## Repository Overview
 
-Code-only repository for the **Telangana Pharmacy Council (TGPC)** pharmacist registration search tool. Tracks source code but excludes data artifacts (e.g., `data/rx.json`, `data/update_details.json`, `data/jsn/`, `data/img/`), credentials, and IDE files.
+Code-only repository for the **Telangana Pharmacy Council (TGPC)** pharmacist registration search tool. Tracks source code but excludes data artifacts (e.g., `data/rph.json`, `data/update_details.json`, `data/jsn/`, `data/img/`), credentials, and IDE files.
 
 The project consists of:
 - **Python pipeline** (`tgpc/`) — scrapes data from the Telangana Pharmacy Council website, syncs to Supabase, Cloudflare R2, Google Drive, GitHub Release, and sends email notification
@@ -19,7 +19,7 @@ The project consists of:
 
 ```
 tgpc/
-├── .github/workflows/rxsync.yml   # Manual CI: single job, scrapes + syncs to 4 destinations + email
+├── .github/workflows/rphsync.yml   # Manual CI: single job, scrapes + syncs to 4 destinations + email
 ├── .husky/                         # Husky pre-commit hook → triggers pre-commit (ruff)
 ├── .pre-commit-config.yaml         # ruff lint + ruff-format only
 ├── pyproject.toml                  # Package: tgpc-data-extraction v2.0.0, pinned deps
@@ -29,11 +29,11 @@ tgpc/
 ├── V2.md
 ├── README.md
 ├── data/
-│   ├── rx.json                     # ~87K pharmacist records (JSON array) — gitignored but tracked historically
+│   ├── rph.json                     # ~87K pharmacist records (JSON array) — gitignored but tracked historically
 │   ├── update_details.json         # Sync diff summary — gitignored
 │   ├── jsn/                        # Per-record enrichment JSON — gitignored
 │   ├── img/                        # Per-record photos — gitignored
-│   └── backups/                    # Timestamped rx.json backups — gitignored
+│   └── backups/                    # Timestamped rph.json backups — gitignored
 ├── tgpc/                           # Python package (5 files)
 │   ├── __init__.py                 # Imports Config, setup_logging, Scraper, Manager; __version__ = "2.0.0"
 │   ├── __main__.py                 # CLI: python3 -m tgpc {update, sync, enrich}
@@ -71,7 +71,7 @@ tgpc/
 
 ```
 __main__.py ─── Manager ─── Config (utils.py)
-                     ├── FileManager (load/save rx.json as JSON array)
+                     ├── FileManager (load/save rph.json as JSON array)
                      ├── BackupManager (timestamped backups, cleanup after 30 days)
                      ├── Scraper (scraper.py)
                      │       ├── RateLimiter (adaptive delay 3-8s)
@@ -79,11 +79,11 @@ __main__.py ─── Manager ─── Config (utils.py)
                      │       ├── extract_basic_records() — table parser via BeautifulSoup
                      │       └── extract_detailed_info() — per-record detail page parser
                      └── Sync methods:
-                           ├── sync_to_supabase() — upsert to rx table, update metadata.last_sync
-                           ├── sync_to_supabase_storage() — upload rx.json to Supabase Storage
+                           ├── sync_to_supabase() — upsert to rph table, update metadata.last_sync
+                           ├── sync_to_supabase_storage() — upload rph.json to Supabase Storage
                            ├── sync_to_r2() — aws s3api put-object to Cloudflare R2
                            ├── sync_to_gdrive() — rclone copyto Google Drive
-                           ├── sync_to_release() — gh release upload rx.json
+                           ├── sync_to_release() — gh release upload rph.json
                            └── sync_to_email() — Resend API email with change details
 ```
 
@@ -95,7 +95,7 @@ python3 -m tgpc update --no-sync    # Scrape only, skip cloud sync
 python3 -m tgpc sync --supabase     # Sync only to Supabase
 python3 -m tgpc sync --r2           # Sync only to R2
 python3 -m tgpc sync --gdrive       # Sync only to Google Drive
-python3 -m tgpc sync --release      # Upload rx.json to GitHub Release (tag: rxjson)
+python3 -m tgpc sync --release      # Upload rph.json to GitHub Release (tag: rphjson)
 python3 -m tgpc sync --all          # Sync to all 4 destinations
 python3 -m tgpc enrich --start 1 --stop 100 --force --skip-validation
 ```
@@ -131,7 +131,7 @@ Config is loaded via `Config.load()` classmethod (reads env vars for proxy and e
 **PharmacistRecord** dataclass:
 - Core fields: `registration_number`, `name`, `father_name`, `category`, `serial_number`
 - Optional detail fields: `gender`, `validity_date`, `status`, `education` (list of dicts), `work_experience` (dict)
-- `to_dict()` → strict 5-field dict (for `rx.json`)
+- `to_dict()` → strict 5-field dict (for `rph.json`)
 - `to_detailed_dict()` → 10-field dict (for enrichment JSON files)
 
 **RateLimiter:**
@@ -160,41 +160,41 @@ Config is loaded via `Config.load()` classmethod (reads env vars for proxy and e
 - `save(records, filename)` → JSON array with `indent=2, ensure_ascii=False`
 - `load(filename)` → deserializes `PharmacistRecord` list
 
-**`BackupManager`** — timestamped backups (format: `rx_backup_YYYYMMDD_HHMMSS.json`), cleanup deletes files older than 30 days.
+**`BackupManager`** — timestamped backups (format: `rph_backup_YYYYMMDD_HHMMSS.json`), cleanup deletes files older than 30 days.
 
 **`Manager.run_daily_update()`** — the core update workflow:
 1. **Health check** → if blocked, writes `update_status=blocked` to GITHUB_OUTPUT, returns `"blocked"`
-2. **Backup** existing `rx.json`
+2. **Backup** existing `rph.json`
 3. **Scrape** fresh data via `scraper.extract_basic_records()`
 4. **Source unavailable check** — if scrape raises exception matching `_is_source_unavailable_error()` (timeouts, connection errors, 429/5xx), writes `source_unavailable`, preserves existing data, returns `"source_unavailable"`
 5. **Empty check** — if no records returned, returns `"empty_scrape"`
 6. **Safety guard** — if fresh count < 90% of existing, aborts with `"safety_abort"`
 7. **Deduplicate** by registration number, sort by serial_number
 8. **Calculate diffs** — new, removed, modified records with per-category stats
-9. **Save** new data to `rx.json`, cleanup old backups
+9. **Save** new data to `rph.json`, cleanup old backups
 10. **Write `update_details.json`** with change details
 11. **Write GITHUB_OUTPUT** for CI consumption
 12. Returns `"updated"`
 
 **`Manager.sync_to_supabase()`**:
 - Reads `SUPABASE_URL`, `SUPABASE_SECRET_KEY` from env
-- Creates Supabase client, batch upserts to `rx` table (1000/batch, `on_conflict="registration_number"`)
+- Creates Supabase client, batch upserts to `rph` table (1000/batch, `on_conflict="registration_number"`)
 - Updates `metadata.last_sync` timestamp
 
 **`Manager.sync_to_supabase_storage()`**:
-- POSTs `rx.json` to `{url}/storage/v1/object/tgpc/rx.json` with `x-upsert: true`
+- POSTs `rph.json` to `{url}/storage/v1/object/tgpc/rph.json` with `x-upsert: true`
 
 **`Manager.sync_to_r2()`**:
 - Reads `CLOUDFLARE_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`
-- Runs `aws s3api put-object --endpoint-url https://{account_id}.r2.cloudflarestorage.com --bucket tgpc --key rx.json`
+- Runs `aws s3api put-object --endpoint-url https://{account_id}.r2.cloudflarestorage.com --bucket tgpc --key rph.json`
 
 **`Manager.sync_to_gdrive()`**:
 - Reads `RCLONE_GDRIVE_CONFIG` (base64-encoded rclone config file)
-- Writes to temp file, runs `rclone copyto rx.json gdrive:tgpc/rx.json`
+- Writes to temp file, runs `rclone copyto rph.json gdrive:tgpc/rph.json`
 - Cleans up temp config
 
 **`Manager.sync_to_release()`**:
-- Uses `gh release` CLI to upload `rx.json` to GitHub Release tag `rxjson`
+- Uses `gh release` CLI to upload `rph.json` to GitHub Release tag `rphjson`
 - Creates release if it doesn't exist, updates title with record count
 
 **`Manager.sync_to_email()`**:
@@ -206,7 +206,7 @@ Config is loaded via `Config.load()` classmethod (reads env vars for proxy and e
 
 **`Manager.run_enrichment(start, stop, force, skip_validation)`**:
 - Health check → enumerate `done_ids` from `jsn/` directory
-- Load `rx.json`, filter pending records sorted by serial
+- Load `rph.json`, filter pending records sorted by serial
 - Optionally restrict to `start`/`stop` serial range
 - `force` flag re-extracts even already-done records
 - Calls `_process_records_sequential()` → for each record: scrapes detail page, validates registration/name/father/category match (raises `DataIntegrityError` on mismatch), combines basic + extracted data, saves individual JSON to `jsn/{reg_no}.json`
@@ -236,7 +236,7 @@ dependencies = [
 ### Supabase Schema
 
 ```sql
-CREATE TABLE rx (
+CREATE TABLE rph (
   registration_number TEXT PRIMARY KEY,
   name TEXT,
   father_name TEXT,
@@ -250,14 +250,14 @@ CREATE TABLE metadata (
 );
 
 -- RPC function (created via Supabase dashboard):
--- get_rx_stats() → { total: int, categories: { BPharm: int, DPharm: int, MPharm: int, PharmD: int, QC: int, QP: int } }
+-- get_rph_stats() → { total: int, categories: { BPharm: int, DPharm: int, MPharm: int, PharmD: int, QC: int, QP: int } }
 ```
 
-RLS allows anonymous `SELECT` on `rx` and `metadata` tables. The Publishable Key in `config.js` is safe to commit.
+RLS allows anonymous `SELECT` on `rph` and `metadata` tables. The Publishable Key in `config.js` is safe to commit.
 
 ### Data File Formats
 
-**`rx.json`** — standard JSON array:
+**`rph.json`** — standard JSON array:
 ```json
 [
   {"registration_number": "TG12345", "name": "...", "father_name": "...", "category": "BPharm", "serial_number": 12345},
@@ -317,7 +317,7 @@ Security headers added to all responses: `X-Content-Type-Options: nosniff`, `Ref
 ### Pages
 
 **`index.html`** — Desktop search. Inline CSS (~1300 lines in `<style>`):
-- Sticky header: "TGPC" (green) "Rx" (red) "Registry" (gray)
+- Sticky header: "TGPC" (green) "RPh" (red) "Registry" (gray)
 - Connection status pill (Busy / Live + clock / Offline) with CSS pulse animation
 - Stats bar: 7 cards (Total, BPharm, DPharm, MPharm, PharmD, QC, QP) — 1-row desktop, 4-col tablet, 2-col mobile (hides QC/QP on small)
 - Sync badge + last-sync timestamp from Supabase metadata table
@@ -356,8 +356,8 @@ Security headers added to all responses: `X-Content-Type-Options: nosniff`, `Ref
 - `renderPagination()` — 50/page desktop, prev/next + "X-Y of Z"
 - `exportResults()` — jsPDF + jspdf-autotable from CDN
 - `exportCSV()` — Blob download with UTF-8 BOM
-- `checkConnection()` — tests Supabase `rx` table SELECT 1
-- `loadAnalytics()` — `supabase.rpc('get_rx_stats')` with localStorage cache
+- `checkConnection()` — tests Supabase `rph` table SELECT 1
+- `loadAnalytics()` — `supabase.rpc('get_rph_stats')` with localStorage cache
 - `setupRealtimeUpdates()` — polls `metadata.last_sync` every 5 minutes, shows toast on change
 - Keyboard shortcut: Alt+S focuses search, Escape clears
 
@@ -393,23 +393,23 @@ Array of 19 notice objects with fields: `id`, `date`, `source`, `title`, `links`
 
 ## CI/CD
 
-### GitHub Actions: `.github/workflows/rxsync.yml`
+### GitHub Actions: `.github/workflows/rphsync.yml`
 
 **Trigger:** `workflow_dispatch` (manual). Input: `force_sync` (boolean, default false).
 
-**Single job `rxsync`** with these steps:
+**Single job `rphsync`** with these steps:
 
 1. **Checkout** repository
 2. **Install Python deps** (`pip install -e .` + `pip install supabase`)
 3. **Create data directory** (`mkdir -p data/backups`)
-4. **Restore artifact** — `gh run download` artifact `rx-data` if `data/rx.json` doesn't exist locally
+4. **Restore artifact** — `gh run download` artifact `rph-data` if `data/rph.json` doesn't exist locally
 5. **Run data update** — `python3 -m tgpc update` (or force-skip if `force_sync` is true, sets GITHUB_OUTPUT directly)
 6. **Sync to Supabase DB** (condition: `update.success == True`) — `python3 -m tgpc sync` (but only Supabase sync is done inline, not the full CLI sync)
 7. **Upload to Supabase Storage** — curl POST to storage bucket `tgpc`
 8. **Upload to Cloudflare R2** — `aws s3api put-object`
 9. **Upload to Google Drive** — `rclone copyto` (also uploads `jsn-{max_serial}.zip` and `img-{max_serial}.zip` if they exist, cleans old versions)
-10. **Clean old artifact** — deletes previous `rx-data` artifacts
-11. **Upload new artifact** — `rx-data` with 90-day retention
+10. **Clean old artifact** — deletes previous `rph-data` artifacts
+11. **Upload new artifact** — `rph-data` with 90-day retention
 12. **Create update summary** — Python script reads `update_details.json`, writes formatted markdown to `GITHUB_STEP_SUMMARY`
 13. **Send email notification** — inline Python script builds HTML email and sends via Resend API
 14. **Notify on failure** — prints failure message
@@ -471,7 +471,7 @@ These are public R2 bucket URLs for the same account.
 | Frontend | Cloudflare Pages (auto-deploy from `main`) | `https://tgpc.pages.dev` |
 | Worker | Embedded in Pages as `_worker.js` | Same domain |
 | CI/CD | GitHub Actions (manual trigger) | `github.com/dilludx/tgpc/actions` |
-| Data download | GitHub Release | Tag `rxjson`, file `rx.json` |
+| Data download | GitHub Release | Tag `rphjson`, file `rph.json` |
 
 ---
 

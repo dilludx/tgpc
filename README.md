@@ -4,8 +4,8 @@ Scrapes the public [Telangana Pharmacy Council](https://www.pharmacycouncil.tela
 
 ## What This Repo Does
 
-1. **Scrapes** the public TGPC registry website → `data/rx.json` (JSON array)
-2. **Syncs** to Supabase (`rx` table) + Cloudflare R2 + Google Drive + GitHub Release
+1. **Scrapes** the public TGPC registry website → `data/rph.json` (JSON array)
+2. **Syncs** to Supabase (`rph` table) + Cloudflare R2 + Google Drive + GitHub Release
 3. **Enriches** records with photos and detailed info from individual detail pages
 4. **Serves** a static search frontend from `docs/` via Cloudflare Pages + `_worker.js`
 
@@ -26,9 +26,9 @@ Scrapes the public [Telangana Pharmacy Council](https://www.pharmacycouncil.tela
 ```bash
 python3 -m venv venv && ./venv/bin/pip install -e .
 
-python3 -m tgpc update                          # Scrape → data/rx.json → sync all destinations
+python3 -m tgpc update                          # Scrape → data/rph.json → sync all destinations
 python3 -m tgpc update --no-sync                # Scrape only, skip cloud sync
-python3 -m tgpc sync --supabase                 # Sync data/rx.json → Supabase
+python3 -m tgpc sync --supabase                 # Sync data/rph.json → Supabase
 python3 -m tgpc sync --all                      # Sync to all 4 destinations
 python3 -m tgpc enrich --start 1 --stop 100     # Enrich records with detail pages
 python3 -m unittest discover -s tests -p 'test_*.py' -v  # 13 tests
@@ -49,11 +49,11 @@ python3 -m unittest discover -s tests -p 'test_*.py' -v  # 13 tests
 
 The frontend embeds its own Supabase anon key in `docs/config.js` — this is safe because RLS restricts access to `SELECT` only.
 
-## CI Pipeline (`.github/workflows/rxsync.yml`)
+## CI Pipeline (`.github/workflows/rphsync.yml`)
 
-Single `rxsync` job (manual trigger). Steps:
+Single `rphsync` job (manual trigger). Steps:
 
-1. Restore `data/rx.json` from artifact cache
+1. Restore `data/rph.json` from artifact cache
 2. Run `python3 -m tgpc update`
 3. Sync to Supabase DB + Storage
 4. Upload to Cloudflare R2
@@ -63,9 +63,9 @@ Single `rxsync` job (manual trigger). Steps:
 
 ## Data Artifacts (all gitignored)
 
-- `data/rx.json` — Canonical JSON array of all pharmacist records (`registration_number`, `name`, `father_name`, `category`, `serial_number`)
+- `data/rph.json` — Canonical JSON array of all pharmacist records (`registration_number`, `name`, `father_name`, `category`, `serial_number`)
 - `data/update_details.json` — Sync diff written by `run_daily_update()` (consumed by CI summary + email)
-- `data/backups/` — Timestamped backups of rx.json (cleaned after 30 days)
+- `data/backups/` — Timestamped backups of rph.json (cleaned after 30 days)
 - `data/jsn/` — Per-record enrichment JSON files
 - `data/img/` — Per-record photos from enrichment
 
