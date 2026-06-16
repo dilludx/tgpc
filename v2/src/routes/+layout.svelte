@@ -104,14 +104,6 @@
       sliderStyle = `transform:translateX(${el.offsetLeft}px);width:${el.offsetWidth}px`;
     }
   });
-
-  $effect(() => {
-    const tab = activeTab;
-    let el = tab === 'search' ? searchRef : tab === 'notice' ? noticeRef : dispatchRef;
-    if (el) {
-      sliderStyle = `transform:translateX(${el.offsetLeft}px);width:${el.offsetWidth}px`;
-    }
-  });
 </script>
 <div class="h-screen flex flex-col bg-white overflow-hidden">
   <header class="sticky top-0 z-50 bg-white">
