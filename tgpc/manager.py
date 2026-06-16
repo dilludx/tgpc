@@ -497,30 +497,37 @@ class Manager:
 
         endpoint = f"https://{account_id}.r2.cloudflarestorage.com"
         file_path = str(self.file_manager.data_dir / "rph.json")
-
+        env = os.environ.copy()
+        env["AWS_ACCESS_KEY_ID"] = access_key
+        env["AWS_SECRET_ACCESS_KEY"] = secret_key
         try:
             result = subprocess.run(
                 [
-                    "curl",
-                    "--fail",
-                    "--silent",
-                    "--show-error",
-                    "--aws-sigv4",
-                    "aws:auto",
-                    "--user",
-                    f"{access_key}:{secret_key}",
-                    "-T",
+                    "aws",
+                    "s3api",
+                    "put-object",
+                    "--endpoint-url",
+                    endpoint,
+                    "--region",
+                    "auto",
+                    "--bucket",
+                    "tgpc",
+                    "--key",
+                    "rph.json",
+                    "--body",
                     file_path,
-                    f"{endpoint}/tgpc/rph.json",
                 ],
                 capture_output=True,
                 text=True,
                 timeout=120,
+                env=env,
             )
             if result.returncode == 0:
                 logger.info("R2 sync complete")
             else:
                 logger.error(f"R2 sync failed: {result.stderr.strip()}")
+        except FileNotFoundError:
+            logger.error("awscli not installed. Run: pip install awscli")
         except Exception as e:
             logger.error(f"R2 sync error: {e}")
 
