@@ -82,18 +82,19 @@
   let searchRef: HTMLAnchorElement | undefined;
   let noticeRef: HTMLAnchorElement | undefined;
   let dispatchRef: HTMLAnchorElement | undefined;
-  let headingEl: HTMLAnchorElement | undefined;
+  let titleSpan: HTMLSpanElement | undefined;
   let headingWidth = $state(0);
   let sliderStyle = $state('');
 
   $effect(() => {
-    if (!headingEl) return;
+    if (!titleSpan) return;
+    headingWidth = titleSpan.offsetWidth;
     const ro = new ResizeObserver(entries => {
       for (const entry of entries) {
         headingWidth = entry.contentRect.width;
       }
     });
-    ro.observe(headingEl);
+    ro.observe(titleSpan);
     return () => ro.disconnect();
   });
 
@@ -109,11 +110,11 @@
   <header class="sticky top-0 z-50 bg-white">
     <div class="w-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
       <div class="flex flex-col gap-0.5" style={headingWidth ? `width:${headingWidth}px` : ''}>
-        <a href="/" bind:this={headingEl} class="no-underline inline-flex flex-col w-fit relative">
-          <span class="text-[1.4rem] font-bold tracking-tight flex items-center gap-1" style="color:#111;white-space:nowrap">
+        <a href="/" class="no-underline inline-flex flex-col items-start" style="width:{headingWidth || 'auto'}px">
+          <span bind:this={titleSpan} class="text-[1.4rem] font-bold tracking-tight inline-flex items-center gap-1" style="color:#111;white-space:nowrap">
             <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">RPh</span><span class="text-[#9ca3af]">Registry</span>
           </span>
-          <span class="text-[0.6rem] text-[#9ca3af] font-medium truncate absolute left-0" style="top:100%;width:100%">Open-Source TGPC Pharmacist Data</span>
+          <span class="text-[0.6rem] text-[#9ca3af] font-medium truncate self-stretch" style="max-width:{headingWidth || 'none'}px">Open-Source TGPC Pharmacist Data</span>
         </a>
         <div class="flex items-center gap-2 text-[0.7rem]">
           <span class="flex w-full items-center gap-1 h-5 px-1.5 rounded-full text-[0.625rem] font-medium"
