@@ -109,7 +109,7 @@
 <div class="h-screen flex flex-col bg-white overflow-hidden">
   <header class="sticky top-0 z-50 bg-white">
     <div class="w-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
-      <div class="flex flex-col gap-0.5">
+      <div class="flex flex-col gap-0.5 items-start">
         <div class="w-fit" style="max-width:{headingWidth || 'none'}px">
           <a href="/" class="no-underline inline-flex flex-col items-start" style="width:{headingWidth || 'auto'}px">
             <span bind:this={titleSpan} class="text-[1.4rem] font-bold tracking-tight inline-flex items-center gap-1" style="color:#111;white-space:nowrap">
