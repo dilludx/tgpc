@@ -118,7 +118,7 @@
             <span class="text-[0.6rem] text-[#9ca3af] font-medium truncate self-stretch" style="max-width:{headingWidth || 'none'}px">Open-Source TGPC Pharmacist Data</span>
           </a>
           <div class="flex items-center gap-2 text-[0.7rem] self-stretch">
-            <span class="flex w-full items-center gap-1 h-5 px-1.5 rounded-full text-[0.625rem] font-medium"
+            <span class="flex w-full items-center justify-center gap-1 h-5 px-1.5 rounded-full text-[0.625rem] font-medium"
                   style="background:{statusConfig.bg};border:1px solid {statusConfig.border};color:{statusConfig.text}">
               <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:{statusConfig.dot}"></span>
               <span class="text-[10px] font-medium leading-[18px]">{status}</span>
