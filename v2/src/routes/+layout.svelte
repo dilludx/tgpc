@@ -109,7 +109,7 @@
 <div class="h-screen flex flex-col bg-white overflow-hidden">
   <header class="sticky top-0 z-50 bg-white">
     <div class="w-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
-      <div class="flex flex-col gap-0.5 items-start">
+      <div class="flex flex-col gap-0.5">
         <div class="w-fit" style="max-width:{headingWidth || 'none'}px">
           <a href="/" class="no-underline inline-flex flex-col items-start" style="width:{headingWidth || 'auto'}px">
             <span bind:this={titleSpan} class="text-[1.4rem] font-bold tracking-tight inline-flex items-center gap-1" style="color:#111;white-space:nowrap">
@@ -119,7 +119,7 @@
           </a>
         </div>
         <div class="flex items-center gap-2 text-[0.7rem]">
-          <span class="flex w-full items-center gap-1 h-5 px-1.5 rounded-full text-[0.625rem] font-medium"
+          <span class="flex items-center gap-1 h-5 px-1.5 rounded-full text-[0.625rem] font-medium"
                 style="background:{statusConfig.bg};border:1px solid {statusConfig.border};color:{statusConfig.text}">
             <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:{statusConfig.dot}"></span>
             <span class="text-[10px] font-medium leading-[18px]">{status}</span>
