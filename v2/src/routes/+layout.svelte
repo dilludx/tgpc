@@ -110,7 +110,7 @@
     <div class="w-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
       <div class="flex flex-col gap-0.5" style={headingWidth ? `width:${headingWidth}px` : ''}>
         <a href="/" class="no-underline inline-flex flex-col w-full">
-          <span bind:this={titleEl} class="text-[1.4rem] font-bold tracking-tight flex items-center gap-1" style="color:#111;white-space:nowrap">
+          <span bind:this={titleEl} class="text-[1.4rem] font-bold tracking-tight inline-flex items-center gap-1" style="color:#111;white-space:nowrap">
             <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">RPh</span><span class="text-[#9ca3af]">Registry</span>
           </span>
           <span class="text-[0.6rem] text-[#9ca3af] font-medium truncate w-full">Open-Source TGPC Pharmacist Data</span>
