@@ -82,7 +82,28 @@
   let searchRef: HTMLAnchorElement | undefined;
   let noticeRef: HTMLAnchorElement | undefined;
   let dispatchRef: HTMLAnchorElement | undefined;
+  let headingEl: HTMLAnchorElement | undefined;
+  let headingWidth = $state(0);
   let sliderStyle = $state('');
+
+  $effect(() => {
+    if (!headingEl) return;
+    const ro = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        headingWidth = entry.contentRect.width;
+      }
+    });
+    ro.observe(headingEl);
+    return () => ro.disconnect();
+  });
+
+  $effect(() => {
+    const tab = activeTab;
+    let el = tab === 'search' ? searchRef : tab === 'notice' ? noticeRef : dispatchRef;
+    if (el) {
+      sliderStyle = `transform:translateX(${el.offsetLeft}px);width:${el.offsetWidth}px`;
+    }
+  });
 
   $effect(() => {
     const tab = activeTab;
@@ -95,8 +116,8 @@
 <div class="h-screen flex flex-col bg-white overflow-hidden">
   <header class="sticky top-0 z-50 bg-white">
     <div class="w-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
-      <div class="flex flex-col gap-0.5 items-start">
-        <a href="/" class="no-underline inline-block relative">
+      <div class="flex flex-col gap-0.5" style={headingWidth ? `width:${headingWidth}px` : ''}>
+        <a href="/" bind:this={headingEl} class="no-underline inline-flex flex-col w-fit relative">
           <span class="text-[1.4rem] font-bold tracking-tight flex items-center gap-1" style="color:#111;white-space:nowrap">
             <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">RPh</span><span class="text-[#9ca3af]">Registry</span>
           </span>
