@@ -73,33 +73,26 @@
     const title = `TGPC RPh Registry - Search: ${kw} - ${fmtDate(now)}`;
     const body = filtered.map(r => [r.registration_number, r.name, r.father_name || '—', r.category.toUpperCase()]);
 
-    const FILLS: Record<string, number[]> = {
-      BPHARM: [207, 247, 225], DPHARM: [255, 220, 220], MPHARM: [230, 218, 252],
-      PHARMD: [255, 238, 194], QC: [196, 238, 250], QP: [235, 234, 233]
-    };
     const TEXTS: Record<string, number[]> = {
-      BPHARM: [0, 110, 55], DPHARM: [160, 30, 30], MPHARM: [80, 30, 160],
-      PHARMD: [160, 100, 0], QC: [5, 90, 115], QP: [80, 75, 72]
+      BPHARM: [0, 204, 102], DPHARM: [239, 68, 68], MPHARM: [124, 58, 237],
+      PHARMD: [245, 158, 11], QC: [8, 145, 178], QP: [120, 113, 108]
     };
 
     autoTable(doc, {
       startY: 15,
       head: [['RPC NUMBER', 'NAME', 'FATHER NAME', 'CATEGORY']],
       body,
-      theme: 'plain',
+      theme: 'striped',
       headStyles: { fillColor: [0, 204, 102], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
       bodyStyles: { fontSize: 8, cellPadding: 2 },
+      alternateRowStyles: { fillColor: [247, 247, 247] },
       margin: { top: 12, left: 10, right: 10, bottom: 12 },
       tableWidth: 'auto',
       didParseCell: (data) => {
         if (data.section === 'body' && data.row.raw) {
           const cat = (data.row.raw as string[])[3]?.toUpperCase();
-          const fill = FILLS[cat];
           const text = TEXTS[cat];
-          if (fill && text) {
-            data.cell.styles.fillColor = fill as [number, number, number];
-            data.cell.styles.textColor = text as [number, number, number];
-          }
+          if (text) data.cell.styles.textColor = text as [number, number, number];
         }
       },
       didDrawPage: (data) => {
@@ -114,7 +107,7 @@
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
       const ph = doc.internal.pageSize.height;
-      doc.text('TGPC RPh Registry - Open-Source TGPC Pharmacist Data', 10, ph - 10);
+      doc.text('TGPC RPh Registry - Open-Source Pharmacist Data', 10, ph - 10);
       doc.text('tgpc.pages.dev', doc.internal.pageSize.width / 2, ph - 10, { align: 'center' });
       doc.text(`Page ${i} / ${total}`, doc.internal.pageSize.width - 10, ph - 10, { align: 'right' });
     }
