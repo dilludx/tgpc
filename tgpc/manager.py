@@ -476,7 +476,7 @@ class Manager:
                         "x-upsert": "true",
                     },
                     data=f,
-                    timeout=120,
+                    timeout=300,
                 )
             if resp.ok:
                 logger.info("Supabase Storage sync complete")
@@ -552,7 +552,7 @@ class Manager:
                 ],
                 capture_output=True,
                 text=True,
-                timeout=120,
+                timeout=300,
                 env={**os.environ, "RCLONE_CONFIG": str(config_path)},
             )
             config_path.unlink(missing_ok=True)
