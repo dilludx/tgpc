@@ -6,27 +6,13 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { CATEGORY_COLORS, CATEGORIES, CATEGORY_KEYS } from '$lib/colors';
+  import Clock from '$lib/components/Clock.svelte';
 
   let { children } = $props();
 
   let status = $state<ConnectionStatus>('Busy');
   let stats = $state<Stats | null>(null);
   let lastSync = $state<string>('');
-  let tick = $state(0);
-
-  const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-
-  let dateStr = $derived.by(() => {
-    tick;
-    const d = new Date();
-    return `${String(d.getDate()).padStart(2,'0')} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-  });
-  let timeStr = $derived.by(() => {
-    tick;
-    const d = new Date();
-    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
-  });
-  let year = $derived.by(() => { tick; return new Date().getFullYear(); });
 
   async function loadStats() {
     status = 'Busy';
@@ -61,12 +47,6 @@
     return () => clearInterval(id);
   });
 
-  onMount(() => {
-    tick = Date.now();
-    const id = setInterval(() => tick = Date.now(), 1000);
-    return () => clearInterval(id);
-  });
-
   let statusConfig = $derived.by(() => ({
     Live: { bg: 'rgba(34,197,94,0.05)', border: '#86efac', text: '#166534', dot: '#22c55e' },
     Busy: { bg: 'rgba(239,68,68,0.05)', border: '#fca5a5', text: '#991b1b', dot: '#ef4444' },
@@ -77,26 +57,21 @@
     return stats ? stats[key].toLocaleString() : '—';
   }
 
+  let sortedCategories = $derived.by(() => {
+    if (!stats) return CATEGORIES;
+    return [...CATEGORIES].sort((a, b) => {
+      const ka = CATEGORY_KEYS[CATEGORIES.indexOf(a)] as keyof Stats;
+      const kb = CATEGORY_KEYS[CATEGORIES.indexOf(b)] as keyof Stats;
+      return (stats[kb] ?? 0) - (stats[ka] ?? 0);
+    });
+  });
+
   let activeTab = $derived($page.url.pathname === '/' ? 'search' : $page.url.pathname === '/notice' ? 'notice' : 'dispatch');
 
   let searchRef: HTMLAnchorElement | undefined;
   let noticeRef: HTMLAnchorElement | undefined;
   let dispatchRef: HTMLAnchorElement | undefined;
-  let titleSpan: HTMLSpanElement | undefined;
-  let headingWidth = $state(0);
   let sliderStyle = $state('');
-
-  $effect(() => {
-    if (!titleSpan) return;
-    headingWidth = titleSpan.offsetWidth;
-    const ro = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        headingWidth = entry.contentRect.width;
-      }
-    });
-    ro.observe(titleSpan);
-    return () => ro.disconnect();
-  });
 
   $effect(() => {
     const tab = activeTab;
@@ -110,23 +85,26 @@
   <header class="sticky top-0 z-50 bg-white">
     <div class="w-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
       <div class="flex flex-col">
-        <div class="w-fit flex flex-col" style="max-width:{headingWidth || 'none'}px">
-          <a href="/" class="no-underline" style="width:{headingWidth || 'auto'}px">
-            <span bind:this={titleSpan} class="text-[1.4rem] font-bold tracking-tight inline-flex items-center gap-1" style="color:#111;white-space:nowrap">
-              <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">RPh</span><span class="text-[#9ca3af]">Registry</span>
-            </span>
-          </a>
-          <span class="text-[0.65rem] text-[#9ca3af] font-medium truncate self-stretch mb-0.5 " style="max-width:{headingWidth || 'none'}px">Open-Source TGPC Pharmacist Data</span>
-          <div class="flex items-center gap-2 text-[0.7rem] self-stretch">
-            <span class="flex w-full items-center justify-center gap-1 h-5 px-1.5 rounded-full text-[0.75rem] font-medium"
-                  style="background:{statusConfig.bg};border:1px solid {statusConfig.border};color:{statusConfig.text}">
-              <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:{statusConfig.dot}"></span>
-              <span class="text-[10px] font-medium leading-[18px]">{status}</span>
-              <span class="opacity-40 leading-[18px]">|</span>
-              <span class="opacity-80 leading-[18px] tabular-nums whitespace-nowrap">{dateStr} {timeStr}</span>
-            </span>
+          <div style="display:table;width:0">
+            <a href="/" class="no-underline" style="display:table-row;white-space:nowrap;width:1px">
+              <span class="text-[1.4rem] font-bold tracking-tight inline-flex items-center gap-1" style="color:#111;white-space:nowrap">
+                <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">RPh</span><span class="text-[#9ca3af]">Registry</span>
+              </span>
+            </a>
+            <span class="text-[0.65rem] text-[#9ca3af] font-medium truncate mb-0.5" style="display:table-row;overflow:hidden">Open-Source TGPC Pharmacist Data</span>
+            <div style="display:table-row;overflow:hidden">
+              <div class="flex items-center gap-2 text-[0.7rem]">
+                <span class="flex w-full items-center justify-center gap-px h-5 px-1.5 rounded-full text-[0.75rem] font-medium box-border overflow-hidden"
+                      style="background:{statusConfig.bg};border:1px solid {statusConfig.border};color:{statusConfig.text}">
+                  <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:{statusConfig.dot}"></span>
+                  <span class="text-[10px] font-medium leading-[18px] inline-block w-[28px] text-center">{status}</span>
+                  {#if status !== 'Offline'}
+                  <Clock/>
+                  {/if}
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
       </div>
       <div style="background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px 4px 10px;display:flex;flex-direction:column;gap:0;flex-shrink:0">
         <div style="display:flex;gap:10px;align-items:center">
@@ -136,11 +114,11 @@
               <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val('total')}</div>
             </div>
           </div>
-          {#each CATEGORIES as cat, i}
+          {#each sortedCategories as cat, i}
             <div style="border-right:{i < 5 ? '1px solid #e5e7eb' : 'none'};padding-right:{i < 5 ? '12px' : '0'}">
               <div style="display:flex;flex-direction:column;gap:4px">
                 <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:{CATEGORY_COLORS[cat]}">{cat}</div>
-                <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val(CATEGORY_KEYS[i] as keyof Stats)}</div>
+                <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val(CATEGORY_KEYS[CATEGORIES.indexOf(cat)] as keyof Stats)}</div>
               </div>
             </div>
           {/each}
@@ -150,13 +128,13 @@
             <span style="display:inline-flex;align-items:center;justify-content:center;width:10px;height:10px;background:#00cc66;border-radius:50%;color:white;font-size:6px;font-weight:bold">&#10003;</span>
             <span style="color:#00cc66;font-size:0.45rem;font-weight:600;text-transform:uppercase;letter-spacing:0.3px">Synced</span>
           </span>
-          <span style="background:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">{lastSync || `${dateStr} ${timeStr}`}</span>
+          <span style="background:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">{lastSync || '—'}</span>
           <span style="opacity:0.4">|</span>
           <span style="color:#9ca3af">Unofficial data — Not for legal use</span>
         </div>
       </div>
     </div>
-    <div class="w-full px-4 sm:px-6 border-b border-[#e5e7eb]" style="display:flex;align-items:center;gap:2px;background:#f8f9fa;font-size:0.7rem;padding-top:3px;padding-bottom:3px;overflow-x:auto;position:relative">
+    <div class="w-full px-4 sm:px-6 border-b border-[#e5e7eb]" style="display:flex;align-items:center;gap:2px;font-size:0.7rem;padding-top:3px;padding-bottom:3px;overflow-x:auto;position:relative">
       <a href="/" bind:this={searchRef} style="text-decoration:none;padding:2px 4px;font-weight:500;color:{activeTab === 'search' ? '#00cc66' : '#6b7280'};white-space:nowrap">SEARCH</a>
       <span style="color:#d1d5db;font-weight:300;padding:0 2px;user-select:none">/</span>
       <a href="/notice" bind:this={noticeRef} style="text-decoration:none;padding:2px 4px;font-weight:500;color:{activeTab === 'notice' ? '#00cc66' : '#6b7280'};white-space:nowrap">NOTICES</a>
@@ -174,7 +152,7 @@
           style="padding-bottom:calc(0.25rem + env(safe-area-inset-bottom, 0px))">
     <div class="w-full px-4 sm:px-6 flex items-center justify-between gap-4">
       <span class="text-left flex-1 pr-4" style="text-wrap:balance"><span style="color:#ef4444">DISCLAIMER:</span> This is an unofficial, third-party tool not affiliated with TGPC or any government body. Data is for reference only — verify all information from official sources before use. Users assume all risk.<br>No warranty as to accuracy, completeness, or timeliness. No liability for errors, omissions, or actions taken based on this content. Operated under fair dealing (Indian Copyright Act, 1957, Section 52).</span>
-      <span class="text-right whitespace-nowrap font-semibold flex-shrink-0 text-[0.7rem]">TGPC RPh Registry &copy; {year}</span>
+      <span class="text-right whitespace-nowrap font-semibold flex-shrink-0 text-[0.7rem]">TGPC RPh Registry &copy; {new Date().getFullYear()}</span>
     </div>
   </footer>
 </div>

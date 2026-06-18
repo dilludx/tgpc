@@ -1,5 +1,17 @@
 [
   {
+    "id": 20,
+    "date": "2026-06-10",
+    "source": "Circular",
+    "title": "Pharmacist Recruitment, Promotion, Service Regulations-2025",
+    "links": [
+      {
+        "label": "Gazette",
+        "url": "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice/20260610PCIPharmacistRecruitmentPromotionServiceRegulations2025.pdf"
+      }
+    ]
+  },
+  {
     "id": 1,
     "date": "2026-02-23",
     "source": "News",
