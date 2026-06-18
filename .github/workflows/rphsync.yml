@@ -76,11 +76,11 @@ jobs:
       run: |
         echo "♻️ SYNCING DATA TO SUPABASE CLOUD DATABASE..."
         python3 -c "
-from tgpc.manager import Manager
-m = Manager()
-m.sync_to_supabase()
-print('✅ Supabase sync complete')
-"
+        from tgpc.manager import Manager
+        m = Manager()
+        m.sync_to_supabase()
+        print('✅ Supabase sync complete')
+        "
 
     - name: Upload to Supabase Storage
       if: ${{ steps.update.outputs.success == 'True' }}
