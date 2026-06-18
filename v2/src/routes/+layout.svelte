@@ -54,7 +54,7 @@
   })[status]);
 
   function val(key: keyof Stats): string {
-    return stats ? stats[key].toLocaleString() : '—';
+    return stats ? stats[key].toLocaleString() : '0';
   }
 
   let sortedCategories = $derived.by(() => {
@@ -107,16 +107,16 @@
           </div>
       </div>
       <div style="background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px 4px 10px;display:flex;flex-direction:column;gap:0;flex-shrink:0">
-        <div style="display:flex;gap:10px;align-items:center">
+        <div style="display:flex;gap:10px;align-items:center;justify-content:center">
           <div style="border-right:1px solid #e5e7eb;padding-right:12px">
-            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;flex-direction:column;gap:4px;text-align:center">
               <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#808080">Total <span style="color:#ef4444;text-transform:none">RPh</span></div>
               <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val('total')}</div>
             </div>
           </div>
           {#each sortedCategories as cat, i}
             <div style="border-right:{i < 5 ? '1px solid #e5e7eb' : 'none'};padding-right:{i < 5 ? '12px' : '0'}">
-              <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;flex-direction:column;gap:4px;text-align:center">
                 <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:{CATEGORY_COLORS[cat]}">{cat}</div>
                 <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val(CATEGORY_KEYS[CATEGORIES.indexOf(cat)] as keyof Stats)}</div>
               </div>

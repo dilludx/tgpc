@@ -72,16 +72,36 @@
     const kw = query.trim() || '(all)';
     const title = `TGPC RPh Registry - Search: ${kw} - ${fmtDate(now)}`;
     const body = filtered.map(r => [r.registration_number, r.name, r.father_name || '—', r.category.toUpperCase()]);
+
+    const FILLS: Record<string, number[]> = {
+      BPHARM: [207, 247, 225], DPHARM: [255, 220, 220], MPHARM: [230, 218, 252],
+      PHARMD: [255, 238, 194], QC: [196, 238, 250], QP: [235, 234, 233]
+    };
+    const TEXTS: Record<string, number[]> = {
+      BPHARM: [0, 110, 55], DPHARM: [160, 30, 30], MPHARM: [80, 30, 160],
+      PHARMD: [160, 100, 0], QC: [5, 90, 115], QP: [80, 75, 72]
+    };
+
     autoTable(doc, {
       startY: 15,
       head: [['RPC NUMBER', 'NAME', 'FATHER NAME', 'CATEGORY']],
       body,
-      theme: 'striped',
+      theme: 'plain',
       headStyles: { fillColor: [0, 204, 102], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
       bodyStyles: { fontSize: 8, cellPadding: 2 },
-      alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { top: 12, left: 10, right: 10, bottom: 12 },
       tableWidth: 'auto',
+      didParseCell: (data) => {
+        if (data.section === 'body' && data.row.raw) {
+          const cat = (data.row.raw as string[])[3]?.toUpperCase();
+          const fill = FILLS[cat];
+          const text = TEXTS[cat];
+          if (fill && text) {
+            data.cell.styles.fillColor = fill as [number, number, number];
+            data.cell.styles.textColor = text as [number, number, number];
+          }
+        }
+      },
       didDrawPage: (data) => {
         doc.setFontSize(11);
         doc.setTextColor(0, 204, 102);
@@ -93,8 +113,10 @@
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
-      doc.text(`Page ${i} / ${total}`, doc.internal.pageSize.width - 10, 10, { align: 'right' });
-      doc.text(`Page ${i} / ${total}`, doc.internal.pageSize.width - 10, doc.internal.pageSize.height - 10, { align: 'right' });
+      const ph = doc.internal.pageSize.height;
+      doc.text('TGPC RPh Registry - Open-Source TGPC Pharmacist Data', 10, ph - 10);
+      doc.text('tgpc.pages.dev', doc.internal.pageSize.width / 2, ph - 10, { align: 'center' });
+      doc.text(`Page ${i} / ${total}`, doc.internal.pageSize.width - 10, ph - 10, { align: 'right' });
     }
     doc.save(`TGPC-RPH-SEARCH-${kw}-${fileDateStr(now)}.pdf`);
   }
@@ -128,18 +150,18 @@
     <div class="flex items-center min-w-0 border-b-2 border-[#e5e7eb] transition-colors focus-within:border-[#00cc66]"
          class:flex-1={!searched}
          class:max-w-[25vw]={searched}>
-      <div class="relative min-w-0 min-h-[2.5rem] flex-1" style="display:{searched ? 'inline-grid' : 'grid'};grid-template-columns:1fr">
+      <div class="relative min-w-0 min-h-[2rem] flex-1" style="display:{searched ? 'inline-grid' : 'grid'};grid-template-columns:1fr">
         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] pointer-events-none z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
-        <span class="col-start-1 row-start-1 invisible whitespace-nowrap pl-9 {searched ? 'pr-36' : 'pr-16'} py-2.5 text-[0.95rem] max-sm:text-base min-w-0 overflow-hidden">{query || 'Search by Name or Registered Pharmacist Certificate (RPC) Number'}</span>
+        <span class="col-start-1 row-start-1 invisible whitespace-nowrap pl-9 {searched ? 'pr-36' : 'pr-16'} py-1.5 text-[0.95rem] max-sm:text-base min-w-0 overflow-hidden">{query || 'Search by Name or Registered Pharmacist Certificate (RPC) Number'}</span>
         <input
           type="text"
           bind:value={query}
           onkeydown={(e) => e.key === 'Enter' && doSearch()}
           placeholder="Search by Name or Registered Pharmacist Certificate (RPC) Number"
           aria-label="Search"
-          class="col-start-1 row-start-1 w-full pl-9 {searched ? 'pr-36' : 'pr-16'} py-2.5 text-[0.95rem] bg-transparent outline-none max-sm:text-base"
+          class="col-start-1 row-start-1 w-full pl-9 {searched ? 'pr-36' : 'pr-16'} py-1.5 text-[0.95rem] bg-transparent outline-none max-sm:text-base"
         />
         {#if query.trim()}
           <div class="absolute right-0.5 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1">

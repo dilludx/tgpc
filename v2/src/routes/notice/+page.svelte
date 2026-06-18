@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Notice } from '$lib/types';
   import { fetchNotices } from '$lib/api';
+  import { onMount } from 'svelte';
 
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
@@ -43,7 +44,7 @@
     loading = false;
   }
 
-  $effect(() => { load(); });
+  onMount(() => { load(); });
 </script>
 
 <div class="space-y-4">
@@ -54,7 +55,7 @@
       </svg>
       <input type="text" bind:value={query} placeholder="Search notices"
         aria-label="Search"
-        class="w-full pl-9 pr-4 py-2.5 border-b-2 border-[#e5e7eb] text-[0.95rem] bg-transparent outline-none transition-colors focus:border-[#00cc66] max-sm:text-base" />
+        class="w-full pl-9 pr-4 py-1.5 border-b-2 border-[#e5e7eb] text-[0.95rem] bg-transparent outline-none transition-colors focus:border-[#00cc66] max-sm:text-base" />
     </div>
   </div>
 

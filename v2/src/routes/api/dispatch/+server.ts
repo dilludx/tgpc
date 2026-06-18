@@ -22,7 +22,7 @@ export async function GET({ platform, fetch }) {
         name: obj.key.replace('dispatch/', ''),
         size: obj.size
       }));
-      if (files.length > 0) return json(files);
+      if (files.length > 0) return json(files, { headers: { 'Cache-Control': 'public, max-age=300' } });
     }
   } catch {}
 
@@ -35,5 +35,5 @@ export async function GET({ platform, fetch }) {
     name: n,
     size: Math.round(50000 + Math.random() * 200000)
   }));
-  return json(fallback);
+  return json(fallback, { headers: { 'Cache-Control': 'public, max-age=300' } });
 }
