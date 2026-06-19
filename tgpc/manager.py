@@ -822,7 +822,7 @@ class Manager:
         img_dir.mkdir(parents=True, exist_ok=True)
 
         # Filter by start/stop range - use serial_number from rph.json as position
-        if start or stop:
+        if start != 1 or stop is not None:
             rph_records_all = self.file_manager.load("rph.json")
             rph_records_all.sort(key=lambda r: r.serial_number or 0)
 
@@ -832,7 +832,8 @@ class Manager:
                     continue
                 if stop and i + 1 > stop:
                     break
-                filtered.append(r)
+                if r.registration_number not in done_ids:
+                    filtered.append(r)
             pending_records = filtered
 
             start_str = f"serial {start}" if start else "all"
