@@ -137,20 +137,18 @@ class BackupManager:
         logger.info(f"Backup created: {dest}")
         return str(dest)
 
-    def cleanup(self, days: int = 30) -> int:
-        """Remove old backups. Returns count of deleted files."""
-        cutoff = datetime.now() - timedelta(days=days)
+    def cleanup(self, keep: int = 7) -> int:
+        """Keep the most recent N backups, delete older ones. Returns count of deleted files."""
+        files = sorted(self.backup_dir.glob("rph_backup_*.json"), reverse=True)
         deleted = 0
-        for f in self.backup_dir.glob("rph_backup_*.json"):
+        for f in files[keep:]:
             try:
-                ts = f.stem.split("_", 2)[2]
-                if datetime.strptime(ts, "%Y%m%d_%H%M%S") < cutoff:
-                    f.unlink()
-                    deleted += 1
-            except (ValueError, IndexError) as e:
-                logger.warning(f"Could not parse backup file {f.name}: {e}")
+                f.unlink()
+                deleted += 1
             except OSError as e:
                 logger.warning(f"Could not delete backup file {f.name}: {e}")
+        if deleted:
+            logger.info(f"Cleaned {deleted} old backups, kept {min(keep, len(files))}")
         return deleted
 
 
