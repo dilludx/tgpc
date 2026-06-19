@@ -149,6 +149,14 @@ class BackupManager:
                 logger.warning(f"Could not delete backup file {f.name}: {e}")
         if deleted:
             logger.info(f"Cleaned {deleted} old backups, kept {min(keep, len(files))}")
+
+        details = self.backup_dir.parent / "update_details.json"
+        if details.exists():
+            try:
+                details.unlink()
+                logger.info("Cleaned update_details.json")
+            except OSError as e:
+                logger.warning(f"Could not delete update_details.json: {e}")
         return deleted
 
 
