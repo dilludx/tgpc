@@ -8,26 +8,19 @@
 
   let query = $state('');
   let category = $state<CategoryFilter>('all');
-  let page = $state(1);
   let loading = $state(false);
   let results = $state<PharmacistRecord[]>([]);
   let searched = $state(false);
 
-  const PER_PAGE = 50;
   const CATEGORY_FILTERS: CategoryFilter[] = ['all', ...CAT_NAMES];
 
   let filtered = $derived(category === 'all' ? results : results.filter(r => r.category === category));
-  let totalPages = $derived(Math.max(1, Math.ceil(filtered.length / PER_PAGE)));
-  let paginated = $derived(filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE));
-  let start = $derived(filtered.length === 0 ? 0 : (page - 1) * PER_PAGE + 1);
-  let end = $derived(Math.min(page * PER_PAGE, filtered.length));
 
   $effect(() => {
     if (query.trim() === '' && searched) {
       searched = false;
       results = [];
       category = 'all';
-      page = 1;
     }
   });
 
@@ -36,7 +29,6 @@
     if (q.length < 3) return;
     loading = true;
     searched = true;
-    page = 1;
     results = await searchRecords(query);
     loading = false;
   }
@@ -49,7 +41,6 @@
   function reset() {
     query = '';
     category = 'all';
-    page = 1;
     results = [];
     searched = false;
   }
@@ -179,10 +170,10 @@
 
     {#if searched}
       <div class="flex items-center gap-1 min-w-0 flex-1" transition:fly={{ y: 6, duration: 200, opacity: 0 }}>
-        <span class="text-[0.75rem] text-[#9ca3af] tabular-nums flex-shrink-0">{start}–{end} of {filtered.length}</span>
+        <span class="text-[0.75rem] text-[#9ca3af] tabular-nums flex-shrink-0">{filtered.length.toLocaleString()} results</span>
         <span class="ml-auto flex items-center gap-1.5">
           {#each CATEGORY_FILTERS as cat}
-            <button onclick={() => { category = cat; page = 1; }}
+            <button onclick={() => category = cat}
               class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none uppercase"
               style={chipStyle(cat)}>
               {cat === 'all' ? 'All' : cat}
@@ -207,24 +198,22 @@
     {:else if filtered.length === 0}
       <p class="text-[0.85rem] text-[#9ca3af] py-8 text-center">No results</p>
     {:else}
-      {#if filtered.length > 0}
       <div class="hidden md:block">
         <div class="flex items-center gap-2 py-1.5 border-b-2 border-[#e5e7eb] text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider">
           <span class="flex-1 min-w-0">RPC NUMBER</span>
           <span class="flex-1 min-w-0">Name</span>
           <span class="flex-1 min-w-0 hidden lg:block">Father Name</span>
-          <span class="flex-1 min-w-0 text-right">Category</span>
+          <span class="flex-1 min-w-0 text-right pr-6">Category</span>
         </div>
       </div>
-      <div style="max-height:calc(100vh - 280px);overflow-y:auto">
-        <!-- Desktop -->
+      <div style="max-height:calc(100vh - 240px);overflow-y:auto">
         <div class="hidden md:block">
-          {#each paginated as r}
-            <div class="flex items-center gap-2 py-2.5 border-b border-[#f3f4f6] text-[0.875rem]">
+          {#each filtered as r}
+            <div class="flex items-center gap-2 py-2.5 border-b border-[#f3f4f6] text-[0.875rem]" style="content-visibility:auto;contain-intrinsic-size:44px">
               <span class="flex-1 min-w-0 font-semibold text-[#2563eb]">{r.registration_number}</span>
               <span class="flex-1 min-w-0">{r.name}</span>
               <span class="flex-1 min-w-0 text-[#6b7280] hidden lg:block">{r.father_name || '—'}</span>
-              <span class="flex-1 min-w-0 flex justify-end">
+              <span class="flex-1 min-w-0 flex justify-end pr-6">
                 <span class="inline-flex items-center px-1.5 rounded-full text-[0.65rem] font-semibold leading-[18px] uppercase" style="background:{CATEGORY_BG[r.category]};color:{CATEGORY_COLORS[r.category]}">
                   {r.category}
                 </span>
@@ -232,11 +221,9 @@
             </div>
           {/each}
         </div>
-
-        <!-- Mobile -->
         <div class="md:hidden space-y-0.5">
-          {#each paginated as r}
-            <div class="py-2.5 border-b border-[#f3f4f6]">
+          {#each filtered as r}
+            <div class="py-2.5 border-b border-[#f3f4f6]" style="content-visibility:auto;contain-intrinsic-size:80px">
               <div class="flex items-center justify-between">
                 <span class="font-semibold text-[#2563eb] text-[0.875rem]">{r.registration_number}</span>
                 <span class="inline-flex items-center px-1.5 rounded-full text-[0.6rem] font-semibold leading-[18px] uppercase" style="background:{CATEGORY_BG[r.category]};color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
@@ -247,20 +234,6 @@
           {/each}
         </div>
       </div>
-
-      <!-- Pagination -->
-      {#if filtered.length > PER_PAGE}
-        <div class="flex items-center justify-between pt-3 text-[0.8rem] text-[#6b7280]">
-          <button onclick={() => { if (page > 1) page--; }} disabled={page <= 1}
-            class="px-3 py-1 rounded text-[0.75rem] font-medium transition-all cursor-pointer border disabled:opacity-30 disabled:cursor-not-allowed bg-white"
-            style="border-color:#e5e7eb;color:#111">← Prev</button>
-          <span class="tabular-nums">{page} / {totalPages}</span>
-          <button onclick={() => { if (page < totalPages) page++; }} disabled={page >= totalPages}
-            class="px-3 py-1 rounded text-[0.75rem] font-medium transition-all cursor-pointer border disabled:opacity-30 disabled:cursor-not-allowed bg-white"
-            style="border-color:#e5e7eb;color:#111">Next →</button>
-        </div>
-      {/if}
-      {/if}
     {/if}
     </div>
   {/if}
