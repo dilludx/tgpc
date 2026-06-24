@@ -98,7 +98,7 @@
             {#each fy as f}
               <a href={`${BASE}/${f.name}`} target="_blank" rel="noopener"
                 class="flex items-center gap-2 p-2.5 border border-[#e5e7eb] rounded-lg no-underline text-[#111] hover:bg-[#f9fafb] transition-colors">
-                <img src="/pdf.png" alt="" width="24" height="24" class="block flex-shrink-0" />
+                <img src="/pdf.svg" alt="" width="24" height="24" class="block flex-shrink-0" />
                 <div class="min-w-0">
                   <div class="text-[0.8rem] font-medium truncate">{fmt(f.parsed!)}</div>
                   <div class="text-[0.65rem] text-[#9ca3af]">{sizes[f.name] ? Math.round(sizes[f.name] / 1024) + ' KB' : ''}</div>
@@ -111,7 +111,7 @@
         {#each filtered as f}
           <a href={`${BASE}/${f.name}`} target="_blank" rel="noopener"
             class="flex items-center gap-2 p-2.5 border border-[#e5e7eb] rounded-lg no-underline text-[#111] hover:bg-[#f9fafb] transition-colors">
-            <img src="/pdf.png" alt="" width="24" height="24" class="block flex-shrink-0" />
+            <img src="/pdf.svg" alt="" width="24" height="24" class="block flex-shrink-0" />
             <div class="min-w-0">
               <div class="text-[0.8rem] font-medium truncate">{fmt(f.parsed!)}</div>
               <div class="text-[0.65rem] text-[#9ca3af]">{sizes[f.name] ? Math.round(sizes[f.name] / 1024) + ' KB' : ''}</div>
