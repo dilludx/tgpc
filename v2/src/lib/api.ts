@@ -23,12 +23,12 @@ export async function getStats(): Promise<Stats | null> {
       const d = data as { total: number; categories: Record<string, number> };
       return {
         total: d.total ?? 0,
-        bpharm: d.categories?.BPharm ?? d.categories?.bpharm ?? 0,
-        dpharm: d.categories?.DPharm ?? d.categories?.dpharm ?? 0,
-        mpharm: d.categories?.MPharm ?? d.categories?.mpharm ?? 0,
-        pharmd: d.categories?.PharmD ?? d.categories?.pharmd ?? 0,
-        qc: d.categories?.QC ?? d.categories?.qc ?? 0,
-        qp: d.categories?.QP ?? d.categories?.qp ?? 0
+        BPharm: d.categories?.BPharm ?? 0,
+        DPharm: d.categories?.DPharm ?? 0,
+        MPharm: d.categories?.MPharm ?? 0,
+        PharmD: d.categories?.PharmD ?? 0,
+        QC: d.categories?.QC ?? 0,
+        QP: d.categories?.QP ?? 0
       };
     }
     return null;

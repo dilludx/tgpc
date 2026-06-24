@@ -62,11 +62,11 @@
     const now = new Date();
     const kw = query.trim() || '(all)';
     const title = `TGPC RPh Registry - Search: ${kw} - ${fmtDate(now)}`;
-    const body = filtered.map(r => [r.registration_number, r.name, r.father_name || '—', r.category.toUpperCase()]);
+    const body = filtered.map(r => [r.registration_number, r.name, r.father_name || '—', r.category]);
 
     const TEXTS: Record<string, number[]> = {
-      BPHARM: [0, 204, 102], DPHARM: [239, 68, 68], MPHARM: [124, 58, 237],
-      PHARMD: [245, 158, 11], QC: [8, 145, 178], QP: [120, 113, 108]
+      BPharm: [0, 204, 102], DPharm: [239, 68, 68], MPharm: [124, 58, 237],
+      PharmD: [245, 158, 11], QC: [8, 145, 178], QP: [120, 113, 108]
     };
 
     autoTable(doc, {
@@ -81,7 +81,7 @@
       tableWidth: 'auto',
       didParseCell: (data) => {
         if (data.section === 'body' && data.row.raw) {
-          const cat = (data.row.raw as string[])[3]?.toUpperCase();
+          const cat = (data.row.raw as string[])[3];
           const text = TEXTS[cat];
           if (text) data.cell.styles.textColor = text as [number, number, number];
         }
@@ -114,7 +114,7 @@
       `"${r.registration_number}"`,
       `"${(r.name || '').replace(/"/g, '""')}"`,
       `"${(r.father_name || '').replace(/"/g, '""')}"`,
-      `"${r.category.toUpperCase()}"`
+      `"${r.category}"`
     ]);
     const csv = [`# TGPC RPh Registry - Search: ${kw} - ${fmtDate(now)}`, header.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -174,7 +174,7 @@
         <span class="ml-auto flex items-center gap-1.5">
           {#each CATEGORY_FILTERS as cat}
             <button onclick={() => category = cat}
-              class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none uppercase"
+              class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none"
               style={chipStyle(cat)}>
               {cat === 'all' ? 'All' : cat}
             </button>
@@ -214,7 +214,7 @@
               <span class="flex-1 min-w-0">{r.name}</span>
               <span class="flex-1 min-w-0 text-[#6b7280] hidden lg:block">{r.father_name || '—'}</span>
               <span class="flex-1 min-w-0 flex justify-end pr-6">
-                <span class="inline-flex items-center px-1.5 rounded-full text-[0.65rem] font-semibold leading-[18px] uppercase" style="background:{CATEGORY_BG[r.category]};color:{CATEGORY_COLORS[r.category]}">
+                <span class="inline-flex items-center px-1.5 rounded-full text-[0.65rem] font-semibold leading-[18px]" style="background:{CATEGORY_BG[r.category]};color:{CATEGORY_COLORS[r.category]}">
                   {r.category}
                 </span>
               </span>
@@ -226,7 +226,7 @@
             <div class="py-2.5 border-b border-[#f3f4f6]" style="content-visibility:auto;contain-intrinsic-size:80px">
               <div class="flex items-center justify-between">
                 <span class="font-semibold text-[#2563eb] text-[0.875rem]">{r.registration_number}</span>
-                <span class="inline-flex items-center px-1.5 rounded-full text-[0.6rem] font-semibold leading-[18px] uppercase" style="background:{CATEGORY_BG[r.category]};color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
+                <span class="inline-flex items-center px-1.5 rounded-full text-[0.6rem] font-semibold leading-[18px]" style="background:{CATEGORY_BG[r.category]};color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
               </div>
               <div class="text-[0.875rem] mt-0.5">{r.name}</div>
               <div class="text-[0.75rem] text-[#6b7280] mt-0.5">{r.father_name || '—'}</div>

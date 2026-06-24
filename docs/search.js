@@ -419,7 +419,7 @@ function displayAnalytics(stats) {
 
         // Update all categories
         Object.keys(stats.categories).forEach(cat => {
-            const elementId = cat.toLowerCase() + 'Count';
+            const elementId = cat + 'Count';
             const element = document.getElementById(elementId);
             if (element) {
                 element.textContent = stats.categories[cat].toLocaleString();
@@ -603,7 +603,7 @@ function displayPage() {
                         <td><span class="reg-number">${escapeHtml(record.registration_number)}</span></td>
                         <td>${escapeHtml(record.name)}</td>
                         <td>${escapeHtml(record.father_name) || 'N/A'}</td>
-                        <td><span class="badge ${escapeHtml(record.category).toLowerCase()}">${escapeHtml(record.category)}</span></td>
+                        <td><span class="badge ${escapeHtml(record.category)}">${escapeHtml(record.category)}</span></td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -617,7 +617,7 @@ function displayPage() {
                 <div class="mobile-card">
                     <div class="mobile-card-header">
                         <span class="mobile-card-reg">${escapeHtml(record.registration_number)}</span>
-                        <span class="badge ${escapeHtml(record.category).toLowerCase()}">${escapeHtml(record.category)}</span>
+                        <span class="badge ${escapeHtml(record.category)}">${escapeHtml(record.category)}</span>
                     </div>
                     <div class="mobile-card-name">${escapeHtml(record.name)}</div>
                     ${record.father_name ? `<div class="mobile-card-father">${escapeHtml(record.father_name)}</div>` : ''}

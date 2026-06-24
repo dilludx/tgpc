@@ -29,4 +29,4 @@ export const CATEGORY_LABELS: Record<Category, string> = {
 
 export const CATEGORIES: Category[] = ['BPharm', 'DPharm', 'MPharm', 'PharmD', 'QC', 'QP'];
 
-export const CATEGORY_KEYS = ['bpharm', 'dpharm', 'mpharm', 'pharmd', 'qc', 'qp'] as const;
+export const CATEGORY_KEYS = ['BPharm', 'DPharm', 'MPharm', 'PharmD', 'QC', 'QP'] as const;

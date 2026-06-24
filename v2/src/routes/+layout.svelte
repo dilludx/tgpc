@@ -117,7 +117,7 @@
           {#each sortedCategories as cat, i}
             <div style="border-right:{i < 5 ? '1px solid #e5e7eb' : 'none'};padding-right:{i < 5 ? '12px' : '0'}">
               <div style="display:flex;flex-direction:column;gap:4px;text-align:center">
-                <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:{CATEGORY_COLORS[cat]}">{cat}</div>
+                <div style="font-size:0.6875rem;font-weight:600;letter-spacing:0.5px;color:{CATEGORY_COLORS[cat]}">{cat}</div>
                 <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val(CATEGORY_KEYS[CATEGORIES.indexOf(cat)] as keyof Stats)}</div>
               </div>
             </div>

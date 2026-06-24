@@ -101,7 +101,7 @@ async function loadStatusAndStats() {
             document.getElementById('total').textContent = fmt(data.total);
             if (data.categories) {
                 for (const [key, value] of Object.entries(data.categories)) {
-                    const el = document.getElementById(key.toLowerCase());
+                    const el = document.getElementById(key);
                     if (el) {
                         el.textContent = fmt(value);
                     }
@@ -131,7 +131,7 @@ function renderPage() {
         <div class="card">
             <div class="card-row">
                 <span class="reg">${esc(r.registration_number)}</span>
-                <span class="tag ${esc(r.category).toLowerCase()}">${esc(r.category)}</span>
+                <span class="tag ${esc(r.category)}">${esc(r.category)}</span>
             </div>
             <div class="name">${esc(r.name)}</div>
             ${r.father_name ? `<div class="father">FATHER NAME: ${esc(r.father_name)}</div>` : ''}

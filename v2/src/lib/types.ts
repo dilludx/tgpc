@@ -32,12 +32,12 @@ export interface DispatchFile {
 
 export interface Stats {
   total: number;
-  bpharm: number;
-  dpharm: number;
-  mpharm: number;
-  pharmd: number;
-  qc: number;
-  qp: number;
+  BPharm: number;
+  DPharm: number;
+  MPharm: number;
+  PharmD: number;
+  QC: number;
+  QP: number;
 }
 
 export type ConnectionStatus = 'Live' | 'Busy' | 'Offline';

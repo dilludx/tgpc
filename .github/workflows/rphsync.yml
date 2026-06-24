@@ -298,7 +298,7 @@ jobs:
             m = re.search(r'\((.*?)\)', s)
             if not m:
                 return "Other"
-            return {"BPHARM":"BPharm","MPHARM":"MPharm","DPHARM":"DPharm","PHARMD":"PharmD"}.get(m.group(1).upper(), m.group(1).title())
+            return {"BPharm":"BPharm","MPharm":"MPharm","DPharm":"DPharm","PharmD":"PharmD","QC":"QC","QP":"QP"}.get(m.group(1), m.group(1).title())
 
         def reg_no(s):
             m = re.search(r'(\d+)', s)
