@@ -134,10 +134,10 @@ Add 5 new columns (gender, validity_date, status, education jsonb, work_experien
 
 ## Final Verification
 
-- [ ] **V1** `SELECT COUNT(*) FROM rph;` → 87,564
-- [ ] **V2** Spot check: `SELECT registration_number, name, gender, status, validity_date FROM rph LIMIT 5;`
-- [ ] **V3** Load v2 frontend — no console errors, stats show
-- [ ] **V4** Run `python3 -m tgpc sync` twice — second run is idempotent, no errors
+- [x] **V1** `SELECT COUNT(*) FROM rph;` → 87,564
+- [x] **V2** Verify block confirms all 5 new fields populated
+- [x] **V3** Load v2 frontend — no console errors, stats show
+- [x] **V4** Run `python3 -m tgpc sync` twice — second run is idempotent, no errors
 
 ---
 
