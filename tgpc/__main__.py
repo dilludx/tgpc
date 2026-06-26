@@ -205,6 +205,7 @@ def main():
         manager.sync_to_release()
         manager.sync_to_email()
     elif args.command == "enrich":
+        load_credentials()
         manager.run_enrichment(
             start=args.start,
             stop=args.stop,

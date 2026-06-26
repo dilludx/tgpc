@@ -444,10 +444,30 @@ class Manager:
 
             logger.info(f"Syncing {len(records)} records to Supabase...")
 
-            # Batch upsert
+            # Batch upsert with detail fields
             batch_size = 1000
+            jsn_dir = Path(self.config.enrichment_directory) / "jsn"
+
             for i in range(0, len(records), batch_size):
-                batch = [r.to_dict() for r in records[i : i + batch_size]]
+                batch = []
+                for r in records[i : i + batch_size]:
+                    row = r.to_dict()
+                    detail_file = jsn_dir / f"{r.registration_number}.json"
+                    if detail_file.exists():
+                        with open(detail_file, "r", encoding="utf-8") as f:
+                            detail = json.load(f)
+                        row["gender"] = detail.get("gender", "")
+                        row["validity_date"] = detail.get("validity_date", "")
+                        row["status"] = detail.get("status", "")
+                        row["education"] = detail.get("education", [])
+                        row["work_experience"] = detail.get("work_experience", {})
+                    else:
+                        row["gender"] = ""
+                        row["validity_date"] = ""
+                        row["status"] = ""
+                        row["education"] = []
+                        row["work_experience"] = {}
+                    batch.append(row)
                 supabase.table("rph").upsert(batch, on_conflict="registration_number").execute()
                 logger.info(f"Synced batch {i // batch_size + 1}")
 
@@ -805,6 +825,13 @@ class Manager:
 
         logger.info("Starting enrichment...")
 
+        # Create Supabase client for live upsert
+        supabase = None
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_SECRET_KEY")
+        if url and key:
+            supabase = create_client(url, key)
+
         # Load Data
         rph_records = self.file_manager.load("rph.json")
         jsn_dir = Path(self.config.enrichment_directory) / "jsn"
@@ -855,7 +882,9 @@ class Manager:
             return
 
         # Process records sequentially
-        total_processed = self._process_records_sequential(pending_records, rph_lookup, jsn_dir, img_dir)
+        total_processed = self._process_records_sequential(
+            pending_records, rph_lookup, jsn_dir, img_dir, supabase=supabase
+        )
 
         # Validate all files before GDrive sync
         logger.info("Validating files...")
@@ -921,7 +950,9 @@ class Manager:
         else:
             logger.info("No records processed")
 
-    def _process_records_sequential(self, pending_records, rph_lookup, jsn_dir, img_dir, ip_rotation_interval=500):
+    def _process_records_sequential(
+        self, pending_records, rph_lookup, jsn_dir, img_dir, ip_rotation_interval=500, supabase=None
+    ):
         """Process records sequentially."""
         total_processed = 0
 
@@ -995,7 +1026,12 @@ class Manager:
 
                 total_processed += 1
 
-                # No progress tracking needed for minor enrichments
+                # Upsert to Supabase immediately
+                if supabase:
+                    try:
+                        supabase.table("rph").upsert(data, on_conflict="registration_number").execute()
+                    except Exception as e:
+                        logger.warning(f"Failed to upsert enriched record {reg_no} to Supabase: {e}")
 
             except DataIntegrityError:
                 raise

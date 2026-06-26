@@ -4,10 +4,10 @@ Add 5 new columns (gender, validity_date, status, education jsonb, work_experien
 
 ---
 
-## Phase 1 — Add Columns (manual SQL)
+## Phase 1 — Add Columns (manual SQL) ✅
 
-- [ ] **1.1** Open Supabase Dashboard → SQL Editor → New query
-- [ ] **1.2** Run SQL:
+- [x] **1.1** Open Supabase Dashboard → SQL Editor → New query
+- [x] **1.2** Run SQL:
   ```sql
   ALTER TABLE rph 
     ADD COLUMN IF NOT EXISTS gender text DEFAULT '',
@@ -20,14 +20,14 @@ Add 5 new columns (gender, validity_date, status, education jsonb, work_experien
   ```sql
   SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'rph';
   ```
-  → 10 columns (5 original + 5 new)
+  → 11 columns (id + 5 original + 5 new)
 
 ---
 
-## Phase 2 — Modify `sync_to_supabase()` in `tgpc/manager.py`
+## Phase 2 — Modify `sync_to_supabase()` in `tgpc/manager.py` ✅
 
-- [ ] **2.1** Confirm imports exist (already at lines 6, 11): `import json`, `from pathlib import Path`
-- [ ] **2.2** Replace lines 449-451:
+- [x] **2.1** Confirm imports exist (already at lines 6, 11): `import json`, `from pathlib import Path`
+- [x] **2.2** Replace lines 449-451:
   **Before:**
   ```python
   for i in range(0, len(records), batch_size):
@@ -61,18 +61,18 @@ Add 5 new columns (gender, validity_date, status, education jsonb, work_experien
       supabase.table("rph").upsert(batch, on_conflict="registration_number").execute()
       logger.info(f"Synced batch {i // batch_size + 1}")
   ```
-- [ ] **2.3** Lines 454-465 (metadata timestamp + logging) stay unchanged
+- [x] **2.3** Lines 454-465 (metadata timestamp + logging) stay unchanged
 
 ---
 
-## Phase 3 — Backfill 87,564 Records
+## Phase 3 — Backfill 87,564 Records ✅
 
-- [ ] **3.1** Confirm Phase 1 SQL ran (columns exist)
-- [ ] **3.2** Run:
+- [x] **3.1** Confirm Phase 1 SQL ran (columns exist)
+- [x] **3.2** Run:
   ```bash
   python3 -m tgpc sync
   ```
-- [ ] **3.3** Verify in Supabase SQL Editor:
+- [x] **3.3** Verify in Supabase SQL Editor:
   ```sql
   SELECT 
     COUNT(*) as total,
@@ -87,9 +87,9 @@ Add 5 new columns (gender, validity_date, status, education jsonb, work_experien
 
 ---
 
-## Phase 4 — Enrichment Upserts Immediately
+## Phase 4 — Enrichment Upserts Immediately ✅
 
-- [ ] **4.1** `tgpc/__main__.py` line 207 — add `load_credentials()` before `manager.run_enrichment()`:
+- [x] **4.1** `tgpc/__main__.py` line 207 — add `load_credentials()` before `manager.run_enrichment()`:
   ```python
   elif args.command == "enrich":
       load_credentials()
@@ -99,7 +99,7 @@ Add 5 new columns (gender, validity_date, status, education jsonb, work_experien
       )
   ```
 
-- [ ] **4.2** `tgpc/manager.py` line 805 — create Supabase client once in `run_enrichment()`:
+- [x] **4.2** `tgpc/manager.py` line 805 — create Supabase client once in `run_enrichment()`:
   ```python
   supabase = None
   url = os.environ.get("SUPABASE_URL")
@@ -108,7 +108,7 @@ Add 5 new columns (gender, validity_date, status, education jsonb, work_experien
       supabase = create_client(url, key)
   ```
 
-- [ ] **4.3** `tgpc/manager.py` line 858 — pass `supabase` as keyword:
+- [x] **4.3** `tgpc/manager.py` line 858 — pass `supabase` as keyword:
   ```python
   total_processed = self._process_records_sequential(
       pending_records, rph_lookup, jsn_dir, img_dir, supabase=supabase
@@ -116,12 +116,12 @@ Add 5 new columns (gender, validity_date, status, education jsonb, work_experien
   ```
   **Must use keyword** — 5th positional is `ip_rotation_interval=500`.
 
-- [ ] **4.4** `tgpc/manager.py` line 924 — update function signature:
+- [x] **4.4** `tgpc/manager.py` line 924 — update function signature:
   ```python
   def _process_records_sequential(self, pending_records, rph_lookup, jsn_dir, img_dir, ip_rotation_interval=500, supabase=None):
   ```
 
-- [ ] **4.5** `tgpc/manager.py` line 996 — add Supabase upsert after saving detail JSON:
+- [x] **4.5** `tgpc/manager.py` line 996 — add Supabase upsert after saving detail JSON:
   ```python
   if supabase:
       try:
