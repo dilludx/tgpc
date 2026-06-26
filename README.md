@@ -7,7 +7,7 @@ Scrapes the public [Telangana Pharmacy Council](https://www.pharmacycouncil.tela
 1. **Scrapes** the public TGPC registry website → `data/rph.json`
 2. **Syncs** to Supabase (`rph` table + Storage) + Cloudflare R2 + Google Drive + GitHub Release
 3. **Enriches** records with photos and detailed info from individual detail pages
-4. **Serves** a search frontend (SvelteKit v2 + legacy v1) via Cloudflare Pages
+4. **Serves** a search frontend (SvelteKit) via Cloudflare Pages
 
 ## Stack
 
@@ -16,8 +16,7 @@ Scrapes the public [Telangana Pharmacy Council](https://www.pharmacycouncil.tela
 | Scraper | Python 3.14+ (requests, beautifulsoup4, tenacity, supabase-py) |
 | Database | Supabase (PostgreSQL + REST API + Storage) |
 | Cloud storage | Cloudflare R2 + Google Drive |
-| Frontend (v2) | SvelteKit + TypeScript + Supabase JS client + jsPDF |
-| Frontend (v1) | Vanilla HTML/JS/CSS + Cloudflare Worker |
+| Frontend | SvelteKit + TypeScript + Supabase JS client + jsPDF |
 | Hosting | Cloudflare Pages |
 | CI/CD | GitHub Actions (manual `workflow_dispatch`) |
 | Notifications | Resend (email) |
@@ -51,7 +50,7 @@ python3 -m unittest discover -s tests -p 'test_*.py' -v  # 13+ tests
 | `RESEND_API_KEY` | Resend.com API key |
 | `NOTIFICATION_EMAIL` | Email recipient |
 
-The frontends embed their own Supabase anon key — safe because RLS restricts to `SELECT` only.
+The frontend embeds a Supabase anon key — safe because RLS restricts to `SELECT` only.
 
 ## CI Pipeline (`.github/workflows/rphsync.yml`)
 
@@ -67,17 +66,14 @@ Single `rphsync` job (manual trigger). Steps:
 
 ## Frontend
 
-Two versions of the search UI are deployed:
-
-- **v2** (`v2/`) — SvelteKit app at [tgpc.pages.dev](https://tgpc.pages.dev). Search by name or RPC number, filter by category, export CSV/PDF, view notices and dispatch lists.
-- **v1** (`docs/`) — Legacy static HTML/JS site served as a fallback.
+The search UI is a SvelteKit app at [tgpc.pages.dev](https://tgpc.pages.dev). Search by name or RPC number, filter by category, export CSV/PDF, view notices and dispatch lists.
 
 ## Data Artifacts (all gitignored)
 
 - `data/rph.json` — Canonical JSON array of all pharmacist records
 - `data/update_details.json` — Sync diff consumed by CI summary + email
 - `data/backups/` — Timestamped backups cleaned after 30 days
-- `data/jsn/` — Per-record enrichment JSON files
+- `data/jsn/` — Per-record enrichment JSON files (deleted after migration to Supabase)
 - `data/img/` — Per-record photos from enrichment
 
 ## Operational Notes
@@ -86,12 +82,8 @@ Two versions of the search UI are deployed:
 - `enrich` aborts on registration mismatches to prevent corrupt data
 - Search requires 3+ characters; results paginated 50/page with category filter chips
 
-## License & Disclaimer
+## Disclaimer
 
 **NO LIABILITY**: The creator, repository owner, contributors, and hosting platform assume **no liability** for any damages, data loss, or legal consequences arising from the use or existence of this repository.
-
-- **Code**: MIT License
-- **Data**: Belongs to the respective authority. Educational purposes only.
-- **Usage**: Full responsibility rests with the user.
 
 **Indian Copyright Act, 1957**: Developed for educational and research purposes under Section 52 (Fair Dealing). All data remains the intellectual property of the original copyright holder.

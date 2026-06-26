@@ -10,7 +10,7 @@ Code-only repository for the **Telangana Pharmacy Council (TGPC)** pharmacist re
 
 The project consists of:
 - **Python pipeline** (`tgpc/`) — scrapes data from the Telangana Pharmacy Council website, syncs to Supabase, Cloudflare R2, Google Drive, GitHub Release, and sends email notification
-- **Frontend** (`docs/`) — production website served via Cloudflare Pages + Workers
+- **Frontend** (`v2/`) — production website served via Cloudflare Pages (SvelteKit)
 - **Documentation** (`ARCHITECTURE.md`, `V2.md`, `README.md`)
 
 ---
@@ -23,7 +23,7 @@ tgpc/
 ├── .husky/                         # Husky pre-commit hook → triggers pre-commit (ruff)
 ├── .pre-commit-config.yaml         # ruff lint + ruff-format only
 ├── pyproject.toml                  # Package: tgpc-data-extraction v2.0.0, pinned deps
-├── LICENSE                         # MIT
+├── LICENSE                         # (present but not referenced)
 ├── .gitignore
 ├── ARCHITECTURE.md
 ├── V2.md
@@ -40,27 +40,32 @@ tgpc/
 │   ├── utils.py                    # Config dataclass, TGPCError, setup_logging
 │   ├── scraper.py                  # Scraper, RateLimiter, PharmacistRecord, extractors
 │   └── manager.py                  # FileManager, BackupManager, Manager (1004 lines)
-├── docs/                           # Production frontend (v1)
-│   ├── _worker.js                  # Cloudflare Worker: routing, R2 listing, security headers
-│   ├── index.html                  # Desktop search page (~1555 lines, inline CSS)
-│   ├── mobile.html                 # Mobile search page (~599 lines, inline CSS)
-│   ├── notice.html                 # Notices page
-│   ├── dispatch.html               # Dispatch PDFs page
-│   ├── search.js                   # Desktop search logic (~788 lines)
-│   ├── mobile.js                   # Mobile search logic (~240 lines)
-│   ├── dispatch.js                 # Dispatch file listing from R2 + fallback (~157 lines)
-│   ├── notice.js                   # Notice listing (~149 lines)
-│   ├── config.js                   # Supabase URL + anon key (RLS-protected)
-│   ├── notice.json                 # Static notice/circular data (19 entries, 2018-2026)
-│   ├── pdf.png                     # PDF icon
-│   ├── excel.png                   # CSV export button icon
-│   └── og-image.png                # Open Graph social preview
+├── v2/                            # Production frontend (SvelteKit)
+│   ├── src/
+│   │   ├── routes/
+│   │   │   ├── +layout.svelte     # Shared header/footer/stats bar
+│   │   │   ├── +page.svelte       # Search page
+│   │   │   ├── notice/+page.svelte
+│   │   │   ├── dispatch/+page.svelte
+│   │   │   └── api/
+│   │   │       ├── dispatch/+server.ts  # R2 bucket listing proxy
+│   │   │       └── notice/+server.ts    # Static notice JSON
+│   │   └── lib/
+│   │       ├── supabase.ts
+│   │       ├── types.ts
+│   │       └── utils.ts
+│   ├── static/
+│   │   ├── favicon.svg, .ico, -192.png
+│   │   ├── pdf.svg, og-image.png, notice.json
+│   ├── wrangler.toml
+│   └── svelte.config.js
+├── docs/                           # v1 (legacy, retained as reference)
 ├── tests/
 │   ├── test_scraper.py             # 7 tests: timeouts, record parsing, empty tables, no-records, detailed info, legacy headers, missing tables
 │   ├── test_manager_update.py      # 4 tests: safety guard, dedup/sorting, deterministic order, source-unavailable
 │   ├── test_manager_enrichment.py  # 2 tests: enrichment save, registration mismatch
 │   └── sanity.py                   # Quick sanity check (not a unittest)
-└── tgpc-creds.sh                   # Local env vars — gitignored, never commit
+└── (credentials stored in macOS Keychain, not files)
 ```
 
 ---
@@ -100,7 +105,7 @@ python3 -m tgpc sync --all          # Sync to all 4 destinations
 python3 -m tgpc enrich --start 1 --stop 100 --force --skip-validation
 ```
 
-`load_credentials()` at module level reads `tgpc-creds.sh` and exports vars into `os.environ` if not already set.
+`load_credentials()` reads credentials from macOS Keychain via `security` command and exports vars into `os.environ`.
 
 ### `tgpc/utils.py` — Config & Exceptions
 
@@ -204,13 +209,12 @@ Config is loaded via `Config.load()` classmethod (reads env vars for proxy and e
 - Sends via Resend API (POST to `https://api.resend.com/emails`)
 - Capped at 200 items per section in email
 
-**`Manager.run_enrichment(start, stop, force, skip_validation)`**:
-- Health check → enumerate `done_ids` from `jsn/` directory
+**`Manager.run_enrichment(start, stop, force)`**:
+- Health check → queries Supabase `rph` table for records missing enrichment fields
 - Load `rph.json`, filter pending records sorted by serial
 - Optionally restrict to `start`/`stop` serial range
 - `force` flag re-extracts even already-done records
-- Calls `_process_records_sequential()` → for each record: scrapes detail page, validates registration/name/father/category match (raises `DataIntegrityError` on mismatch), combines basic + extracted data, saves individual JSON to `jsn/{reg_no}.json`
-- After processing: validates all output files via `validate_batch_files()`, blocks on critical (JSON) errors, warns on photo errors
+- Calls `_process_records_sequential()` → for each record: scrapes detail page, validates registration/name/father/category match (raises `DataIntegrityError` on mismatch), upserts all 10 fields directly to Supabase, saves photo to `data/img/`
 
 ### `tgpc/__main__.py` — CLI
 
@@ -294,100 +298,39 @@ RLS allows anonymous `SELECT` on `rph` and `metadata` tables. The Publishable Ke
 
 ---
 
-## Frontend (v1 — Production)
+## Frontend (SvelteKit — Production)
 
-### Architecture
+Built with SvelteKit 5 + Tailwind CSS v4 + TypeScript. Full design spec in `V2.md`.
 
-No framework. Four HTML pages (inline CSS) + vanilla JS files, served via Cloudflare Pages `_worker.js`.
+### Stack
 
-### Cloudflare Worker (`docs/_worker.js`)
-
-Routes:
-| Path | Behavior |
+| Layer | Technology |
 |---|---|
-| `/api/dispatch` | Lists R2 bucket objects with prefix `dispatch/`, returns JSON `[{name, size}]` |
-| `/api/notice` | Proxies `notice.json` from static assets |
-| `/dispatch`, `/dispatch/` | Serves `dispatch.html` |
-| `/notice`, `/notice/` | Serves `notice.html` |
-| `/` | UA detection → mobile serves `mobile.html`, desktop serves `index.html` |
-| All other paths | Passthrough to `env.ASSETS.fetch()` (Cloudflare Pages static serving) |
+| Framework | SvelteKit 5 (`@sveltejs/adapter-cloudflare`) |
+| Styling | Tailwind CSS v4 |
+| Database | Supabase (anon key with RLS — `SELECT` only) |
+| Hosting | Cloudflare Pages (build: `v2/.svelte-kit/cloudflare`) |
+| Env vars | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY` |
 
-Security headers added to all responses: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`. No CSP in the Worker — CSP is handled via `<meta>` tags in HTML files.
+### Routes
 
-### Pages
+| Path | Description |
+|---|---|
+| `/` | Search: table (desktop) / cards (mobile), filter chips, pagination, PDF/CSV export |
+| `/notice` | Notices table with year tabs, search, link badges |
+| `/dispatch` | Dispatch PDF grid with year tabs, search |
+| `/api/dispatch` | JSON — lists PDFs from R2 bucket (`dispatch/` prefix) |
+| `/api/notice` | JSON — notice data from `static/notice.json` |
 
-**`index.html`** — Desktop search. Inline CSS (~1300 lines in `<style>`):
-- Sticky header: "TGPC" (green) "RPh" (red) "Registry" (gray)
-- Connection status pill (Busy / Live + clock / Offline) with CSS pulse animation
-- Stats bar: 7 cards (Total, BPharm, DPharm, MPharm, PharmD, QC, QP) — 1-row desktop, 4-col tablet, 2-col mobile (hides QC/QP on small)
-- Sync badge + last-sync timestamp from Supabase metadata table
-- Nav links: NOTICES (purple) | DISPATCH (red, animated border)
-- "Unofficial data | Not for legal use" disclaimer
-- Search bar: text input + Search (green) + Reset (gray) + Export PDF + Export CSV buttons
-- Filter chips: All \| BPharm \| DPharm \| MPharm \| PharmD \| QC \| QP — horizontal scroll on mobile
-- Results table (desktop) + mobile cards (`<table>` for desktop, `<div class="mobile-cards">` for mobile, CSS toggles via `@media`)
-- Pagination bar: prev/next + "X-Y of Z" (50/page desktop, 25/page mobile)
-- Fixed footer disclaimer
-- Scroll-to-top button
-- Design system: colors, badges, fonts, spacing — exact values documented in V2.md
+### Key Features
 
-**`mobile.html`** — Mobile search. Separate HTML, all functionality in `mobile.js`:
-- Cards layout, 25/page
-- Animated filter slider underline
-- Status + stats from Supabase RPC
-- No CSV/PDF export on mobile
-
-**`notice.html`** — Notices page. Data from `notice.json` via `/api/notice`:
-- Year tabs, search filter, responsive table → card layout on mobile
-- Link badges: PDF (red), Image (purple), External (blue)
-
-**`dispatch.html`** — Dispatch PDFs page. Data from R2 via `/api/dispatch`:
-- File grid (5-col desktop → 1-col mobile), year tabs, search
-- Fallback to 27 hardcoded sample filenames if API fails
-- R2 base URL: `https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/dispatch`
-
-### JavaScript
-
-**`search.js`** (~788 lines) — Desktop search logic:
-- `performSearch()` — Supabase `.select('registration_number,name,father_name,category').or('...ilike...')` with 3-char minimum, limit 100000
-- `applyFilter(category)` — in-memory category filter on `currentResults`
-- `sortResults()` — prefix sort (alphabetical by prefix, numeric by number)
-- `displayResults()` — renders both table + cards, CSS toggles visibility
-- `renderPagination()` — 50/page desktop, prev/next + "X-Y of Z"
-- `exportResults()` — jsPDF + jspdf-autotable from CDN
-- `exportCSV()` — Blob download with UTF-8 BOM
-- `checkConnection()` — tests Supabase `rph` table SELECT 1
-- `loadAnalytics()` — `supabase.rpc('get_rph_stats')` with localStorage cache
-- `setupRealtimeUpdates()` — polls `metadata.last_sync` every 5 minutes, shows toast on change
-- Keyboard shortcut: Alt+S focuses search, Escape clears
-
-**`mobile.js`** (~240 lines) — Mobile search:
-- 2-char minimum query, 25/page
-- `sortRecords()` — same prefix logic
-- `loadStatusAndStats()` — connection check + Supabase RPC stats
-- `moveSlider(chip)` — animated underline indicator for filter chips
-- `startClock()` — live time display
-
-**`dispatch.js`** (~157 lines):
-- Fetches `/api/dispatch` → parses `DL{DD}{MM}{YYYY}[suffix].pdf` filenames
-- Renders grid cards with date + size, year tabs, search
-- Fallback: hardcoded sample filenames
-
-**`notice.js`** (~149 lines):
-- Fetches `/api/notice` → renders table with year tabs, search
-- Link badges colored by extension
-
-**`config.js`**:
-```javascript
-window.TGPC_CONFIG = Object.freeze({
-    SUPABASE_URL: 'https://vhgpyvzgmvhijqgsapnk.supabase.co',
-    SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_0EvC3S3VIDrz-4tkAna5aQ_zkqH91_M'
-});
-```
-
-### `notice.json`
-
-Array of 19 notice objects with fields: `id`, `date`, `source`, `title`, `links` (array of `{label, url}`). R2 base URL for notice assets: `https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice`.
+- **Stats bar** — 7 category cards with live counts from Supabase RPC, cached in localStorage
+- **Realtime** — Supabase Realtime subscription on `metadata` table for live stats/timestamp updates
+- **Search** — client-side Supabase query (min 3 chars), sorted by prefix priority then numeric, paginated 50/page (25 mobile)
+- **Export** — PDF via jsPDF + jspdf-autotable, CSV via Blob download with UTF-8 BOM
+- **Responsive** — single component, CSS toggles between table and cards at 768px
+- **Connection status** — status pill (Busy/Live/Offline) with live clock
+- **Design** — exact colors, fonts, badges, spacing as documented in V2.md
 
 ---
 
@@ -454,22 +397,13 @@ Only `ruff` (lint + fix) and `ruff-format` via `astral-sh/ruff-pre-commit` v0.11
 
 ---
 
-## R2 Notice/Dispatch URLs
-
-Hardcoded in frontend JS:
-- `dispatch.js:1` → `https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/dispatch`
-- `notice.js:97` → `https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice`
-
-These are public R2 bucket URLs for the same account.
-
 ---
 
 ## Deployment
 
 | Component | Method | URL |
-|---|---|---|
-| Frontend | Cloudflare Pages (auto-deploy from `main`) | `https://tgpc.pages.dev` |
-| Worker | Embedded in Pages as `_worker.js` | Same domain |
+|---|---|---|---|
+| Frontend | Cloudflare Pages (auto-deploy from `main`, builds `v2/`) | `https://tgpc.pages.dev` |
 | CI/CD | GitHub Actions (manual trigger) | `github.com/dilludx/tgpc/actions` |
 | Data download | GitHub Release | Tag `rphjson`, file `rph.json` |
 
