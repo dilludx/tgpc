@@ -15,75 +15,11 @@ from collections import Counter
 
 from supabase import create_client
 
-from tgpc.utils import Config, TGPCError, setup_logging
+from tgpc.utils import Config, setup_logging
 from tgpc.scraper import Scraper, PharmacistRecord
 
 
 logger = setup_logging("tgpc.manager")
-
-
-def validate_batch_files(jsn_dir: Path, img_dir: Path, registration_numbers: List[str]) -> dict:
-    """
-    Validate files for a batch of records.
-
-    Args:
-        jsn_dir: Path to jsn directory
-        img_dir: Path to img directory
-        registration_numbers: List of registration numbers to validate
-
-    Returns:
-        dict with validation results
-    """
-    results = {
-        "total": len(registration_numbers),
-        "json_valid": 0,
-        "json_invalid": 0,
-        "json_missing": 0,
-        "photo_valid": 0,
-        "photo_invalid": 0,
-        "photo_missing": 0,
-        "photo_wrong_resolution": 0,
-        "photo_wrong_format": 0,
-        "errors": [],
-    }
-
-    for reg_no in registration_numbers:
-        # Validate JSON file
-        json_file = jsn_dir / f"{reg_no}.json"
-        if not json_file.exists():
-            results["json_missing"] += 1
-            results["errors"].append(f"JSON missing: {reg_no}")
-            continue
-
-        try:
-            with open(json_file, "r", encoding="utf-8") as f:
-                json.load(f)
-            results["json_valid"] += 1
-        except Exception as e:
-            results["json_invalid"] += 1
-            results["errors"].append(f"JSON invalid: {reg_no} - {e}")
-
-        # Validate photo file (check for any image format)
-        photo_files = list(img_dir.glob(f"{reg_no}.*"))
-        if not photo_files:
-            results["photo_missing"] += 1
-            results["errors"].append(f"Photo missing: {reg_no}")
-            continue
-
-        photo_file = photo_files[0]
-
-        try:
-            from PIL import Image
-
-            Image.open(photo_file)
-
-            # Just check if image is valid (can be opened)
-            results["photo_valid"] += 1
-        except Exception as e:
-            results["photo_invalid"] += 1
-            results["errors"].append(f"Photo invalid: {reg_no} - {e}")
-
-    return results
 
 
 class DataIntegrityError(RuntimeError):
@@ -814,8 +750,6 @@ class Manager:
 
         # Load Data
         rph_records = self.file_manager.load("rph.json")
-        jsn_dir = Path(self.config.enrichment_directory) / "jsn"
-        jsn_dir.mkdir(parents=True, exist_ok=True)
 
         # Create lookup by registration number
         rph_lookup = {r.serial_number: r for r in rph_records}
@@ -888,67 +822,7 @@ class Manager:
             return
 
         # Process records sequentially
-        total_processed = self._process_records_sequential(
-            pending_records, rph_lookup, jsn_dir, img_dir, supabase=supabase
-        )
-
-        # Validate all files before GDrive sync
-        logger.info("Validating files...")
-        registration_numbers = [record.registration_number for record in pending_records]
-        validation_results = validate_batch_files(jsn_dir, img_dir, registration_numbers)
-
-        if validation_results["errors"]:
-            # Separate errors into critical (JSON-related) and minor (photo-related)
-            critical_errors = [e for e in validation_results["errors"] if "JSON" in e or "json" in e.lower()]
-            photo_errors = [e for e in validation_results["errors"] if "Photo" in e or "photo" in e.lower()]
-
-            if critical_errors:
-                # Block sync for critical errors (JSON corruption, data integrity issues)
-                n_crit = len(critical_errors)
-                logger.error(
-                    "CRITICAL: %d critical validation errors. GDrive sync aborted to prevent corrupt data.",
-                    n_crit,
-                )
-                logger.error("Critical errors:")
-                for error in critical_errors[:20]:
-                    logger.error("  - %s", error)
-                if len(critical_errors) > 20:
-                    logger.error("  ... and %d more", len(critical_errors) - 20)
-                logger.info(
-                    "Validation summary: %d valid JSON, %d valid photos, %d missing JSON, %d missing photos",
-                    validation_results["json_valid"],
-                    validation_results["photo_valid"],
-                    validation_results["json_missing"],
-                    validation_results["photo_missing"],
-                )
-                raise TGPCError(
-                    f"Critical validation errors detected. GDrive sync aborted. {len(critical_errors)} errors."
-                )
-            else:
-                # Allow sync for photo errors only (missing/invalid photos from source)
-                n_photo = len(photo_errors)
-                logger.warning(
-                    "WARNING: %d photo errors (missing/invalid from source). Proceeding with MEDIA volume sync.",
-                    n_photo,
-                )
-                logger.warning("Photo errors:")
-                for error in photo_errors[:20]:
-                    logger.warning("  - %s", error)
-                if len(photo_errors) > 20:
-                    logger.warning("  ... and %d more", len(photo_errors) - 20)
-                logger.info(
-                    "Validation summary: %d valid JSON, %d valid photos, %d missing JSON, %d missing photos",
-                    validation_results["json_valid"],
-                    validation_results["photo_valid"],
-                    validation_results["json_missing"],
-                    validation_results["photo_missing"],
-                )
-        else:
-            logger.info(
-                "Validation passed: All %d JSON and %d photos valid",
-                validation_results["json_valid"],
-                validation_results["photo_valid"],
-            )
+        total_processed = self._process_records_sequential(pending_records, rph_lookup, img_dir, supabase=supabase)
 
         # Keep progress file for tracking
         if total_processed > 0:
@@ -957,7 +831,7 @@ class Manager:
             logger.info("No records processed")
 
     def _process_records_sequential(
-        self, pending_records, rph_lookup, jsn_dir, img_dir, ip_rotation_interval=500, supabase=None
+        self, pending_records, rph_lookup, img_dir, ip_rotation_interval=500, supabase=None
     ):
         """Process records sequentially."""
         total_processed = 0
@@ -1024,11 +898,6 @@ class Manager:
                 # Combine basic info + extracted details
                 extracted_data = details.to_detailed_dict()
                 data = {**extracted_data, **basic_data}
-
-                # Save to individual JSON file
-                detail_file = jsn_dir / f"{reg_no}.json"
-                with open(detail_file, "w", encoding="utf-8") as f:
-                    json.dump(data, f, indent=2, ensure_ascii=False)
 
                 total_processed += 1
 
