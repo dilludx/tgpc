@@ -1,3 +1,7 @@
+<svelte:head>
+  <title>TGPC RPh Registry</title>
+</svelte:head>
+
 <script lang="ts">
   import '../app.css';
   import type { ConnectionStatus, Stats } from '$lib/types';
