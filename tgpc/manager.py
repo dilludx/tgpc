@@ -444,30 +444,10 @@ class Manager:
 
             logger.info(f"Syncing {len(records)} records to Supabase...")
 
-            # Batch upsert with detail fields
+            # Batch upsert (5 core fields only — enrichment fields already in Supabase)
             batch_size = 1000
-            jsn_dir = Path(self.config.enrichment_directory) / "jsn"
-
             for i in range(0, len(records), batch_size):
-                batch = []
-                for r in records[i : i + batch_size]:
-                    row = r.to_dict()
-                    detail_file = jsn_dir / f"{r.registration_number}.json"
-                    if detail_file.exists():
-                        with open(detail_file, "r", encoding="utf-8") as f:
-                            detail = json.load(f)
-                        row["gender"] = detail.get("gender", "")
-                        row["validity_date"] = detail.get("validity_date", "")
-                        row["status"] = detail.get("status", "")
-                        row["education"] = detail.get("education", [])
-                        row["work_experience"] = detail.get("work_experience", {})
-                    else:
-                        row["gender"] = ""
-                        row["validity_date"] = ""
-                        row["status"] = ""
-                        row["education"] = []
-                        row["work_experience"] = {}
-                    batch.append(row)
+                batch = [r.to_dict() for r in records[i : i + batch_size]]
                 supabase.table("rph").upsert(batch, on_conflict="registration_number").execute()
                 logger.info(f"Synced batch {i // batch_size + 1}")
 
