@@ -4,6 +4,9 @@ export interface PharmacistRecord {
   father_name: string | null;
   category: Category;
   serial_number?: number;
+  gender?: string | null;
+  validity_date?: string | null;
+  status?: string | null;
 }
 
 export type Category = 'BPharm' | 'DPharm' | 'MPharm' | 'PharmD' | 'QC' | 'QP';

@@ -6,7 +6,7 @@ export async function searchRecords(query: string): Promise<PharmacistRecord[]> 
   try {
     const { data } = await supabase
       .from('rph')
-      .select('registration_number, name, father_name, category')
+      .select('registration_number, name, father_name, category, gender, validity_date, status')
       .or(`registration_number.ilike.%${query}%,name.ilike.%${query}%`)
       .limit(100000);
     return sortRecords(data || []);
