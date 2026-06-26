@@ -1,8 +1,7 @@
-import json
+import os
 import sys
 import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 # Mock supabase before importing manager
@@ -44,8 +43,17 @@ class ManagerEnrichmentTests(unittest.TestCase):
         self.enterContext(patch("tgpc.manager.Scraper", return_value=DetailScraper(details_by_id)))
         return Manager()
 
-    def test_run_enrichment_saves_first_pending_record_in_sorted_order(self):
+    @patch("tgpc.manager.create_client")
+    def test_run_enrichment_upserts_first_pending_record_in_sorted_order(self, mock_create_client):
         with tempfile.TemporaryDirectory() as temp_dir:
+            os.environ["SUPABASE_URL"] = "https://test.supabase.co"
+            os.environ["SUPABASE_SECRET_KEY"] = "test-key"
+            fake_client = MagicMock()
+            fake_client.table.return_value.select.return_value.order.return_value.range.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
+            mock_create_client.return_value = fake_client
+
             manager = self._make_manager(
                 temp_dir,
                 {
@@ -81,15 +89,30 @@ class ManagerEnrichmentTests(unittest.TestCase):
 
             manager.run_enrichment()
 
-            detail_file = Path(temp_dir, "jsn", "RPH001.json")
-            self.assertTrue(detail_file.exists())
-            details = json.loads(detail_file.read_text(encoding="utf-8"))
-            self.assertEqual(details["validity_date"], "2026-12-31")
-            self.assertEqual(details["education"][0]["qualification"], "BPharm")
-            self.assertEqual(details["work_experience"]["address"], "Clinic Street")
+            upsert_calls = fake_client.table.return_value.upsert.call_args_list
+            self.assertEqual(len(upsert_calls), 2)
+            data_rph001 = upsert_calls[0][0][0]
+            self.assertEqual(data_rph001["validity_date"], "2026-12-31")
+            self.assertEqual(data_rph001["education"][0]["qualification"], "BPharm")
+            self.assertEqual(data_rph001["work_experience"]["address"], "Clinic Street")
+            data_rph002 = upsert_calls[1][0][0]
+            self.assertEqual(data_rph002["registration_number"], "RPH002")
+            self.assertEqual(data_rph002["validity_date"], "")
 
-    def test_run_enrichment_raises_on_registration_mismatch(self):
+            del os.environ["SUPABASE_URL"]
+            del os.environ["SUPABASE_SECRET_KEY"]
+
+    @patch("tgpc.manager.create_client")
+    def test_run_enrichment_raises_on_registration_mismatch(self, mock_create_client):
         with tempfile.TemporaryDirectory() as temp_dir:
+            os.environ["SUPABASE_URL"] = "https://test.supabase.co"
+            os.environ["SUPABASE_SECRET_KEY"] = "test-key"
+            fake_client = MagicMock()
+            fake_client.table.return_value.select.return_value.order.return_value.range.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
+            mock_create_client.return_value = fake_client
+
             manager = self._make_manager(
                 temp_dir,
                 {
@@ -106,7 +129,11 @@ class ManagerEnrichmentTests(unittest.TestCase):
             with self.assertRaises(DataIntegrityError):
                 manager.run_enrichment()
 
-            self.assertFalse(Path(temp_dir, "jsn", "RPH001.json").exists())
+            upsert_calls = fake_client.table.return_value.upsert.call_args_list
+            self.assertEqual(len(upsert_calls), 0)
+
+            del os.environ["SUPABASE_URL"]
+            del os.environ["SUPABASE_SECRET_KEY"]
 
 
 if __name__ == "__main__":

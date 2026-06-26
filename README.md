@@ -30,10 +30,8 @@ python3 -m venv venv && source venv/bin/activate && pip install -e .
 python3 -m tgpc update                          # Scrape → data/rph.json → sync all 6 destinations
 python3 -m tgpc update --no-sync                # Scrape only, skip cloud sync
 python3 -m tgpc sync                             # Sync data/rph.json to all destinations (Supabase DB + Storage, R2, GDrive, Release, Email)
-python3 -m tgpc enrich --start 1 --stop 100     # Enrich records with detail pages
 make scrape                                      # Shorthand: scrape + sync all
 make sync                                        # Sync all destinations
-make enrich                                      # Enrich records
 python3 -m unittest discover -s tests -p 'test_*.py' -v  # 13+ tests
 ```
 
@@ -79,7 +77,7 @@ The search UI is a SvelteKit app at [tgpc.pages.dev](https://tgpc.pages.dev). Se
 ## Operational Notes
 
 - `update` refuses to replace data if fresh scrape < ~90% of existing count
-- `enrich` aborts on registration mismatches to prevent corrupt data
+- Enrichment aborts on registration mismatches to prevent corrupt data
 - Search requires 3+ characters; results paginated 50/page with category filter chips
 
 ## Disclaimer

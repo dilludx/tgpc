@@ -146,11 +146,6 @@ def main():
     # Sync command
     subparsers.add_parser("sync", help="Sync rph.json to all cloud destinations")
 
-    # Enrich command
-    enrich_parser = subparsers.add_parser("enrich", help="Run enrichment pipeline")
-    enrich_parser.add_argument("--start", type=int, default=1, help="Start from serial number (default: 1)")
-    enrich_parser.add_argument("--stop", type=int, default=None, help="Stop at serial number (default: all)")
-
     # Creds command
     creds_parser = subparsers.add_parser("creds", help="Manage credentials in macOS Keychain")
     creds_sub = creds_parser.add_subparsers(dest="creds_cmd")
@@ -206,12 +201,6 @@ def main():
         manager.sync_to_gdrive()
         manager.sync_to_release()
         manager.sync_to_email()
-    elif args.command == "enrich":
-        load_credentials()
-        manager.run_enrichment(
-            start=args.start,
-            stop=args.stop,
-        )
 
 
 if __name__ == "__main__":

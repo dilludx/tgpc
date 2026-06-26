@@ -31,12 +31,12 @@ tgpc/
 ├── data/
 │   ├── rph.json                     # ~87K pharmacist records (JSON array) — gitignored but tracked historically
 │   ├── update_details.json         # Sync diff summary — gitignored
-│   ├── jsn/                        # Per-record enrichment JSON — gitignored
+│   ├── jsn/                        # Per-record enrichment JSON (deleted, retained in gitignore)
 │   ├── img/                        # Per-record photos — gitignored
 │   └── backups/                    # Timestamped rph.json backups — gitignored
 ├── tgpc/                           # Python package (5 files)
 │   ├── __init__.py                 # Imports Config, setup_logging, Scraper, Manager; __version__ = "2.0.0"
-│   ├── __main__.py                 # CLI: python3 -m tgpc {update, sync, enrich}
+│   ├── __main__.py                 # CLI: python3 -m tgpc {update, sync, creds}
 │   ├── utils.py                    # Config dataclass, TGPCError, setup_logging
 │   ├── scraper.py                  # Scraper, RateLimiter, PharmacistRecord, extractors
 │   └── manager.py                  # FileManager, BackupManager, Manager (1004 lines)
@@ -97,12 +97,7 @@ __main__.py ─── Manager ─── Config (utils.py)
 ```bash
 python3 -m tgpc update              # Health check → backup → scrape → dedup → safety guard → save → sync to all destinations + email
 python3 -m tgpc update --no-sync    # Scrape only, skip cloud sync
-python3 -m tgpc sync --supabase     # Sync only to Supabase
-python3 -m tgpc sync --r2           # Sync only to R2
-python3 -m tgpc sync --gdrive       # Sync only to Google Drive
-python3 -m tgpc sync --release      # Upload rph.json to GitHub Release (tag: rphjson)
-python3 -m tgpc sync --all          # Sync to all 4 destinations
-python3 -m tgpc enrich --start 1 --stop 100 --force --skip-validation
+python3 -m tgpc sync                # Sync to all destinations
 ```
 
 `load_credentials()` reads credentials from macOS Keychain via `security` command and exports vars into `os.environ`.
@@ -156,8 +151,6 @@ Config is loaded via `Config.load()` classmethod (reads env vars for proxy and e
 - `extract_detailed_info(reg_no, img_dir)` → `Optional[PharmacistRecord]` — POSTs to search endpoint, parses detail page for: registration table (name, father, gender, category, status, validity), education table (qualification → category, university, college, years, HT No), work experience table (address, state, district, pin code), and photos (base64 data URI or URL download → saved to `img_dir`)
 
 ### `tgpc/manager.py` — Orchestration (~1004 lines)
-
-**`validate_batch_files(jsn_dir, img_dir, registration_numbers)`** — standalone function that validates enrichment output files for a batch of records. Checks JSON parseability and image validity (via Pillow). Returns dict with counts and error list.
 
 **`DataIntegrityError`** — raised when enrichment scraped data doesn't match the expected registration.
 
@@ -220,10 +213,10 @@ Config is loaded via `Config.load()` classmethod (reads env vars for proxy and e
 
 Uses `argparse` with subparsers:
 - `update` → `manager.run_daily_update()`, optionally `--no-sync`
-- `sync` → flag-based: `--supabase`, `--r2`, `--gdrive`, `--release`, `--all`
-- `enrich` → `manager.run_enrichment()` with `--start`, `--stop`, `--force`, `--skip-validation`
+- `sync` → sync to all destinations
+- `creds` → manage credentials in macOS Keychain (`set`, `list`, `delete`)
 
-Auto-loads credentials from `tgpc-creds.sh` before sync operations via `load_credentials()`.
+Credentials loaded from macOS Keychain via `load_credentials()` before sync operations. Auto-enrich runs automatically after successful `update`.
 
 ### Dependencies (`pyproject.toml`)
 

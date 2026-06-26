@@ -1,10 +1,7 @@
-.PHONY: scrape sync enrich
+.PHONY: scrape sync
 
 scrape:
 	python3 -m tgpc update
 
 sync:
 	python3 -m tgpc sync
-
-enrich:
-	python3 -m tgpc enrich
