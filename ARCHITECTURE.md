@@ -10,7 +10,7 @@ Code-only repository for the **Telangana Pharmacy Council (TGPC)** pharmacist re
 
 The project consists of:
 - **Python pipeline** (`tgpc/`) — scrapes data from the Telangana Pharmacy Council website, syncs to Supabase, Cloudflare R2, Google Drive, GitHub Release, and sends email notification
-- **Frontend** (`v2/`) — production website served via Cloudflare Pages (SvelteKit)
+- **Frontend** (`ui/`) — production website served via Cloudflare Pages (SvelteKit)
 - **Documentation** (`ARCHITECTURE.md`, `V2.md`, `README.md`)
 
 ---
@@ -40,7 +40,7 @@ tgpc/
 │   ├── utils.py                    # Config dataclass, TGPCError, setup_logging
 │   ├── scraper.py                  # Scraper, RateLimiter, PharmacistRecord, extractors
 │   └── manager.py                  # FileManager, BackupManager, Manager (1004 lines)
-├── v2/                            # Production frontend (SvelteKit)
+├── ui/                            # Production frontend (SvelteKit)
 │   ├── src/
 │   │   ├── routes/
 │   │   │   ├── +layout.svelte     # Shared header/footer/stats bar
@@ -302,7 +302,7 @@ Built with SvelteKit 5 + Tailwind CSS v4 + TypeScript. Full design spec in `V2.m
 | Framework | SvelteKit 5 (`@sveltejs/adapter-cloudflare`) |
 | Styling | Tailwind CSS v4 |
 | Database | Supabase (anon key with RLS — `SELECT` only) |
-| Hosting | Cloudflare Pages (build: `v2/.svelte-kit/cloudflare`) |
+| Hosting | Cloudflare Pages (build: `ui/.svelte-kit/cloudflare`) |
 | Env vars | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY` |
 
 ### Routes
@@ -396,7 +396,7 @@ Only `ruff` (lint + fix) and `ruff-format` via `astral-sh/ruff-pre-commit` v0.11
 
 | Component | Method | URL |
 |---|---|---|---|
-| Frontend | Cloudflare Pages (auto-deploy from `main`, builds `v2/`) | `https://tgpc.pages.dev` |
+| Frontend | Cloudflare Pages (auto-deploy from `main`, builds `ui/`) | `https://tgpc.pages.dev` |
 | CI/CD | GitHub Actions (manual trigger) | `github.com/dilludx/tgpc/actions` |
 | Data download | GitHub Release | Tag `rphjson`, file `rph.json` |
 
@@ -412,5 +412,5 @@ Only `ruff` (lint + fix) and `ruff-format` via `astral-sh/ruff-pre-commit` v0.11
 
 ## See Also
 
-- `V2.md` — v2 frontend rebuild plan (SvelteKit + Tailwind), component architecture, design system specs
+- `UI.md` — frontend architecture, component specs, design system
 - `README.md` — Project overview and quick-start

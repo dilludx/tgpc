@@ -1,4 +1,4 @@
-name = "tgpc-v2"
+name = "tgpc-ui"
 compatibility_date = "2026-06-05"
 
 pages_build_output_dir = ".svelte-kit/cloudflare"

@@ -1,12 +1,12 @@
-# TGPC v2 — Architecture & Context
+# TGPC UI — Architecture & Context
 
-> **IMPORTANT:** Before making ANY code change to `v2/`, read this document fully and update the Change Log and Status sections at the bottom when done. This file is the single source of truth for context across sessions.
+> **IMPORTANT:** Before making ANY code change to `ui/`, read this document fully and update the Change Log and Status sections at the bottom when done. This file is the single source of truth for context across sessions.
 >
 > For the full repo overview (Python pipeline, current frontend, deployment), see `ARCHITECTURE.md`.
 >
 > _(This file was renamed from `AGENTS.md`)_
 >
-> **Design mandate:** The v2 UI must look identical to v1. Same colors, same fonts, same spacing, same layout. No visual redesign. This is a technical rebuild, not a rebrand.
+> **Design mandate:** The UI must look identical to v1. Same colors, same fonts, same spacing, same layout. No visual redesign. This is a technical rebuild, not a rebrand.
 
 ## Stack
 
@@ -23,7 +23,7 @@
 
 ```
 tgpc/
-├── v2/
+├── ui/
 │   ├── src/
 │   │   ├── routes/
 │   │   │   ├── +layout.svelte          # Shared: header, footer, connection status, stats bar
@@ -52,7 +52,7 @@ tgpc/
 │   ├── tailwind.config.js              # Custom colors matching v1
 │   ├── vite.config.ts
 │   └── package.json
-├── docs/                               # v1 (untouched during v2 development)
+├── docs/                               # v1 (deleted after migration)
 ├── tgpc/                               # Python pipeline (unchanged)
 ├── ARCHITECTURE.md
 ├── V2.md
@@ -327,7 +327,7 @@ In development, these go in `.env` file (gitignored).
 ## Build & Deploy
 
 ```bash
-cd v2
+cd ui
 npm install           # Install dependencies
 npm run dev           # Local preview at localhost:5173
 npm run build         # Production build → .svelte-kit/cloudflare
@@ -335,7 +335,7 @@ npm run preview       # Preview production build locally
 ```
 
 ### Cloudflare Pages deployment
-- Connect the `v2/` directory as a Pages project (or use the repo root with build config pointing to `v2/`)
+- Connect the `ui/` directory as a Pages project (or use the repo root with build config pointing to `ui/`)
 - Build command: `npm run build`
 - Build output directory: `.svelte-kit/cloudflare`
 - Environment variables: set `PUBLIC_SUPABASE_URL` and `PUBLIC_SUPABASE_PUBLISHABLE_KEY`
@@ -343,18 +343,18 @@ npm run preview       # Preview production build locally
 
 ### Coexistence Strategy
 
-| Stage | v1 (docs/) | v2 (v2/) |
+| Stage | v1 (docs/) | Current (ui/) |
 |---|---|---|
 | Development | Unchanged | `npm run dev` on localhost |
 | Preview | Unchanged | Cloudflare Pages branch deployment → preview URL |
 | Go-live | Still serving | Deploy to production URL |
 | Post-switch | Kept as fallback | Serves via updated Worker routing |
 
-At go-live, `_worker.js` is updated to route production traffic to the v2 build output instead of `docs/`.
+At go-live, `_worker.js` is updated to route production traffic to the ui build output instead of `docs/`.
 
 ## Key Differences from v1
 
-| Aspect | v1 | v2 |
+| Aspect | v1 | Current |
 |---|---|---|
 | Framework | None (vanilla JS) | SvelteKit 5 |
 | CSS | Hand-written in `<style>` blocks | Tailwind CSS utility classes |
@@ -371,7 +371,7 @@ At go-live, `_worker.js` is updated to route production traffic to the v2 build 
 Each step is self-contained. Move to the next only when the previous is complete.
 
 ### Step 1 — Scaffold
-- `npx sv create v2` with SvelteKit + Cloudflare adapter
+- `npx sv create ui` with SvelteKit + Cloudflare adapter
 - Install & configure Tailwind CSS v4
 - **Done when:** `npm run dev` starts, `npm run build` produces `.svelte-kit/cloudflare`
 
@@ -405,7 +405,7 @@ Each step is self-contained. Move to the next only when the previous is complete
 - Verify all v1 features present
 - Prepare Worker for go-live
 - Update V2.md change log
-- **Done when:** v2 matches v1 feature-for-feature, swap plan is clear
+- **Done when:** ui matches v1 feature-for-feature, swap plan is clear
 
 ## What Does NOT Change
 
@@ -424,7 +424,7 @@ Each step is self-contained. Move to the next only when the previous is complete
 
 | Date | Change |
 |---|---|
-| 05 Jun 2026 | Scaffold SvelteKit + Tailwind v4 + Cloudflare adapter in `v2/` |
+| 05 Jun 2026 | Scaffold SvelteKit + Tailwind v4 + Cloudflare adapter in `ui/` |
 | 05 Jun 2026 | Build shared layout: header, stats bar, sync row, footer |
 | 05 Jun 2026 | Build search page: input, chips, table, cards, pagination |
 | 05 Jun 2026 | Add Supabase live search, live stats + connection polling in layout |
