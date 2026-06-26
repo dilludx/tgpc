@@ -829,13 +829,19 @@ class Manager:
                 try:
                     resp = (
                         supabase.table("rph")
-                        .select("registration_number, gender, validity_date, status")
+                        .select("registration_number, gender, validity_date, status, education, work_experience")
                         .order("registration_number")
                         .range(i, end)
                         .execute()
                     )
                     for r in resp.data:
-                        if r.get("gender") or r.get("validity_date") or r.get("status"):
+                        if (
+                            r.get("gender")
+                            or r.get("validity_date")
+                            or r.get("status")
+                            or r.get("education")
+                            or r.get("work_experience")
+                        ):
                             done_ids.add(r["registration_number"])
                 except Exception as e:
                     logger.warning(f"Failed to check enrichment status batch {i}: {e}")
