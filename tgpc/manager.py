@@ -820,8 +820,28 @@ class Manager:
         # Create lookup by registration number
         rph_lookup = {r.serial_number: r for r in rph_records}
 
-        # Identify Pending - check for existing individual detail files
-        done_ids = {f.stem for f in jsn_dir.glob("*.json")}
+        # Identify Pending - check Supabase for already enriched records
+        done_ids = set()
+        if supabase:
+            BATCH = 1000
+            for i in range(0, len(rph_records), BATCH):
+                end = min(i + BATCH - 1, len(rph_records) - 1)
+                try:
+                    resp = (
+                        supabase.table("rph")
+                        .select("registration_number, gender, validity_date, status")
+                        .order("registration_number")
+                        .range(i, end)
+                        .execute()
+                    )
+                    for r in resp.data:
+                        if r.get("gender") or r.get("validity_date") or r.get("status"):
+                            done_ids.add(r["registration_number"])
+                except Exception as e:
+                    logger.warning(f"Failed to check enrichment status batch {i}: {e}")
+            logger.info(f"Found {len(done_ids)} already enriched records in Supabase")
+        else:
+            logger.warning("Supabase credentials missing — all records will be considered pending")
 
         # Sort by serial number ascending (start from serial 1)
         pending_records = [r for r in rph_records if r.registration_number not in done_ids]
