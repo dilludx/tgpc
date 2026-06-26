@@ -324,6 +324,7 @@ class Manager:
 
         self.file_manager.save(list(sorted_records))
         self.backup_manager.cleanup()
+        self._last_new_regs = new_ids
 
         logger.info(
             "Update complete. Total: %d, 🌱 NEW: %d, 🌀 CHANGES: %d, ❌ REMOVALS: %d",
@@ -829,6 +830,30 @@ class Manager:
             logger.info(f"Enrichment complete: {total_processed} records processed")
         else:
             logger.info("No records processed")
+
+    def enrich_new_records(self):
+        """Auto-enrich records that were newly discovered by the last update."""
+        regs = getattr(self, "_last_new_regs", set())
+        if not regs:
+            logger.info("No new records to enrich")
+            return
+
+        records = [r for r in self.file_manager.load() if r.registration_number in regs]
+        if not records:
+            logger.info("No matching records found in rph.json")
+            return
+
+        logger.info(f"Auto-enriching {len(records)} new records...")
+        rph_lookup = {r.serial_number: r for r in records}
+        img_dir = Path(self.config.enrichment_directory) / "img"
+        img_dir.mkdir(parents=True, exist_ok=True)
+
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_SECRET_KEY")
+        supabase = create_client(url, key) if url and key else None
+
+        processed = self._process_records_sequential(records, rph_lookup, img_dir, supabase=supabase)
+        logger.info(f"Auto-enrich complete: {processed} records processed")
 
     def _process_records_sequential(
         self, pending_records, rph_lookup, img_dir, ip_rotation_interval=500, supabase=None

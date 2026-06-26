@@ -194,6 +194,8 @@ def main():
                 manager.sync_to_gdrive()
                 manager.sync_to_release()
                 manager.sync_to_email()
+                if status == "updated":
+                    manager.enrich_new_records()
             return
         raise SystemExit(1)
     elif args.command == "sync":
