@@ -10,6 +10,7 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { CATEGORY_COLORS, CATEGORIES, CATEGORY_KEYS } from '$lib/colors';
+
   import Clock from '$lib/components/Clock.svelte';
 
   let { children } = $props();
