@@ -1,33 +1,18 @@
 # TGPC RPh Registry
 
-Scrapes the [Telangana Pharmacy Council](https://www.pharmacycouncil.telangana.gov.in) pharmacist registry, syncs to Supabase + R2 + GDrive, and serves a search UI at [tgpc.pages.dev](https://tgpc.pages.dev).
+Public-facing search portal for the Telangana State Pharmacy Council pharmacist registry. Scrapes [pharmacycouncil.telangana.gov.in](https://www.pharmacycouncil.telangana.gov.in), enriches records (photo, gender, status, validity), and serves a fast search UI.
 
-## Repo
+- **Frontend:** SvelteKit 5 + Tailwind v4 + Supabase — [tgpc.pages.dev](https://tgpc.pages.dev)
+- **Pipeline:** Python scraper, data enrichment, multi-destination sync (Supabase, R2, GDrive)
+- **Data:** ~87,500 pharmacist records with photo, gender, registration status, and validity dates across 6 categories (BPharm, DPharm, MPharm, PharmD, QC, QP)
 
-| What | Where |
+## Architecture
+
+| Component | Location |
 |---|---|
-| Python pipeline (scraper, sync, enrichment) | `tgpc/` |
+| Python pipeline | `tgpc/` |
 | SvelteKit frontend | `ui/` |
 | CI/CD | `.github/workflows/rphsync.yml` |
-
-## Quick Start
-
-```bash
-git clone https://github.com/dilludx/tgpc.git && cd tgpc
-python3 -m venv venv && source venv/bin/activate && pip install -e .
-
-python3 -m tgpc update           # Scrape → sync all destinations
-python3 -m tgpc update --no-sync # Scrape only
-python3 -m tgpc sync             # Sync existing data to all destinations
-
-cd ui && npm i && npm run dev    # Frontend dev server
-```
-
-Credentials stored in macOS Keychain via `python3 -m tgpc creds set`.
-
-## Frontend
-
-SvelteKit 5 + Tailwind v4 + Supabase. Source in `ui/`. Deploys via Cloudflare Pages (auto-build from `main`, output `ui/.svelte-kit/cloudflare`).
 
 ## Disclaimer
 

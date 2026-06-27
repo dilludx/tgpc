@@ -62,7 +62,7 @@
     const now = new Date();
     const kw = query.trim() || '(all)';
     const title = `TGPC RPh Registry - Search: ${kw} - ${fmtDate(now)}`;
-    const body = filtered.map(r => [r.registration_number, r.name, r.father_name || '—', r.gender || '—', r.validity_date || '—', r.status || '—', r.category]);
+    const body = filtered.map(r => [r.registration_number, r.category, r.name, r.father_name || '—', r.gender || '—', r.validity_date || '—', r.status || '—']);
 
     const TEXTS: Record<string, number[]> = {
       BPharm: [0, 204, 102], DPharm: [239, 68, 68], MPharm: [124, 58, 237],
@@ -71,7 +71,7 @@
 
     autoTable(doc, {
       startY: 15,
-      head: [['RPC NUMBER', 'NAME', 'FATHER NAME', 'GENDER', 'VALID TILL', 'STATUS', 'CATEGORY']],
+      head: [['RPC NUMBER', 'CATEGORY', 'NAME', 'FATHER NAME', 'GENDER', 'VALID TILL', 'STATUS']],
       body,
       theme: 'striped',
       headStyles: { fillColor: [0, 204, 102], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
@@ -81,7 +81,7 @@
       tableWidth: 'auto',
       didParseCell: (data) => {
         if (data.section === 'body' && data.row.raw) {
-          const cat = (data.row.raw as string[])[6];
+          const cat = (data.row.raw as string[])[1];
           const text = TEXTS[cat];
           if (text) data.cell.styles.textColor = text as [number, number, number];
         }
@@ -109,15 +109,15 @@
     if (filtered.length === 0) return;
     const now = new Date();
     const kw = query.trim() || '(all)';
-    const header = ['RPC NUMBER', 'NAME', 'FATHER NAME', 'GENDER', 'VALID TILL', 'STATUS', 'CATEGORY'];
+    const header = ['RPC NUMBER', 'CATEGORY', 'NAME', 'FATHER NAME', 'GENDER', 'VALID TILL', 'STATUS'];
     const rows = filtered.map(r => [
       `"${r.registration_number}"`,
+      `"${r.category}"`,
       `"${(r.name || '').replace(/"/g, '""')}"`,
       `"${(r.father_name || '').replace(/"/g, '""')}"`,
       `"${r.gender || ''}"`,
       `"${r.validity_date || ''}"`,
-      `"${r.status || ''}"`,
-      `"${r.category}"`
+      `"${r.status || ''}"`
     ]);
     const csv = [`# TGPC RPh Registry - Search: ${kw} - ${fmtDate(now)}`, header.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -203,35 +203,35 @@
     {:else}
       <div class="hidden md:block">
         <div class="flex items-center gap-1 py-1.5 border-b-2 border-[#e5e7eb] text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider">
-          <span class="flex-[1.5] min-w-0">RPC NUMBER</span>
-          <span class="flex-[2] min-w-0">Name</span>
-          <span class="flex-[1.5] min-w-0 hidden lg:block">Father Name</span>
-          <span class="w-12 min-w-0 text-center hidden xl:block">Gender</span>
-          <span class="w-24 min-w-0 text-center hidden xl:block">Valid Till</span>
-          <span class="w-14 min-w-0 text-center">Status</span>
-          <span class="w-14 min-w-0 text-right pr-2">Category</span>
+          <span class="flex-1 min-w-0">RPC NUMBER</span>
+          <span class="flex-1 min-w-0">Category</span>
+          <span class="flex-1 min-w-0">Name</span>
+          <span class="flex-1 min-w-0 hidden lg:block">Father Name</span>
+          <span class="flex-1 min-w-0 hidden xl:block">Gender</span>
+          <span class="flex-1 min-w-0 hidden xl:block">Valid Till</span>
+          <span class="flex-1 min-w-0">Status</span>
         </div>
       </div>
       <div style="max-height:calc(100vh - 240px);overflow-y:auto">
         <div class="hidden md:block">
           {#each filtered as r}
             <div class="flex items-center gap-1 py-2.5 border-b border-[#f3f4f6] text-[0.875rem]" style="content-visibility:auto;contain-intrinsic-size:48px">
-              <span class="flex-[1.5] min-w-0 font-semibold text-[#2563eb]">{r.registration_number}</span>
-              <span class="flex-[2] min-w-0">{r.name}</span>
-              <span class="flex-[1.5] min-w-0 text-[#6b7280] hidden lg:block">{r.father_name || '—'}</span>
-              <span class="w-12 min-w-0 text-center text-[0.75rem] text-[#6b7280] hidden xl:block">{r.gender || '—'}</span>
-              <span class="w-24 min-w-0 text-center text-[0.75rem] hidden xl:block">{r.validity_date || '—'}</span>
-              <span class="w-14 min-w-0 flex justify-center">
+              <span class="flex-1 min-w-0 font-semibold text-[#2563eb]">{r.registration_number}</span>
+              <span class="flex-1 min-w-0">
+                <span class="inline-flex items-center px-1.5 rounded-full text-[0.6rem] font-semibold leading-[18px]" style="background:{CATEGORY_BG[r.category]};color:{CATEGORY_COLORS[r.category]}">
+                  {r.category}
+                </span>
+              </span>
+              <span class="flex-1 min-w-0">{r.name}</span>
+              <span class="flex-1 min-w-0 text-[#6b7280] hidden lg:block">{r.father_name || '—'}</span>
+              <span class="flex-1 min-w-0 text-[0.75rem] text-[#6b7280] hidden xl:block">{r.gender || '—'}</span>
+              <span class="flex-1 min-w-0 text-[0.75rem] hidden xl:block">{r.validity_date || '—'}</span>
+              <span class="flex-1 min-w-0">
                 {#if r.status}
                   <span class="inline-flex items-center px-1 rounded text-[0.6rem] font-semibold leading-[16px] rounded-full" style="background:{r.status === 'Active' ? '#dcfce7' : '#fef3c7'};color:{r.status === 'Active' ? '#166534' : '#92400e'}">{r.status}</span>
                 {:else}
                   <span class="text-[0.75rem] text-[#9ca3af]">—</span>
                 {/if}
-              </span>
-              <span class="w-14 min-w-0 flex justify-end pr-2">
-                <span class="inline-flex items-center px-1.5 rounded-full text-[0.6rem] font-semibold leading-[18px]" style="background:{CATEGORY_BG[r.category]};color:{CATEGORY_COLORS[r.category]}">
-                  {r.category}
-                </span>
               </span>
             </div>
           {/each}
@@ -245,8 +245,8 @@
               </div>
               <div class="text-[0.875rem] mt-0.5">{r.name}</div>
               <div class="text-[0.75rem] text-[#6b7280] mt-0.5">{r.father_name || '—'}</div>
-              <div class="flex items-center gap-3 mt-1 text-[0.7rem] text-[#6b7280]">
-                {#if r.gender}<span>Gender: {r.gender}</span>{/if}
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[0.7rem] text-[#6b7280]">
+                {#if r.gender}<span>{r.gender}</span>{/if}
                 {#if r.validity_date}<span>Valid till: {r.validity_date}</span>{/if}
                 {#if r.status}
                   <span class="inline-flex items-center px-1 rounded text-[0.6rem] font-semibold leading-[16px] rounded-full" style="background:{r.status === 'Active' ? '#dcfce7' : '#fef3c7'};color:{r.status === 'Active' ? '#166534' : '#92400e'}">{r.status}</span>
