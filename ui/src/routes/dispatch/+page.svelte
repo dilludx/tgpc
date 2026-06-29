@@ -2,10 +2,25 @@
   import type { DispatchFile } from '$lib/types';
   import { fetchDispatchFiles } from '$lib/api';
   import { browser } from '$app/environment';
-  import { onMount } from 'svelte';
 
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const BASE = 'https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/dispatch';
+
+  let { data } = $props();
+
+  function cachedOrNull<T>(key: string): T | null {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const { data, expiry } = JSON.parse(raw);
+      if (Date.now() > expiry) { localStorage.removeItem(key); return null; }
+      return data as T;
+    } catch { return null; }
+  }
+
+  function setCache<T>(key: string, data: T, ttl = 300_000) {
+    try { localStorage.setItem(key, JSON.stringify({ data, expiry: Date.now() + ttl })); } catch {}
+  }
 
   let files = $state<DispatchFile[]>([]);
   let years = $state<string[]>([]);
@@ -41,21 +56,17 @@
     return f.name.toLowerCase().includes(q) || fmt(f.parsed).toLowerCase().includes(q);
   }));
 
-  async function load() {
-    if (browser) {
-      const cached = sessionStorage.getItem('tgpc_dispatch');
-      if (cached) {
-        try { build(JSON.parse(cached)); loading = false; return; } catch {}
-      }
-    }
-    loading = true;
-    const data = await fetchDispatchFiles();
-    if (browser) sessionStorage.setItem('tgpc_dispatch', JSON.stringify(data));
-    build(data);
-    loading = false;
-  }
+  const cached = browser && cachedOrNull<{ name: string; size?: number }[]>('tgpc_dispatch');
+  const initial = cached || data.files;
+  if (initial.length > 0) { build(initial); loading = false; }
 
-  onMount(() => { load(); });
+  if (!cached && browser) {
+    fetchDispatchFiles().then(raw => {
+      setCache('tgpc_dispatch', raw);
+      build(raw);
+      loading = false;
+    });
+  }
 </script>
 
 <div class="space-y-4">

@@ -1,0 +1,11 @@
+import type { PageLoad } from './$types';
+import type { DispatchFile } from '$lib/types';
+import { fetchDispatchFiles } from '$lib/api';
+
+export const load: PageLoad = async () => {
+  let files: { name: string; size?: number }[] = [];
+  try {
+    files = await fetchDispatchFiles();
+  } catch {}
+  return { files };
+};

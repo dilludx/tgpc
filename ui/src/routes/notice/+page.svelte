@@ -1,9 +1,25 @@
 <script lang="ts">
   import type { Notice } from '$lib/types';
   import { fetchNotices } from '$lib/api';
-  import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
 
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  let { data } = $props();
+
+  function cachedOrNull<T>(key: string): T | null {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const { data, expiry } = JSON.parse(raw);
+      if (Date.now() > expiry) { localStorage.removeItem(key); return null; }
+      return data as T;
+    } catch { return null; }
+  }
+
+  function setCache<T>(key: string, data: T, ttl = 300_000) {
+    try { localStorage.setItem(key, JSON.stringify({ data, expiry: Date.now() + ttl })); } catch {}
+  }
 
   let notices = $state<Notice[]>([]);
   let years = $state<string[]>([]);
@@ -36,15 +52,23 @@
     return n.title.toLowerCase().includes(q) || fmtDate(n.date).toLowerCase().includes(q);
   }));
 
-  async function load() {
-    loading = true;
-    notices = await fetchNotices();
+  const cached = browser && cachedOrNull<Notice[]>('tgpc_notices');
+  const initial = cached || data.notices;
+  if (initial.length > 0) { notices = initial; buildYears(); loading = false; }
+
+  function buildYears() {
     years = [...new Set(notices.map(n => getYr(n.date)))].sort((a, b) => +b - +a);
     tab = years[0] || null;
-    loading = false;
   }
 
-  onMount(() => { load(); });
+  if (!cached && browser) {
+    fetchNotices().then(raw => {
+      setCache('tgpc_notices', raw);
+      notices = raw;
+      buildYears();
+      loading = false;
+    });
+  }
 </script>
 
 <div class="space-y-4">
