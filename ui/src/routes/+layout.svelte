@@ -107,7 +107,7 @@
     }
   });
 </script>
-<div class="h-screen flex flex-col bg-white overflow-hidden">
+<div class="min-h-screen flex flex-col bg-white">
   <header class="sticky top-0 z-50 bg-white">
     <div class="w-full px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
       <div class="flex flex-col">
@@ -136,14 +136,14 @@
         <div style="display:flex;gap:10px;align-items:center;justify-content:center">
           <div style="border-right:1px solid #e5e7eb;padding-right:12px">
               <div style="display:flex;flex-direction:column;gap:4px;text-align:center">
-              <div style="font-size:0.875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#808080">Total <span style="color:#ef4444;text-transform:none">RPh</span></div>
+              <div style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.5px;color:#374151">Total <span style="color:#ef4444;text-transform:none">RPh</span></div>
               <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val('total')}</div>
             </div>
           </div>
           {#each sortedCategories as cat, i}
             <div style="border-right:{i < 5 ? '1px solid #e5e7eb' : 'none'};padding-right:{i < 5 ? '12px' : '0'}">
               <div style="display:flex;flex-direction:column;gap:4px;text-align:center">
-                <div style="font-size:0.875rem;font-weight:600;letter-spacing:0.5px;color:{CATEGORY_COLORS[cat]}">{cat}</div>
+                <div style="font-size:0.8rem;letter-spacing:0.5px;color:#374151">{cat}</div>
                 <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val(CATEGORY_KEYS[CATEGORIES.indexOf(cat)] as keyof Stats)}</div>
               </div>
             </div>
@@ -170,7 +170,7 @@
     </div>
   </header>
 
-  <main class="flex-1 w-full px-4 sm:px-6 pt-1 pb-14 overflow-hidden">
+  <main class="flex-1 w-full px-4 sm:px-6 pt-1 pb-14">
     {@render children()}
   </main>
 
