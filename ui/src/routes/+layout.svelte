@@ -9,15 +9,31 @@
   import { supabase } from '$lib/supabase';
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
+  import type { LayoutProps } from './$types';
   import { CATEGORY_COLORS, CATEGORIES, CATEGORY_KEYS } from '$lib/colors';
 
   import Clock from '$lib/components/Clock.svelte';
 
-  let { children } = $props();
+  let { children, data } = $props();
+  let { stats: ssrStats, lastSync: ssrSync } = data;
 
-  let status = $state<ConnectionStatus>('Busy');
-  let stats = $state<Stats | null>(null);
-  let lastSync = $state<string>('');
+  let status = $state<ConnectionStatus>(ssrStats ? 'Live' : 'Busy');
+  let stats = $state<Stats | null>(ssrStats);
+  let lastSync = $state<string>(ssrSync);
+
+  function cachedOrNull<T>(key: string): T | null {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return null;
+      const { data, expiry } = JSON.parse(raw);
+      if (Date.now() > expiry) { localStorage.removeItem(key); return null; }
+      return data as T;
+    } catch { return null; }
+  }
+
+  function setCache<T>(key: string, data: T, ttl = 300_000) {
+    try { localStorage.setItem(key, JSON.stringify({ data, expiry: Date.now() + ttl })); } catch {}
+  }
 
   async function loadStats() {
     status = 'Busy';
@@ -25,7 +41,8 @@
     if (data) {
       stats = data;
       status = 'Live';
-    } else {
+      setCache('tgpc_stats', data);
+    } else if (!ssrStats) {
       status = 'Offline';
     }
   }
@@ -41,6 +58,7 @@
         const d = new Date(data.value);
         const s = d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
         lastSync = s.toUpperCase().replace(/,/g, '');
+        setCache('tgpc_last_sync', lastSync);
       }
     } catch {}
   }
@@ -166,60 +184,4 @@
 </div>
 
 <style>
-  .notice-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    height: 20px;
-    padding: 0 7px;
-    border-radius: 50px;
-    font-size: 0.625rem;
-    font-weight: 500;
-    color: #7c3aed;
-    background: #f3f0ff;
-    text-decoration: none;
-    transition: background 0.15s;
-    box-sizing: border-box;
-  }
-  .notice-btn:hover {
-    background: #e8e3ff;
-  }
-
-  .dispatch-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    height: 20px;
-    padding: 0 7px;
-    border-radius: 50px;
-    font-size: 0.625rem;
-    font-weight: 500;
-    color: #ef4444;
-    background: #fef2f2;
-    text-decoration: none;
-    transition: background 0.15s;
-    box-sizing: border-box;
-  }
-  .dispatch-btn:hover {
-    background: #fee2e2;
-  }
-
-  .search-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    height: 20px;
-    padding: 0 7px;
-    border-radius: 50px;
-    font-size: 0.625rem;
-    font-weight: 500;
-    color: #00cc66;
-    background: #d9f7eb;
-    text-decoration: none;
-    transition: background 0.15s;
-    box-sizing: border-box;
-  }
-  .search-btn:hover {
-    background: #b3efd6;
-  }
 </style>
