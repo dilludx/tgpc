@@ -2,7 +2,7 @@ import type { Category } from './types';
 
 export const CATEGORY_COLORS: Record<Category, string> = {
   BPharm: '#00cc66',
-  DPharm: '#ef4444',
+  DPharm: '#ea580c',
   MPharm: '#7c3aed',
   PharmD: '#f59e0b',
   QC: '#0891b2',
@@ -11,7 +11,7 @@ export const CATEGORY_COLORS: Record<Category, string> = {
 
 export const CATEGORY_BG: Record<Category, string> = {
   BPharm: '#d9f7eb',
-  DPharm: '#fef2f2',
+  DPharm: '#fff7ed',
   MPharm: '#ede9fe',
   PharmD: '#fef3c7',
   QC: '#cffafe',

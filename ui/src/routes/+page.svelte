@@ -215,22 +215,18 @@
       <div style="max-height:calc(100vh - 240px);overflow-y:auto">
         <div class="hidden md:block">
           {#each filtered as r}
-            <div class="flex items-center gap-1 py-2.5 border-b border-[#f3f4f6] text-[0.875rem]" style="content-visibility:auto;contain-intrinsic-size:48px">
+            <div class="flex items-center gap-1 py-2.5 border-b border-[#f3f4f6] text-[0.875rem] text-[#374151]" style="content-visibility:auto;contain-intrinsic-size:48px">
               <span class="flex-1 min-w-0 font-semibold text-[#2563eb]">{r.registration_number}</span>
-              <span class="flex-1 min-w-0">
-                <span class="inline-flex items-center px-1.5 rounded-full text-[0.6rem] font-semibold leading-[18px]" style="background:{CATEGORY_BG[r.category]};color:{CATEGORY_COLORS[r.category]}">
-                  {r.category}
-                </span>
-              </span>
+              <span class="flex-1 min-w-0" style="color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
               <span class="flex-1 min-w-0">{r.name}</span>
-              <span class="flex-1 min-w-0 text-[#6b7280] hidden lg:block">{r.father_name || '—'}</span>
-              <span class="flex-1 min-w-0 text-[0.75rem] text-[#6b7280] hidden xl:block">{r.gender || '—'}</span>
-              <span class="flex-1 min-w-0 text-[0.75rem] hidden xl:block">{r.validity_date || '—'}</span>
+              <span class="flex-1 min-w-0 hidden lg:block">{r.father_name || '—'}</span>
+              <span class="flex-1 min-w-0 hidden xl:block">{r.gender || '—'}</span>
+              <span class="flex-1 min-w-0 hidden xl:block">{r.validity_date || '—'}</span>
               <span class="flex-1 min-w-0">
                 {#if r.status}
-                  <span class="inline-flex items-center px-1 rounded text-[0.6rem] font-semibold leading-[16px] rounded-full" style="background:{r.status === 'Active' ? '#dcfce7' : '#fef3c7'};color:{r.status === 'Active' ? '#166534' : '#92400e'}">{r.status}</span>
+                  <span class="inline-flex items-center px-1 rounded text-[0.875rem] font-semibold leading-[20px] rounded-full" style="background:{r.status === 'Active' ? '#dcfce7' : '#fee2e2'};color:{r.status === 'Active' ? '#166534' : '#dc2626'}">{r.status}</span>
                 {:else}
-                  <span class="text-[0.75rem] text-[#9ca3af]">—</span>
+                  <span class="text-[#374151]">—</span>
                 {/if}
               </span>
             </div>
@@ -238,18 +234,18 @@
         </div>
         <div class="md:hidden space-y-0.5">
           {#each filtered as r}
-            <div class="py-2 border-b border-[#f3f4f6]" style="content-visibility:auto;contain-intrinsic-size:110px">
+            <div class="py-2 border-b border-[#f3f4f6] text-[0.875rem]" style="content-visibility:auto;contain-intrinsic-size:110px">
               <div class="flex items-center justify-between">
-                <span class="font-semibold text-[#2563eb] text-[0.875rem]">{r.registration_number}</span>
-                <span class="inline-flex items-center px-1.5 rounded-full text-[0.6rem] font-semibold leading-[18px]" style="background:{CATEGORY_BG[r.category]};color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
+                <span class="font-semibold text-[#2563eb]">{r.registration_number}</span>
+                <span style="color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
               </div>
-              <div class="text-[0.875rem] mt-0.5">{r.name}</div>
-              <div class="text-[0.75rem] text-[#6b7280] mt-0.5">{r.father_name || '—'}</div>
-              <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[0.7rem] text-[#6b7280]">
+              <div class="mt-0.5 text-[#374151]">{r.name}</div>
+              <div class="mt-0.5 text-[#374151]">{r.father_name || '—'}</div>
+              <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[#374151]">
                 {#if r.gender}<span>{r.gender}</span>{/if}
                 {#if r.validity_date}<span>Valid till: {r.validity_date}</span>{/if}
                 {#if r.status}
-                  <span class="inline-flex items-center px-1 rounded text-[0.6rem] font-semibold leading-[16px] rounded-full" style="background:{r.status === 'Active' ? '#dcfce7' : '#fef3c7'};color:{r.status === 'Active' ? '#166534' : '#92400e'}">{r.status}</span>
+                  <span class="inline-flex items-center px-1 rounded text-[0.875rem] font-semibold leading-[20px] rounded-full" style="background:{r.status === 'Active' ? '#dcfce7' : '#fee2e2'};color:{r.status === 'Active' ? '#166534' : '#dc2626'}">{r.status}</span>
                 {/if}
               </div>
             </div>

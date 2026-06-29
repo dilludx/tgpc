@@ -136,20 +136,20 @@
         <div style="display:flex;gap:10px;align-items:center;justify-content:center">
           <div style="border-right:1px solid #e5e7eb;padding-right:12px">
               <div style="display:flex;flex-direction:column;gap:4px;text-align:center">
-              <div style="font-size:0.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#808080">Total <span style="color:#ef4444;text-transform:none">RPh</span></div>
+              <div style="font-size:0.875rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#808080">Total <span style="color:#ef4444;text-transform:none">RPh</span></div>
               <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val('total')}</div>
             </div>
           </div>
           {#each sortedCategories as cat, i}
             <div style="border-right:{i < 5 ? '1px solid #e5e7eb' : 'none'};padding-right:{i < 5 ? '12px' : '0'}">
               <div style="display:flex;flex-direction:column;gap:4px;text-align:center">
-                <div style="font-size:0.6875rem;font-weight:600;letter-spacing:0.5px;color:{CATEGORY_COLORS[cat]}">{cat}</div>
+                <div style="font-size:0.875rem;font-weight:600;letter-spacing:0.5px;color:{CATEGORY_COLORS[cat]}">{cat}</div>
                 <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val(CATEGORY_KEYS[CATEGORIES.indexOf(cat)] as keyof Stats)}</div>
               </div>
             </div>
           {/each}
         </div>
-        <div style="font-size:0.5rem;color:#a1a1aa;font-weight:500;letter-spacing:0.3px;text-transform:uppercase;margin-top:4px;padding-top:4px;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+             <div style="font-size:0.5rem;color:#a1a1aa;font-weight:500;letter-spacing:0.3px;text-transform:uppercase;margin-top:4px;padding-top:4px;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span style="display:inline-flex;align-items:center;gap:3px;background:rgba(0,204,102,0.1);padding:1px 6px 1px 4px;border-radius:10px">
             <span style="display:inline-flex;align-items:center;justify-content:center;width:10px;height:10px;background:#00cc66;border-radius:50%;color:white;font-size:6px;font-weight:bold">&#10003;</span>
             <span style="color:#00cc66;font-size:0.45rem;font-weight:600;text-transform:uppercase;letter-spacing:0.3px">Synced</span>
