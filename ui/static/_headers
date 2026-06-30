@@ -1,0 +1,8 @@
+/*.svg
+  Cache-Control: no-cache
+/*.png
+  Cache-Control: no-cache
+/*.ico
+  Cache-Control: no-cache
+/manifest.json
+  Cache-Control: no-cache

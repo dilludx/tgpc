@@ -62,7 +62,7 @@
     const now = new Date();
     const kw = query.trim() || '(all)';
     const title = `TGPC RPh Registry - Search: ${kw} - ${fmtDate(now)}`;
-    const body = filtered.map(r => [r.registration_number, r.category, r.name, r.father_name || '—', r.gender || '—', r.validity_date || '—', r.status || '—']);
+    const body = filtered.map(r => [r.registration_number, r.name, r.father_name || '—', r.gender || '—', r.category, r.validity_date || '—', r.status || '—']);
 
     const TEXTS: Record<string, number[]> = {
       BPharm: [0, 204, 102], DPharm: [239, 68, 68], MPharm: [124, 58, 237],
@@ -71,7 +71,7 @@
 
     autoTable(doc, {
       startY: 15,
-      head: [['RPC NUMBER', 'CATEGORY', 'NAME', 'FATHER NAME', 'GENDER', 'VALID TILL', 'STATUS']],
+      head: [['RPC NUMBER', 'NAME', 'FATHER NAME', 'GENDER', 'CATEGORY', 'VALID TILL', 'STATUS']],
       body,
       theme: 'striped',
       headStyles: { fillColor: [0, 204, 102], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
@@ -81,7 +81,7 @@
       tableWidth: 'auto',
       didParseCell: (data) => {
         if (data.section === 'body' && data.row.raw) {
-          const cat = (data.row.raw as string[])[1];
+          const cat = (data.row.raw as string[])[4];
           const text = TEXTS[cat];
           if (text) data.cell.styles.textColor = text as [number, number, number];
         }
@@ -109,13 +109,13 @@
     if (filtered.length === 0) return;
     const now = new Date();
     const kw = query.trim() || '(all)';
-    const header = ['RPC NUMBER', 'CATEGORY', 'NAME', 'FATHER NAME', 'GENDER', 'VALID TILL', 'STATUS'];
+    const header = ['RPC NUMBER', 'NAME', 'FATHER NAME', 'GENDER', 'CATEGORY', 'VALID TILL', 'STATUS'];
     const rows = filtered.map(r => [
       `"${r.registration_number}"`,
-      `"${r.category}"`,
       `"${(r.name || '').replace(/"/g, '""')}"`,
       `"${(r.father_name || '').replace(/"/g, '""')}"`,
       `"${r.gender || ''}"`,
+      `"${r.category}"`,
       `"${r.validity_date || ''}"`,
       `"${r.status || ''}"`
     ]);
@@ -202,56 +202,58 @@
       <p class="text-[0.85rem] text-[#9ca3af] py-8 text-center">No results</p>
     {:else}
       <div class="hidden md:block">
-        <div class="flex items-center gap-1 py-1.5 border-b-2 border-[#e5e7eb] text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider">
-          <span class="flex-1 min-w-0">RPC NUMBER</span>
-          <span class="flex-1 min-w-0">Category</span>
-          <span class="flex-1 min-w-0">Name</span>
-          <span class="flex-1 min-w-0 hidden lg:block">Father Name</span>
-          <span class="flex-1 min-w-0 hidden xl:block">Gender</span>
-          <span class="flex-1 min-w-0 hidden xl:block">Valid Till</span>
-          <span class="flex-1 min-w-0">Status</span>
+        <div style="max-height:calc(100vh - 240px);overflow-y:auto;overflow-x:auto">
+        <table class="w-full" style="table-layout:auto">
+          <thead>
+            <tr class="text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider">
+              <th class="font-inherit text-left py-1.5 border-b-2 border-[#e5e7eb]">RPC NUMBER</th>
+              <th class="font-inherit text-left py-1.5 border-b-2 border-[#e5e7eb]">Name</th>
+              <th class="font-inherit text-left py-1.5 border-b-2 border-[#e5e7eb] hidden lg:table-cell">Father Name</th>
+              <th class="font-inherit text-left py-1.5 border-b-2 border-[#e5e7eb] hidden xl:table-cell">Gender</th>
+              <th class="font-inherit text-left py-1.5 border-b-2 border-[#e5e7eb]">Category</th>
+              <th class="font-inherit text-left py-1.5 border-b-2 border-[#e5e7eb] hidden xl:table-cell">Valid Till</th>
+              <th class="font-inherit text-right py-1.5 border-b-2 border-[#e5e7eb] pr-10">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each filtered as r}
+              <tr class="text-[0.875rem] text-[#374151] border-b border-[#f3f4f6]" style="content-visibility:auto;contain-intrinsic-size:48px">
+                <td class="py-2.5 font-semibold text-[#2563eb]">{r.registration_number}</td>
+                <td class="py-2.5 truncate max-w-0" title={r.name}>{r.name}</td>
+                <td class="py-2.5 truncate max-w-0 hidden lg:table-cell" title={r.father_name || ''}>{r.father_name || '—'}</td>
+                <td class="py-2.5 hidden xl:table-cell">{r.gender || '—'}</td>
+                <td class="py-2.5 font-semibold" style="color:{CATEGORY_COLORS[r.category]}">{r.category}</td>
+                <td class="py-2.5 hidden xl:table-cell">{r.validity_date || '—'}</td>
+                <td class="py-2.5 text-right pr-10">
+                  {#if r.status}
+                    <span style="color:{r.status === 'Active' ? '#000000' : '#ef4444'}">{r.status}</span>
+                  {:else}
+                    <span class="text-[#374151]">—</span>
+                  {/if}
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
         </div>
       </div>
-      <div style="max-height:calc(100vh - 240px);overflow-y:auto">
-        <div class="hidden md:block">
-          {#each filtered as r}
-            <div class="flex items-center gap-1 py-2.5 border-b border-[#f3f4f6] text-[0.875rem] text-[#374151]" style="content-visibility:auto;contain-intrinsic-size:48px">
-              <span class="flex-1 min-w-0 font-semibold text-[#2563eb]">{r.registration_number}</span>
-              <span class="flex-1 min-w-0" style="color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
-              <span class="flex-1 min-w-0">{r.name}</span>
-              <span class="flex-1 min-w-0 hidden lg:block">{r.father_name || '—'}</span>
-              <span class="flex-1 min-w-0 hidden xl:block">{r.gender || '—'}</span>
-              <span class="flex-1 min-w-0 hidden xl:block">{r.validity_date || '—'}</span>
-              <span class="flex-1 min-w-0">
-                {#if r.status}
-                  <span class="inline-flex items-center px-1 rounded text-[0.875rem] font-semibold leading-[20px] rounded-full" style="background:{r.status === 'Active' ? '#dcfce7' : '#fee2e2'};color:{r.status === 'Active' ? '#166534' : '#dc2626'}">{r.status}</span>
-                {:else}
-                  <span class="text-[#374151]">—</span>
-                {/if}
-              </span>
-            </div>
-          {/each}
-        </div>
-        <div class="md:hidden space-y-0.5">
+      <div class="md:hidden space-y-0.5">
           {#each filtered as r}
             <div class="py-2 border-b border-[#f3f4f6] text-[0.875rem]" style="content-visibility:auto;contain-intrinsic-size:110px">
-              <div class="flex items-center justify-between">
-                <span class="font-semibold text-[#2563eb]">{r.registration_number}</span>
-                <span style="color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
-              </div>
-              <div class="mt-0.5 text-[#374151]">{r.name}</div>
-              <div class="mt-0.5 text-[#374151]">{r.father_name || '—'}</div>
+              <span class="font-semibold text-[#2563eb]">{r.registration_number}</span>
+              <div class="mt-0.5 text-[#374151] truncate">{r.name}</div>
+              <div class="mt-0.5 text-[#374151] truncate">{r.father_name || '—'}</div>
               <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[#374151]">
                 {#if r.gender}<span>{r.gender}</span>{/if}
+                <span class="font-semibold" style="color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
                 {#if r.validity_date}<span>Valid till: {r.validity_date}</span>{/if}
                 {#if r.status}
-                  <span class="inline-flex items-center px-1 rounded text-[0.875rem] font-semibold leading-[20px] rounded-full" style="background:{r.status === 'Active' ? '#dcfce7' : '#fee2e2'};color:{r.status === 'Active' ? '#166534' : '#dc2626'}">{r.status}</span>
+                  <span style="color:{r.status === 'Active' ? '#000000' : '#ef4444'}">{r.status}</span>
                 {/if}
               </div>
             </div>
           {/each}
         </div>
-      </div>
     {/if}
     </div>
   {/if}
