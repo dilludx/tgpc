@@ -204,7 +204,7 @@
       <div class="hidden md:block">
         <div style="max-height:calc(100vh - 240px);overflow-y:auto;overflow-x:auto">
         <table class="w-full" style="table-layout:auto">
-          <thead>
+          <thead class="sticky top-0 bg-white z-10">
             <tr class="text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider">
               <th class="font-inherit text-left py-1.5 border-b-2 border-[#e5e7eb]">RPC NUMBER</th>
               <th class="font-inherit text-left py-1.5 border-b-2 border-[#e5e7eb]">Name</th>
@@ -218,11 +218,11 @@
           <tbody>
             {#each filtered as r}
               <tr class="text-[0.875rem] text-[#374151] border-b border-[#f3f4f6]" style="content-visibility:auto;contain-intrinsic-size:48px">
-                <td class="py-2.5 font-semibold text-[#2563eb]">{r.registration_number}</td>
-                <td class="py-2.5 truncate max-w-0" title={r.name}>{r.name}</td>
-                <td class="py-2.5 truncate max-w-0 hidden lg:table-cell" title={r.father_name || ''}>{r.father_name || '—'}</td>
+                <td class="py-2.5 text-[#2563eb]" style="font-weight:600">{r.registration_number}</td>
+                <td class="py-2.5 truncate hidden lg:table-cell" title={r.name}>{r.name}</td>
+                <td class="py-2.5 truncate hidden lg:table-cell" title={r.father_name || ''}>{r.father_name || '—'}</td>
                 <td class="py-2.5 hidden xl:table-cell">{r.gender || '—'}</td>
-                <td class="py-2.5 font-semibold" style="color:{CATEGORY_COLORS[r.category]}">{r.category}</td>
+                <td class="py-2.5" style="color:{CATEGORY_COLORS[r.category]}">{r.category}</td>
                 <td class="py-2.5 hidden xl:table-cell">{r.validity_date || '—'}</td>
                 <td class="py-2.5 text-right pr-10">
                   {#if r.status}
@@ -240,12 +240,12 @@
       <div class="md:hidden space-y-0.5">
           {#each filtered as r}
             <div class="py-2 border-b border-[#f3f4f6] text-[0.875rem]" style="content-visibility:auto;contain-intrinsic-size:110px">
-              <span class="font-semibold text-[#2563eb]">{r.registration_number}</span>
+              <span class="text-[#2563eb]" style="font-weight:600">{r.registration_number}</span>
               <div class="mt-0.5 text-[#374151] truncate">{r.name}</div>
               <div class="mt-0.5 text-[#374151] truncate">{r.father_name || '—'}</div>
               <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[#374151]">
                 {#if r.gender}<span>{r.gender}</span>{/if}
-                <span class="font-semibold" style="color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
+                <span style="color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
                 {#if r.validity_date}<span>Valid till: {r.validity_date}</span>{/if}
                 {#if r.status}
                   <span style="color:{r.status === 'Active' ? '#000000' : '#ef4444'}">{r.status}</span>

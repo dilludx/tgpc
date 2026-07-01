@@ -136,14 +136,14 @@
         <div style="display:flex;gap:10px;align-items:center;justify-content:center">
           <div style="border-right:1px solid #e5e7eb;padding-right:12px">
               <div style="display:flex;flex-direction:column;gap:4px;text-align:center">
-              <div style="font-size:0.8rem;letter-spacing:0.5px;color:#374151">RPh</div>
+              <div style="font-size:0.8rem;font-weight:500;letter-spacing:0.5px;color:#ef4444">RPh</div>
               <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val('total')}</div>
             </div>
           </div>
           {#each sortedCategories as cat, i}
             <div style="border-right:{i < 5 ? '1px solid #e5e7eb' : 'none'};padding-right:{i < 5 ? '12px' : '0'}">
               <div style="display:flex;flex-direction:column;gap:4px;text-align:center">
-                <div style="font-size:0.8rem;letter-spacing:0.5px;color:#374151">{cat}</div>
+                <div style="font-size:0.8rem;font-weight:500;letter-spacing:0.5px;color:{CATEGORY_COLORS[cat]}">{cat}</div>
                 <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val(CATEGORY_KEYS[CATEGORIES.indexOf(cat)] as keyof Stats)}</div>
               </div>
             </div>

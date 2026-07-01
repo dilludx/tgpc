@@ -94,7 +94,11 @@ class Scraper:
         self.rate_limiter = RateLimiter(self.config)
 
         # Simple browser session with connection pooling
+        import urllib3
+
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         self.session = requests.Session()
+        self.session.verify = False  # Site cert doesn't match hostname
 
         # Configure adapter with connection pooling and faster DNS via Cloudflare
         adapter = requests.adapters.HTTPAdapter(
@@ -364,6 +368,9 @@ class Scraper:
                     if validity_date:
                         record.validity_date = validity_date
                         break
+
+            if not record.name:
+                return None
 
             main_text = soup.get_text()
             if not record.validity_date:
