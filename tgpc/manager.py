@@ -649,8 +649,7 @@ class Manager:
                 html += "</div>"
             return html + "</div>"
 
-        MAX_EMAIL = 200
-        new_t, mod_t, rem_t = new[:MAX_EMAIL], mod[:MAX_EMAIL], rem[:MAX_EMAIL]
+        new_t, mod_t, rem_t = new, mod, rem
 
         text = f"TGPC RPh Registry Sync Report\n{sync_time}\n\n"
         html = (
