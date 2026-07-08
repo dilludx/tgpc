@@ -190,6 +190,14 @@ class ScraperParsingTests(unittest.TestCase):
         <body>
             <table>
                 <tr>
+                    <th>Registration No</th><th>Name</th>
+                </tr>
+                <tr>
+                    <td>RPH123</td><td>Test User</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
                     <th>S.No</th><th>Qualification</th><th>University</th><th>Year</th>
                 </tr>
                 <tr>

@@ -292,54 +292,80 @@ class Scraper:
             if img and img.get("src") and img_dir:
                 src = img["src"]
                 import base64
+                from io import BytesIO
 
+                image_bytes = None
                 if "base64" in src:
-                    # Extract MIME type from data URI
                     if src.startswith("data:"):
-                        mime_type = src.split(";")[0].split(":")[1]  # e.g., "image/jpeg"
                         base64_data = src.split(",")[-1]
-                        image_bytes = base64.b64decode(base64_data)
-
-                        # Get file extension from MIME type
-                        ext_map = {
-                            "image/jpeg": "jpg",
-                            "image/jpg": "jpg",
-                            "image/png": "png",
-                            "image/webp": "webp",
-                            "image/gif": "gif",
-                        }
-                        ext = ext_map.get(mime_type.lower(), "jpg")
-
-                        # Save image with registration number as filename
-                        photo_path = img_dir / f"{reg_no}.{ext}"
-                        with open(photo_path, "wb") as f:
-                            f.write(image_bytes)
-                        logger.info(f"Saved photo from base64: {photo_path.name}")
-
+                        try:
+                            image_bytes = base64.b64decode(base64_data)
+                        except Exception:
+                            pass
                 elif src.startswith("/") or src.startswith("http"):
-                    # Download photo from relative or absolute URL
                     try:
                         photo_url = src if src.startswith("http") else f"{self.config.base_url}{src}"
                         photo_response = self._request("GET", photo_url)
                         if photo_response.status_code == 200:
-                            # Get format from Content-Type header
-                            content_type = photo_response.headers.get("Content-Type", "image/jpeg")
-                            ext_map = {
-                                "image/jpeg": "jpg",
-                                "image/jpg": "jpg",
-                                "image/png": "png",
-                                "image/webp": "webp",
-                                "image/gif": "gif",
-                            }
-                            ext = ext_map.get(content_type.lower(), "jpg")
-
-                            # Save image with registration number as filename
-                            photo_path = img_dir / f"{reg_no}.{ext}"
-                            with open(photo_path, "wb") as f:
-                                f.write(photo_response.content)
-                            logger.info(f"Saved photo from URL: {photo_path.name}")
+                            image_bytes = photo_response.content
                     except Exception as e:
                         logger.warning(f"Failed to download photo from {src}: {e}")
+
+                if image_bytes and len(image_bytes) > 100:
+                    try:
+                        from PIL import Image, ImageOps
+
+                        im = Image.open(BytesIO(image_bytes))
+
+                        # Animated? Grab first frame only
+                        if getattr(im, "is_animated", False):
+                            im.seek(0)
+
+                        # Apply EXIF orientation (fixes rotated phone photos)
+                        try:
+                            im = ImageOps.exif_transpose(im)
+                        except Exception:
+                            pass
+
+                        # Flatten alpha onto white background for any mode with alpha
+                        if im.mode in ("RGBA", "LA", "PA"):
+                            bg = Image.new("RGB", im.size, (255, 255, 255))
+                            if im.mode == "LA":
+                                im = im.convert("RGBA")
+                            elif im.mode == "PA":
+                                im = im.convert("RGBA")
+                            bg.paste(im, mask=im.split()[3])
+                            im.close()
+                            im = bg
+                        elif im.mode == "CMYK":
+                            im = im.convert("RGB")
+                        elif im.mode == "P":
+                            im = im.convert("RGBA")
+                            bg = Image.new("RGB", im.size, (255, 255, 255))
+                            bg.paste(im, mask=im.split()[3])
+                            im.close()
+                            im = bg
+                        elif im.mode == "L":
+                            im = im.convert("RGB")
+                        elif im.mode not in ("RGB",):
+                            try:
+                                im = im.convert("RGB")
+                            except Exception:
+                                im = im.convert("RGB")
+
+                        w, h = im.size
+                        if w < 1 or h < 1:
+                            logger.warning(f"Degenerate image {reg_no}: {w}x{h}")
+                        else:
+                            if w > 413 or h > 531:
+                                ratio = min(413 / w, 531 / h)
+                                im = im.resize((int(w * ratio), int(h * ratio)), Image.LANCZOS)
+                            photo_path = img_dir / f"{reg_no}.webp"
+                            im.save(photo_path, "WEBP", quality=85)
+                            logger.info(f"Saved photo as WebP: {photo_path.name}")
+                        im.close()
+                    except Exception as e:
+                        logger.warning(f"Failed to process photo for {reg_no}: {e}")
 
             for table in tables:
                 headers = [self._normalize_header(th.get_text(" ", strip=True)) for th in table.find_all("th")]

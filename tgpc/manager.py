@@ -796,7 +796,7 @@ class Manager:
         logger.info(f"Total pending: {total_pending} records")
 
         # Setup Photos Directory
-        img_dir = Path(self.config.enrichment_directory) / "img"
+        img_dir = Path(self.config.enrichment_directory) / "webp"
         img_dir.mkdir(parents=True, exist_ok=True)
 
         # Filter by start/stop range - use serial_number from rph.json as position
@@ -845,7 +845,7 @@ class Manager:
 
         logger.info(f"Auto-enriching {len(records)} new records...")
         rph_lookup = {r.serial_number: r for r in records}
-        img_dir = Path(self.config.enrichment_directory) / "img"
+        img_dir = Path(self.config.enrichment_directory) / "webp"
         img_dir.mkdir(parents=True, exist_ok=True)
 
         url = os.environ.get("SUPABASE_URL")

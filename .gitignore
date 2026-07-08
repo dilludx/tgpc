@@ -28,6 +28,7 @@ data/jsn/
 data/metadata/
 data/rphdetails.json
 data/img/
+data/webp/
 data/progress/
 data/update_details.json
 *.backup
