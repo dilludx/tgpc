@@ -480,25 +480,28 @@ class Manager:
         photos_dir = self.file_manager.data_dir / "webp"
         if photos_dir.is_dir():
             try:
-                result = subprocess.run(
-                    [
-                        "rclone",
-                        "sync",
-                        str(photos_dir),
-                        "r2:tgpc/photos/",
-                        "--transfers",
-                        "16",
-                        "--checkers",
-                        "8",
-                    ],
-                    capture_output=True,
-                    text=True,
-                    timeout=1800,
-                )
+                rclone_log = Path(self.config.data_directory) / "rclone-photos.log"
+                with open(rclone_log, "w") as log_f:
+                    result = subprocess.run(
+                        [
+                            "rclone",
+                            "copy",
+                            str(photos_dir),
+                            "r2:tgpc/photos/",
+                            "--transfers",
+                            "16",
+                            "--checkers",
+                            "8",
+                            "--fast-list",
+                        ],
+                        stdout=log_f,
+                        stderr=subprocess.STDOUT,
+                        timeout=1800,
+                    )
                 if result.returncode == 0:
                     logger.info("R2 photos sync complete")
                 else:
-                    logger.error(f"R2 photos sync failed: {result.stderr.strip()}")
+                    logger.error(f"R2 photos sync failed (see {rclone_log})")
             except FileNotFoundError:
                 logger.error("rclone not installed. Run: curl https://rclone.org/install.sh | sudo bash")
             except Exception as e:
