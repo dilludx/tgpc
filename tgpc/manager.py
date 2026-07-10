@@ -904,7 +904,7 @@ class Manager:
                 if photo_file.is_file():
                     account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
                     if account_id:
-                        details.photo_url = f"https://pub-{account_id}.r2.dev/tgpc/photos/{reg_no}.webp"
+                        details.photo_url = f"https://pub-{account_id}.r2.dev/photos/{reg_no}.webp"
 
                 # Get basic info from rph.json lookup for validation
                 basic_info = rph_lookup.get(serial)
