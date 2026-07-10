@@ -35,6 +35,7 @@ class PharmacistRecord:
 
     education: Optional[List[Dict[str, str]]] = None
     work_experience: Optional[Dict[str, str]] = None
+    photo_url: Optional[str] = None
 
     def to_dict(self):
         """Convert to dictionary, strictly maintaining the 5-field schema for rph.json."""
@@ -59,6 +60,7 @@ class PharmacistRecord:
             "status": self.status or "",
             "education": self.education or [],
             "work_experience": self.work_experience or {"Address": "", "State": "", "District": "", "Pin code": ""},
+            "photo_url": self.photo_url or "",
         }
 
 

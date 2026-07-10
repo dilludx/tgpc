@@ -2,9 +2,14 @@
   import type { PharmacistRecord, Category, CategoryFilter } from '$lib/types';
   import { searchRecords } from '$lib/api';
   import { CATEGORY_COLORS, CATEGORY_BG, CATEGORIES as CAT_NAMES } from '$lib/colors';
+  import { PUBLIC_R2_PHOTO_BASE } from '$env/static/public';
   import jsPDF from 'jspdf';
   import autoTable from 'jspdf-autotable';
   import { fade, fly } from 'svelte/transition';
+
+  function photoUrl(r: PharmacistRecord): string {
+    return r.photo_url || `${PUBLIC_R2_PHOTO_BASE}/${r.registration_number}.webp`;
+  }
 
   let query = $state('');
   let category = $state<CategoryFilter>('all');
@@ -206,6 +211,7 @@
         <table class="w-full" style="table-layout:auto">
           <thead class="sticky top-0 bg-white z-10">
             <tr class="text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider">
+              <th class="font-inherit text-left py-1.5 border-b-2 border-[#e5e7eb] w-[52px]"></th>
               <th class="font-inherit text-left py-1.5 border-b-2 border-[#e5e7eb]">RPC NUMBER</th>
               <th class="font-inherit text-left py-1.5 border-b-2 border-[#e5e7eb]">Name</th>
               <th class="font-inherit text-left py-1.5 border-b-2 border-[#e5e7eb] hidden lg:table-cell">Father Name</th>
@@ -218,6 +224,9 @@
           <tbody>
             {#each filtered as r}
               <tr class="text-[0.875rem] text-[#374151] border-b border-[#f3f4f6]" style="content-visibility:auto;contain-intrinsic-size:48px">
+                <td class="py-1.5">
+                  <img src={photoUrl(r)} alt="" loading="lazy" class="w-9 h-11 rounded object-cover bg-[#f3f4f6]" />
+                </td>
                 <td class="py-2.5 text-[#2563eb]" style="font-weight:600">{r.registration_number}</td>
                 <td class="py-2.5 truncate hidden lg:table-cell" title={r.name}>{r.name}</td>
                 <td class="py-2.5 truncate hidden lg:table-cell" title={r.father_name || ''}>{r.father_name || '—'}</td>
@@ -239,17 +248,20 @@
       </div>
       <div class="md:hidden space-y-0.5">
           {#each filtered as r}
-            <div class="py-2 border-b border-[#f3f4f6] text-[0.875rem]" style="content-visibility:auto;contain-intrinsic-size:110px">
-              <span class="text-[#2563eb]" style="font-weight:600">{r.registration_number}</span>
-              <div class="mt-0.5 text-[#374151] truncate">{r.name}</div>
-              <div class="mt-0.5 text-[#374151] truncate">{r.father_name || '—'}</div>
-              <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[#374151]">
-                {#if r.gender}<span>{r.gender}</span>{/if}
-                <span style="color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
-                {#if r.validity_date}<span>Valid till: {r.validity_date}</span>{/if}
-                {#if r.status}
-                  <span style="color:{r.status === 'Active' ? '#000000' : '#ef4444'}">{r.status}</span>
-                {/if}
+            <div class="flex gap-3 py-2 border-b border-[#f3f4f6] text-[0.875rem]" style="content-visibility:auto;contain-intrinsic-size:110px">
+              <img src={photoUrl(r)} alt="" loading="lazy" class="w-10 h-12 rounded object-cover bg-[#f3f4f6] flex-shrink-0" />
+              <div class="min-w-0">
+                <span class="text-[#2563eb]" style="font-weight:600">{r.registration_number}</span>
+                <div class="mt-0.5 text-[#374151] truncate">{r.name}</div>
+                <div class="mt-0.5 text-[#374151] truncate">{r.father_name || '—'}</div>
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[#374151]">
+                  {#if r.gender}<span>{r.gender}</span>{/if}
+                  <span style="color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
+                  {#if r.validity_date}<span>Valid till: {r.validity_date}</span>{/if}
+                  {#if r.status}
+                    <span style="color:{r.status === 'Active' ? '#000000' : '#ef4444'}">{r.status}</span>
+                  {/if}
+                </div>
               </div>
             </div>
           {/each}

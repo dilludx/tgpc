@@ -429,7 +429,7 @@ class Manager:
             logger.error(f"Supabase Storage sync error: {e}")
 
     def sync_to_r2(self):
-        """Sync rph.json to Cloudflare R2."""
+        """Sync rph.json and photos to Cloudflare R2."""
         account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
         access_key = os.environ.get("R2_ACCESS_KEY_ID")
         secret_key = os.environ.get("R2_SECRET_ACCESS_KEY")
@@ -443,6 +443,8 @@ class Manager:
         env = os.environ.copy()
         env["AWS_ACCESS_KEY_ID"] = access_key
         env["AWS_SECRET_ACCESS_KEY"] = secret_key
+
+        # Upload rph.json
         try:
             result = subprocess.run(
                 [
@@ -466,13 +468,41 @@ class Manager:
                 env=env,
             )
             if result.returncode == 0:
-                logger.info("R2 sync complete")
+                logger.info("R2 rph.json sync complete")
             else:
-                logger.error(f"R2 sync failed: {result.stderr.strip()}")
+                logger.error(f"R2 rph.json sync failed: {result.stderr.strip()}")
         except FileNotFoundError:
             logger.error("awscli not installed. Run: pip install awscli")
         except Exception as e:
-            logger.error(f"R2 sync error: {e}")
+            logger.error(f"R2 rph.json sync error: {e}")
+
+        # Sync photos
+        photos_dir = self.file_manager.data_dir / "webp"
+        if photos_dir.is_dir():
+            try:
+                result = subprocess.run(
+                    [
+                        "rclone",
+                        "sync",
+                        str(photos_dir),
+                        "r2:tgpc/photos/",
+                        "--transfers",
+                        "16",
+                        "--checkers",
+                        "8",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=1800,
+                )
+                if result.returncode == 0:
+                    logger.info("R2 photos sync complete")
+                else:
+                    logger.error(f"R2 photos sync failed: {result.stderr.strip()}")
+            except FileNotFoundError:
+                logger.error("rclone not installed. Run: curl https://rclone.org/install.sh | sudo bash")
+            except Exception as e:
+                logger.error(f"R2 photos sync error: {e}")
 
     def sync_to_gdrive(self):
         """Sync rph.json to Google Drive via rclone."""
@@ -868,6 +898,13 @@ class Manager:
                 details = self.scraper.extract_detailed_info(reg_no, img_dir)
                 if not details:
                     continue
+
+                # Set photo_url if photo was saved
+                photo_file = img_dir / f"{reg_no}.webp"
+                if photo_file.is_file():
+                    account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+                    if account_id:
+                        details.photo_url = f"https://pub-{account_id}.r2.dev/tgpc/photos/{reg_no}.webp"
 
                 # Get basic info from rph.json lookup for validation
                 basic_info = rph_lookup.get(serial)
