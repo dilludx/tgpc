@@ -3,6 +3,7 @@ CLI entry point for TGPC system.
 """
 
 import argparse
+import atexit
 import getpass
 import os
 import subprocess
@@ -21,6 +22,69 @@ CREDENTIAL_KEYS = [
     "RESEND_API_KEY",
     "NOTIFICATION_EMAIL",
 ]
+
+
+# --- Cloudflare WARP ---
+
+_warp_was_connected = False
+
+
+def _warp_available() -> bool:
+    """Check if warp-cli is installed and reachable."""
+    try:
+        r = subprocess.run(["warp-cli", "status"], capture_output=True, text=True, timeout=5)
+        return r.returncode == 0 or "Connected" in r.stdout or "Disconnected" in r.stdout
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+
+
+def _warp_connect() -> bool:
+    """Connect Cloudflare WARP. Returns True if connected (or already connected)."""
+    if not _warp_available():
+        return False
+
+    try:
+        r = subprocess.run(["warp-cli", "status"], capture_output=True, text=True, timeout=5)
+        if "Connected" in r.stdout:
+            print("WARP: already connected")
+            return True
+
+        r = subprocess.run(["warp-cli", "connect"], capture_output=True, text=True, timeout=15)
+        if r.returncode == 0:
+            print("WARP: connected")
+            return True
+
+        print(f"WARP: connect failed — {r.stderr.strip() or r.stdout.strip()}")
+        return False
+    except Exception as e:
+        print(f"WARP: connect error — {e}")
+        return False
+
+
+def _warp_disconnect():
+    """Disconnect Cloudflare WARP."""
+    if not _warp_available():
+        return
+
+    try:
+        r = subprocess.run(["warp-cli", "disconnect"], capture_output=True, text=True, timeout=15)
+        if r.returncode == 0:
+            print("WARP: disconnected")
+        else:
+            print(f"WARP: disconnect failed — {r.stderr.strip() or r.stdout.strip()}")
+    except Exception as e:
+        print(f"WARP: disconnect error — {e}")
+
+
+def _warp_ensure_disconnected():
+    """Ensure WARP is disconnected on exit. Registered with atexit."""
+    global _warp_was_connected
+    if _warp_was_connected:
+        _warp_disconnect()
+        _warp_was_connected = False
+
+
+# --- Keychain ---
 
 
 def _get_keychain(key: str) -> str | None:
@@ -178,29 +242,40 @@ def main():
 
     manager = Manager()
 
-    if args.command == "update":
-        status = manager.run_daily_update()
-        if status in {"source_unavailable", "updated", "blocked"}:
-            if not args.no_sync:
-                load_credentials()
-                manager.sync_to_supabase()
-                manager.sync_to_supabase_storage()
-                manager.sync_to_r2()
-                manager.sync_to_gdrive()
-                manager.sync_to_release()
-                manager.sync_to_email()
-                if status == "updated":
-                    manager.enrich_new_records()
-            return
-        raise SystemExit(1)
-    elif args.command == "sync":
-        load_credentials()
-        manager.sync_to_supabase()
-        manager.sync_to_supabase_storage()
-        manager.sync_to_r2()
-        manager.sync_to_gdrive()
-        manager.sync_to_release()
-        manager.sync_to_email()
+    # Connect WARP for network-level routing (update and sync hit external services)
+    global _warp_was_connected
+    if args.command in ("update", "sync"):
+        atexit.register(_warp_ensure_disconnected)
+        _warp_was_connected = _warp_connect()
+
+    try:
+        if args.command == "update":
+            status = manager.run_daily_update()
+            if status in {"source_unavailable", "updated", "blocked"}:
+                if not args.no_sync:
+                    load_credentials()
+                    manager.sync_to_supabase()
+                    manager.sync_to_supabase_storage()
+                    manager.sync_to_r2()
+                    manager.sync_to_gdrive()
+                    manager.sync_to_release()
+                    manager.sync_to_email()
+                    if status == "updated":
+                        manager.enrich_new_records()
+                return
+            raise SystemExit(1)
+        elif args.command == "sync":
+            load_credentials()
+            manager.sync_to_supabase()
+            manager.sync_to_supabase_storage()
+            manager.sync_to_r2()
+            manager.sync_to_gdrive()
+            manager.sync_to_release()
+            manager.sync_to_email()
+    finally:
+        if _warp_was_connected:
+            _warp_disconnect()
+            _warp_was_connected = False
 
 
 if __name__ == "__main__":
