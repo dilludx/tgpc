@@ -210,6 +210,9 @@ def main():
     # Sync command
     subparsers.add_parser("sync", help="Sync rph.json to all cloud destinations")
 
+    # Retry-photos command
+    subparsers.add_parser("retry-photos", help="Retry uploading failed photos from data/webp/ to R2")
+
     # Creds command
     creds_parser = subparsers.add_parser("creds", help="Manage credentials in macOS Keychain")
     creds_sub = creds_parser.add_subparsers(dest="creds_cmd")
@@ -244,7 +247,7 @@ def main():
 
     # Connect WARP for network-level routing (update and sync hit external services)
     global _warp_was_connected
-    if args.command in ("update", "sync"):
+    if args.command in ("update", "sync", "retry-photos"):
         atexit.register(_warp_ensure_disconnected)
         _warp_was_connected = _warp_connect()
 
@@ -272,6 +275,9 @@ def main():
             manager.sync_to_gdrive()
             manager.sync_to_release()
             manager.sync_to_email()
+        elif args.command == "retry-photos":
+            load_credentials()
+            manager.retry_photos()
     finally:
         if _warp_was_connected:
             _warp_disconnect()

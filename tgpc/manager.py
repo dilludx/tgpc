@@ -429,20 +429,19 @@ class Manager:
             logger.error(f"Supabase Storage sync error: {e}")
 
     def sync_to_r2(self):
-        """Sync rph.json and photos to Cloudflare R2."""
-        account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+        """Sync rph.json to Cloudflare R2. Photos are uploaded during enrichment."""
+        endpoint = self._get_r2_endpoint()
+        if not endpoint:
+            logger.error("Missing CLOUDFLARE_ACCOUNT_ID for R2 sync")
+            return
+
         access_key = os.environ.get("R2_ACCESS_KEY_ID")
         secret_key = os.environ.get("R2_SECRET_ACCESS_KEY")
-
-        if not all([account_id, access_key, secret_key]):
+        if not all([access_key, secret_key]):
             logger.error("Missing R2 credentials")
             return
 
-        endpoint = f"https://{account_id}.r2.cloudflarestorage.com"
         file_path = str(self.file_manager.data_dir / "rph.json")
-        env = os.environ.copy()
-        env["AWS_ACCESS_KEY_ID"] = access_key
-        env["AWS_SECRET_ACCESS_KEY"] = secret_key
 
         # Upload rph.json
         try:
@@ -465,7 +464,7 @@ class Manager:
                 capture_output=True,
                 text=True,
                 timeout=120,
-                env=env,
+                env=self._get_r2_env(),
             )
             if result.returncode == 0:
                 logger.info("R2 rph.json sync complete")
@@ -476,36 +475,165 @@ class Manager:
         except Exception as e:
             logger.error(f"R2 rph.json sync error: {e}")
 
-        # Sync photos
+    def retry_photos(self):
+        """Retry uploading all local WebP files to R2. Resolves failures from the same session."""
         photos_dir = self.file_manager.data_dir / "webp"
-        if photos_dir.is_dir():
-            try:
-                rclone_log = Path(self.config.data_directory) / "rclone-photos.log"
-                with open(rclone_log, "w") as log_f:
-                    result = subprocess.run(
-                        [
-                            "rclone",
-                            "copy",
-                            str(photos_dir),
-                            "r2:tgpc/photos/",
-                            "--transfers",
-                            "16",
-                            "--checkers",
-                            "8",
-                            "--fast-list",
-                        ],
-                        stdout=log_f,
-                        stderr=subprocess.STDOUT,
-                        timeout=1800,
+        if not photos_dir.is_dir():
+            logger.info("No data/webp/ directory — nothing to retry")
+            return
+
+        webp_files = sorted(photos_dir.glob("*.webp"))
+        if not webp_files:
+            logger.info("No .webp files in data/webp/ — nothing to retry")
+            return
+
+        logger.info(f"Retrying {len(webp_files)} photos to R2...")
+        succeeded = 0
+        failed = []
+
+        for photo_file in webp_files:
+            reg_no = photo_file.stem
+            r2_key = f"photos/{reg_no}.webp"
+
+            if self._upload_and_verify_photo(photo_file, r2_key):
+                photo_file.unlink()
+                succeeded += 1
+                logger.info(f"Retry OK + local deleted: {reg_no}")
+            else:
+                failed.append(reg_no)
+                logger.error(f"Retry FAILED: {reg_no} — local file kept")
+
+        logger.info(f"Retry complete: {succeeded} uploaded, {len(failed)} failed")
+        if failed:
+            logger.critical(f"Still failed: {', '.join(failed)}")
+
+    def _get_r2_env(self):
+        """Build env dict with R2 credentials for aws s3api commands."""
+        access_key = os.environ.get("R2_ACCESS_KEY_ID")
+        secret_key = os.environ.get("R2_SECRET_ACCESS_KEY")
+        env = os.environ.copy()
+        if access_key:
+            env["AWS_ACCESS_KEY_ID"] = access_key
+        if secret_key:
+            env["AWS_SECRET_ACCESS_KEY"] = secret_key
+        return env
+
+    def _get_r2_endpoint(self):
+        """Build R2 endpoint URL."""
+        account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+        return f"https://{account_id}.r2.cloudflarestorage.com" if account_id else None
+
+    def _upload_and_verify_photo(self, local_path, r2_key, max_retries=5):
+        """Upload a photo to R2 with aggressive immediate retries. Returns True on success."""
+        import time
+
+        for attempt in range(1, max_retries + 1):
+            uploaded = self._upload_photo_to_r2(local_path, r2_key)
+            if not uploaded:
+                if attempt < max_retries:
+                    delay = 2**attempt  # 2s, 4s, 8s, 16s
+                    logger.warning(
+                        f"Upload attempt {attempt}/{max_retries} failed for {r2_key}, retrying in {delay}s..."
                     )
-                if result.returncode == 0:
-                    logger.info("R2 photos sync complete")
-                else:
-                    logger.error(f"R2 photos sync failed (see {rclone_log})")
-            except FileNotFoundError:
-                logger.error("rclone not installed. Run: curl https://rclone.org/install.sh | sudo bash")
-            except Exception as e:
-                logger.error(f"R2 photos sync error: {e}")
+                    time.sleep(delay)
+                    continue
+                return False
+
+            verified = self._verify_photo_on_r2(r2_key, local_path.stat().st_size)
+            if verified:
+                return True
+
+            if attempt < max_retries:
+                delay = 2**attempt
+                logger.warning(
+                    f"Verification attempt {attempt}/{max_retries} failed for {r2_key}, retrying in {delay}s..."
+                )
+                time.sleep(delay)
+
+        return False
+
+    def _upload_photo_to_r2(self, local_path, r2_key):
+        """Upload a single photo to R2. Returns True on success."""
+        endpoint = self._get_r2_endpoint()
+        if not endpoint:
+            logger.error("Missing CLOUDFLARE_ACCOUNT_ID for R2 upload")
+            return False
+
+        try:
+            result = subprocess.run(
+                [
+                    "aws",
+                    "s3api",
+                    "put-object",
+                    "--endpoint-url",
+                    endpoint,
+                    "--region",
+                    "auto",
+                    "--bucket",
+                    "tgpc",
+                    "--key",
+                    r2_key,
+                    "--body",
+                    str(local_path),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=120,
+                env=self._get_r2_env(),
+            )
+            if result.returncode == 0:
+                return True
+            logger.error(f"R2 upload failed for {r2_key}: {result.stderr.strip()}")
+            return False
+        except FileNotFoundError:
+            logger.error("awscli not installed. Run: pip install awscli")
+            return False
+        except Exception as e:
+            logger.error(f"R2 upload error for {r2_key}: {e}")
+            return False
+
+    def _verify_photo_on_r2(self, r2_key, expected_size):
+        """Cloud-only verification: confirm file exists on R2 with correct size."""
+        endpoint = self._get_r2_endpoint()
+        if not endpoint:
+            return False
+
+        try:
+            result = subprocess.run(
+                [
+                    "aws",
+                    "s3api",
+                    "head-object",
+                    "--endpoint-url",
+                    endpoint,
+                    "--region",
+                    "auto",
+                    "--bucket",
+                    "tgpc",
+                    "--key",
+                    r2_key,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                env=self._get_r2_env(),
+            )
+            if result.returncode == 0:
+                import json as _json
+
+                head = _json.loads(result.stdout)
+                actual_size = head.get("ContentLength", -1)
+                if actual_size == expected_size:
+                    return True
+                logger.warning(
+                    f"R2 verification size mismatch for {r2_key}: expected {expected_size}, got {actual_size}"
+                )
+                return False
+            logger.error(f"R2 head-object failed for {r2_key}: {result.stderr.strip()}")
+            return False
+        except Exception as e:
+            logger.error(f"R2 verification error for {r2_key}: {e}")
+            return False
 
     def sync_to_gdrive(self):
         """Sync rph.json to Google Drive via rclone."""
@@ -866,6 +994,15 @@ class Manager:
     def enrich_new_records(self):
         """Auto-enrich records that were newly discovered by the last update."""
         regs = getattr(self, "_last_new_regs", set())
+
+        # Setup shared resources
+        img_dir = Path(self.config.enrichment_directory) / "webp"
+        img_dir.mkdir(parents=True, exist_ok=True)
+
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_SECRET_KEY")
+        supabase = create_client(url, key) if url and key else None
+
         if not regs:
             logger.info("No new records to enrich")
             return
@@ -877,12 +1014,6 @@ class Manager:
 
         logger.info(f"Auto-enriching {len(records)} new records...")
         rph_lookup = {r.serial_number: r for r in records}
-        img_dir = Path(self.config.enrichment_directory) / "webp"
-        img_dir.mkdir(parents=True, exist_ok=True)
-
-        url = os.environ.get("SUPABASE_URL")
-        key = os.environ.get("SUPABASE_SECRET_KEY")
-        supabase = create_client(url, key) if url and key else None
 
         processed = self._process_records_sequential(records, rph_lookup, img_dir, supabase=supabase)
         logger.info(f"Auto-enrich complete: {processed} records processed")
@@ -892,6 +1023,7 @@ class Manager:
     ):
         """Process records sequentially."""
         total_processed = 0
+        failed_photos = []
 
         for idx, record in enumerate(pending_records):
             serial = record.serial_number
@@ -902,12 +1034,21 @@ class Manager:
                 if not details:
                     continue
 
-                # Set photo_url if photo was saved
+                # Upload photo to R2, verify, delete local
                 photo_file = img_dir / f"{reg_no}.webp"
                 if photo_file.is_file():
                     account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+                    r2_key = f"photos/{reg_no}.webp"
+
+                    if self._upload_and_verify_photo(photo_file, r2_key):
+                        photo_file.unlink()
+                        logger.info(f"Photo uploaded + verified + local deleted: {reg_no}")
+                    else:
+                        failed_photos.append(reg_no)
+                        logger.error(f"FAILED after 5 attempts: {reg_no} — local file kept at {photo_file}")
+
                     if account_id:
-                        details.photo_url = f"https://pub-{account_id}.r2.dev/photos/{reg_no}.webp"
+                        details.photo_url = f"https://pub-{account_id}.r2.dev/{r2_key}"
 
                 # Get basic info from rph.json lookup for validation
                 basic_info = rph_lookup.get(serial)
@@ -976,5 +1117,12 @@ class Manager:
                 raise
             except Exception as e:
                 logger.error(f"Enrichment failed for {reg_no}: {e}")
+
+        if failed_photos:
+            logger.critical(
+                f"PHOTO UPLOAD FAILED for {len(failed_photos)} records after 5 attempts each: "
+                + ", ".join(failed_photos)
+            )
+            logger.critical("Local files kept at data/webp/ — manually retry or investigate R2 connectivity")
 
         return total_processed
