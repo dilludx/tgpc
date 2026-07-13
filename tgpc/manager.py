@@ -325,6 +325,8 @@ class Manager:
         self.file_manager.save(list(sorted_records))
         self.backup_manager.cleanup()
         self._last_new_regs = new_ids
+        self._last_modified_regs = modified_ids
+        self._last_removed_regs = removed_ids
 
         logger.info(
             "Update complete. Total: %d, 🌱 NEW: %d, 🌀 CHANGES: %d, ❌ REMOVALS: %d",
@@ -366,8 +368,8 @@ class Manager:
         )
         return "updated"
 
-    def sync_to_supabase(self):
-        """Sync data to Supabase."""
+    def sync_to_supabase(self, delta_records=None):
+        """Sync data to Supabase. If delta_records provided, only upsert those."""
         url = os.environ.get("SUPABASE_URL")
         key = os.environ.get("SUPABASE_SECRET_KEY")
 
@@ -377,7 +379,15 @@ class Manager:
 
         try:
             supabase = create_client(url, key)
-            records = self.file_manager.load()
+
+            if delta_records is not None:
+                records = delta_records
+            else:
+                records = self.file_manager.load()
+
+            if not records:
+                logger.info("No records to sync")
+                return
 
             logger.info(f"Syncing {len(records)} records to Supabase...")
 

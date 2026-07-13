@@ -257,7 +257,15 @@ def main():
             if status in {"source_unavailable", "updated", "blocked"}:
                 if not args.no_sync:
                     load_credentials()
-                    manager.sync_to_supabase()
+                    # Build delta: new + modified records only
+                    delta = None
+                    if status == "updated":
+                        all_records = manager.file_manager.load()
+                        new_regs = getattr(manager, "_last_new_regs", set())
+                        mod_regs = getattr(manager, "_last_modified_regs", set())
+                        delta_ids = new_regs | mod_regs
+                        delta = [r for r in all_records if r.registration_number in delta_ids] if delta_ids else []
+                    manager.sync_to_supabase(delta_records=delta)
                     manager.sync_to_supabase_storage()
                     manager.sync_to_r2()
                     manager.sync_to_gdrive()
