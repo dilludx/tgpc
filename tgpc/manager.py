@@ -414,10 +414,22 @@ class Manager:
                 result = supabase.table("rph").select("registration_number", count="exact").execute()
                 remote_count = result.count
                 if local_count != remote_count:
-                    logger.critical(
-                        f"SUPABASE SYNC MISMATCH: local={local_count}, remote={remote_count}, "
-                        f"diff={local_count - remote_count}. Re-run 'make sync' to fix."
+                    logger.warning(
+                        f"Supabase mismatch detected (local={local_count}, remote={remote_count}). "
+                        f"Running full sync to fix..."
                     )
+                    all_records = self.file_manager.load()
+                    for i in range(0, len(all_records), batch_size):
+                        batch = [r.to_dict() for r in all_records[i : i + batch_size]]
+                        supabase.table("rph").upsert(batch, on_conflict="registration_number").execute()
+                    result = supabase.table("rph").select("registration_number", count="exact").execute()
+                    remote_count = result.count
+                    if local_count == remote_count:
+                        logger.info(f"Full sync fixed mismatch. Supabase now has {remote_count} records")
+                    else:
+                        logger.critical(
+                            f"SUPABASE STILL MISMATCHED after full sync: local={local_count}, remote={remote_count}"
+                        )
                 else:
                     logger.info(f"Supabase verification OK: {local_count} records match")
             except Exception as e:
