@@ -263,7 +263,7 @@ def main():
                         all_records = manager.file_manager.load()
                         new_regs = getattr(manager, "_last_new_regs", set())
                         mod_regs = getattr(manager, "_last_modified_regs", set())
-                        delta_ids = new_regs | mod_regs
+                        delta_ids = new_regs | set(mod_regs)
                         delta = [r for r in all_records if r.registration_number in delta_ids] if delta_ids else []
                     manager.sync_to_supabase(delta_records=delta)
                     manager.sync_to_supabase_storage()
