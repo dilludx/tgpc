@@ -408,6 +408,21 @@ class Manager:
 
             logger.info("Supabase sync complete")
 
+            # Post-sync verification: compare counts
+            local_count = len(self.file_manager.load())
+            try:
+                result = supabase.table("rph").select("registration_number", count="exact").execute()
+                remote_count = result.count
+                if local_count != remote_count:
+                    logger.critical(
+                        f"SUPABASE SYNC MISMATCH: local={local_count}, remote={remote_count}, "
+                        f"diff={local_count - remote_count}. Re-run 'make sync' to fix."
+                    )
+                else:
+                    logger.info(f"Supabase verification OK: {local_count} records match")
+            except Exception as e:
+                logger.warning(f"Could not verify Supabase count: {e}")
+
         except Exception as e:
             logger.error(f"Sync failed: {e}")
 
