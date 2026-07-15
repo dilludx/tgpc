@@ -1073,7 +1073,7 @@ class Manager:
                         logger.error(f"FAILED after 5 attempts: {reg_no} — local file kept at {photo_file}")
 
                     if account_id:
-                        details.photo_url = f"https://pub-{account_id}.r2.dev/{r2_key}"
+                        details.photo_url = f"https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/{r2_key}"
 
                 # Get basic info from rph.json lookup for validation
                 basic_info = rph_lookup.get(serial)
