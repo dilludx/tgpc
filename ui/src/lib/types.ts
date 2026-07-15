@@ -52,3 +52,15 @@ export interface BadgeColor {
 }
 
 export type CategoryFilter = 'all' | Category;
+
+export interface ServiceQuota {
+  name: string;
+  items: { label: string; used: string | null; limit: string | null; pct: string }[];
+  error?: string;
+}
+
+export interface QuotaReport {
+  generated_at: string;
+  services: ServiceQuota[];
+  missing_vars: string[];
+}

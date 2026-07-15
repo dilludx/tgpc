@@ -1,4 +1,4 @@
-.PHONY: scrape sync retry
+.PHONY: scrape sync retry quota
 
 scrape:  # Scrape TGPC website → save rph.json → sync all destinations
 	python3 -m tgpc update
@@ -8,3 +8,6 @@ sync:  # Sync existing rph.json to Supabase, R2, GDrive, Release, Email
 
 retry:  # Retry uploading failed photos from data/webp/ to R2
 	python3 -m tgpc retry-photos
+
+quota:  # Show free quota usage for all services
+	python3 -m tgpc quota

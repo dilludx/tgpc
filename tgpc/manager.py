@@ -707,10 +707,16 @@ class Manager:
             logger.error(f"GDrive sync error: {e}")
 
     def sync_to_release(self):
-        """Upload rph.json to GitHub Release."""
+        """Encrypt rph.json and upload to GitHub Release."""
         tag = "rphjson"
         file_path = str(self.file_manager.data_dir / "rph.json")
+        archive_path = file_path + ".7z"
         repo = os.environ.get("GITHUB_REPOSITORY", "dilludx/tgpc")
+        password = os.environ.get("RELEASE_PASSWORD")
+
+        if not password:
+            logger.warning("RELEASE_PASSWORD not set, skipping release sync")
+            return
 
         try:
             with open(file_path) as f:
@@ -721,6 +727,15 @@ class Manager:
         title = f"{count:,} records — rph.json"
 
         try:
+            subprocess.run(
+                ["7z", "a", f"-p{password}", "-mhe=on", archive_path, file_path],
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=True,
+            )
+            logger.info(f"Encrypted release archive created ({count:,} records)")
+
             result = subprocess.run(
                 ["gh", "release", "view", tag, "--repo", repo],
                 capture_output=True,
@@ -730,59 +745,32 @@ class Manager:
             if result.returncode != 0:
                 logger.info(f"Creating release {tag}...")
                 subprocess.run(
-                    [
-                        "gh",
-                        "release",
-                        "create",
-                        tag,
-                        "--repo",
-                        repo,
-                        "--title",
-                        title,
-                        "--notes",
-                        title,
-                    ],
+                    ["gh", "release", "create", tag, "--repo", repo, "--title", title, "--notes", title],
                     capture_output=True,
                     text=True,
                     timeout=30,
                 )
+
             subprocess.run(
-                [
-                    "gh",
-                    "release",
-                    "upload",
-                    tag,
-                    file_path,
-                    "--repo",
-                    repo,
-                    "--clobber",
-                ],
+                ["gh", "release", "upload", tag, archive_path, "--repo", repo, "--clobber"],
                 capture_output=True,
                 text=True,
                 timeout=120,
             )
             subprocess.run(
-                [
-                    "gh",
-                    "release",
-                    "edit",
-                    tag,
-                    "--repo",
-                    repo,
-                    "--title",
-                    title,
-                    "--notes",
-                    title,
-                ],
+                ["gh", "release", "edit", tag, "--repo", repo, "--title", title, "--notes", title],
                 capture_output=True,
                 text=True,
                 timeout=30,
             )
             logger.info(f"Release sync complete ({count:,} records)")
         except FileNotFoundError:
-            logger.error("gh CLI not installed")
-        except Exception as e:
+            logger.error("7z or gh CLI not installed")
+        except subprocess.CalledProcessError as e:
             logger.error(f"Release sync error: {e}")
+        finally:
+            if os.path.exists(archive_path):
+                os.remove(archive_path)
 
     def sync_to_email(self):
         """Send update report via Resend email."""

@@ -1,8 +1,9 @@
 name = "tgpc-ui"
 compatibility_date = "2026-06-05"
+compatibility_flags = ["nodejs_compat"]
 
 pages_build_output_dir = ".svelte-kit/cloudflare"
 
 [[r2_buckets]]
 binding = "DISPATCH"
-bucket_name = "dispatch"
+bucket_name = "tgpc"

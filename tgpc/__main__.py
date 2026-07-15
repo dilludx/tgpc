@@ -9,18 +9,22 @@ import os
 import subprocess
 from pathlib import Path
 from tgpc.manager import Manager
+from tgpc.quota import show_quotas
 
 KEYCHAIN_SERVICE = "tgpc"
 
 CREDENTIAL_KEYS = [
     "SUPABASE_URL",
     "SUPABASE_SECRET_KEY",
+    "SUPABASE_PAT",
     "CLOUDFLARE_ACCOUNT_ID",
+    "CLOUDFLARE_API_TOKEN",
     "R2_ACCESS_KEY_ID",
     "R2_SECRET_ACCESS_KEY",
     "RCLONE_GDRIVE_CONFIG",
     "RESEND_API_KEY",
     "NOTIFICATION_EMAIL",
+    "RELEASE_PASSWORD",
 ]
 
 
@@ -213,6 +217,9 @@ def main():
     # Retry-photos command
     subparsers.add_parser("retry-photos", help="Retry uploading failed photos from data/webp/ to R2")
 
+    # Quota command
+    subparsers.add_parser("quota", help="Show free quota usage for all services")
+
     # Creds command
     creds_parser = subparsers.add_parser("creds", help="Manage credentials in macOS Keychain")
     creds_sub = creds_parser.add_subparsers(dest="creds_cmd")
@@ -286,6 +293,9 @@ def main():
         elif args.command == "retry-photos":
             load_credentials()
             manager.retry_photos()
+        elif args.command == "quota":
+            load_credentials()
+            show_quotas()
     finally:
         if _warp_was_connected:
             _warp_disconnect()

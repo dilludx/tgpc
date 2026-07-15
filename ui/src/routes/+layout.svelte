@@ -92,7 +92,7 @@
     });
   });
 
-  let activeTab = $derived($page.url.pathname === '/' ? 'search' : $page.url.pathname === '/notice' ? 'notice' : 'dispatch');
+  let activeTab = $derived($page.url.pathname === '/' ? 'search' : $page.url.pathname === '/notice' ? 'notice' : $page.url.pathname === '/dispatch' ? 'dispatch' : '');
 
   let searchRef: HTMLAnchorElement | undefined;
   let noticeRef: HTMLAnchorElement | undefined;
@@ -101,6 +101,7 @@
 
   $effect(() => {
     const tab = activeTab;
+    if (!tab) { sliderStyle = ''; return; }
     let el = tab === 'search' ? searchRef : tab === 'notice' ? noticeRef : dispatchRef;
     if (el) {
       sliderStyle = `transform:translateX(${el.offsetLeft}px);width:${el.offsetWidth}px`;
