@@ -276,11 +276,14 @@ def main():
                     delta_ids = new_regs | set(mod_regs)
                     delta = [r for r in all_records if r.registration_number in delta_ids] if delta_ids else []
                     manager.sync_to_supabase(delta_records=delta)
-                    manager.sync_to_supabase_storage()
-                    manager.sync_to_r2()
-                    manager.sync_to_gdrive()
-                    manager.sync_to_release()
-                    manager.sync_to_email()
+                    if delta_ids:
+                        manager.sync_to_supabase_storage()
+                        manager.sync_to_r2()
+                        manager.sync_to_gdrive()
+                        manager.sync_to_release()
+                        manager.sync_to_email()
+                    else:
+                        print("No changes — skipping full syncs.")
                     if new_regs:
                         print(f"Enriching {len(new_regs)} new records...")
                         manager.enrich_new_records()
