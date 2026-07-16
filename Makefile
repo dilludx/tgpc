@@ -1,16 +1,10 @@
-.PHONY: scrape sync enrich retry quota
+.PHONY: scrape sync quota
 
-scrape:  # Scrape TGPC website → save rph.json → sync all destinations
+scrape:  # Scrape TGPC → sync all destinations → enrich new records
 	python3 -m tgpc update
 
-sync:  # Sync existing rph.json to Supabase, R2, GDrive, Release, Email
+sync:  # Full manual sync of rph.json to all cloud destinations
 	python3 -m tgpc sync
-
-enrich:  # Upload photos for new records from last scrape
-	python3 -m tgpc enrich
-
-retry:  # Retry uploading failed photos from data/webp/ to R2
-	python3 -m tgpc retry-photos
 
 quota:  # Show free quota usage for all services
 	python3 -m tgpc quota
