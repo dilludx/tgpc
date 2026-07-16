@@ -26,9 +26,6 @@ FREE_TIER = {
         "class_a_ops": 1_000_000,
         "class_b_ops": 10_000_000,
     },
-    "cloudflare_pages": {
-        "builds": 500,
-    },
     "resend": {
         "emails_per_day": 100,
         "emails_per_month": 3000,
@@ -215,32 +212,6 @@ def check_r2():
     return result
 
 
-# --- Cloudflare Pages ---
-
-
-def check_pages():
-    token = _cf_token()
-    account_id = _cf_account_id()
-    if not token or not account_id:
-        return {"error": "Missing CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID"}
-
-    project = "tgpc"
-    base = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/pages/projects"
-    headers = {"Authorization": f"Bearer {token}"}
-
-    result = {"builds_this_month": None}
-
-    now = datetime.now(timezone.utc)
-    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-    r = _req(f"{base}/{project}/deployments?per_page=500", headers)
-    if r["status"] == 200:
-        data = json.loads(r["body"]).get("result", [])
-        result["builds_this_month"] = sum(1 for d in data if d.get("created_on", "") >= month_start.isoformat())
-
-    return result
-
-
 # --- GitHub Actions ---
 
 # --- Resend ---
@@ -373,18 +344,6 @@ def show_quotas():
         print(f"  Objects:       {_fmt_val(oc)}")
         print(f"  Class A Ops:   {_fmt_usage(ca, ft['class_a_ops'], '')}    {_pct(ca, ft['class_a_ops'])}")
         print(f"  Class B Ops:   {_fmt_usage(cb, ft['class_b_ops'], '')}    {_pct(cb, ft['class_b_ops'])}")
-
-    print()
-
-    # --- Cloudflare Pages ---
-    print("── Cloudflare Pages ──────────────────────────────────────")
-    cp = check_pages()
-    if "error" in cp:
-        print(f"  ⚠  {cp['error']}")
-    else:
-        ft = FREE_TIER["cloudflare_pages"]
-        bm = cp.get("builds_this_month")
-        print(f"  Builds/month:  {_fmt_usage(bm, ft['builds'], '')}    {_pct(bm, ft['builds'])}")
 
     print()
 

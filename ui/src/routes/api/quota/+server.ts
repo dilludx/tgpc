@@ -4,7 +4,7 @@ import type { QuotaReport, ServiceQuota } from '$lib/types';
 const FREE_TIER: Record<string, Record<string, number>> = {
   supabase: { storage_size_gb: 1.0 },
   r2: { storage_gb: 10.0, class_a_ops: 1_000_000, class_b_ops: 10_000_000 },
-  pages: { builds: 500 },
+
   resend: { emails_per_day: 100, emails_per_month: 3000 },
 };
 
@@ -130,25 +130,6 @@ async function checkR2(env: Record<string, string>): Promise<ServiceQuota> {
   return { name: 'Cloudflare R2', items };
 }
 
-async function checkPages(env: Record<string, string>): Promise<ServiceQuota> {
-  const items: ServiceQuota['items'] = [];
-  const token = env['CLOUDFLARE_API_TOKEN'];
-  const account_id = env['CLOUDFLARE_ACCOUNT_ID'];
-  if (!token || !account_id) return { name: 'Cloudflare Pages', items, error: 'Missing CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID' };
-
-  try {
-    const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${account_id}/pages/projects/tgpc`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (r.ok) {
-      const d: any = await r.json();
-      items.push({ label: 'Project', used: d.result?.name || 'tgpc', limit: null, pct: '-' });
-    }
-  } catch {}
-
-  return { name: 'Cloudflare Pages', items };
-}
-
 async function checkResend(env: Record<string, string>): Promise<ServiceQuota> {
   const items: ServiceQuota['items'] = [];
   const key = env['RESEND_API_KEY'];
@@ -182,7 +163,6 @@ export async function GET({ request, platform }) {
   const services = await Promise.all([
     checkSupabase(env),
     checkR2(env),
-    checkPages(env),
     checkResend(env),
   ]);
 
