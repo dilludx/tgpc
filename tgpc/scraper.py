@@ -136,7 +136,7 @@ class Scraper:
 
         logger.info("Simple scraper initialized - direct connection only")
 
-    def health_check(self, timeout: int = 30) -> bool:
+    def health_check(self, timeout: int = 10) -> bool:
         """Quick health check to detect if connection is blocked."""
         try:
             response = self.session.get(self.urls["total"], timeout=timeout)

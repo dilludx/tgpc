@@ -264,25 +264,24 @@ def main():
     try:
         if args.command == "update":
             status = manager.run_daily_update()
-            if status in {"source_unavailable", "updated", "blocked"}:
+            if status in ("source_unavailable", "blocked"):
+                print(f"TGPC source {status} — no new data to sync.")
+                return
+            if status == "updated":
                 if not args.no_sync:
                     load_credentials()
-                    # Build delta: new + modified records only
-                    delta = None
-                    if status == "updated":
-                        all_records = manager.file_manager.load()
-                        new_regs = getattr(manager, "_last_new_regs", set())
-                        mod_regs = getattr(manager, "_last_modified_regs", set())
-                        delta_ids = new_regs | set(mod_regs)
-                        delta = [r for r in all_records if r.registration_number in delta_ids] if delta_ids else []
+                    all_records = manager.file_manager.load()
+                    new_regs = getattr(manager, "_last_new_regs", set())
+                    mod_regs = getattr(manager, "_last_modified_regs", set())
+                    delta_ids = new_regs | set(mod_regs)
+                    delta = [r for r in all_records if r.registration_number in delta_ids] if delta_ids else []
                     manager.sync_to_supabase(delta_records=delta)
                     manager.sync_to_supabase_storage()
                     manager.sync_to_r2()
                     manager.sync_to_gdrive()
                     manager.sync_to_release()
                     manager.sync_to_email()
-                    if status == "updated":
-                        print("Run 'make enrich' to upload photos for new records")
+                    print("Run 'make enrich' to upload photos for new records")
                 return
             raise SystemExit(1)
         elif args.command == "sync":
