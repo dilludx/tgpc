@@ -281,7 +281,9 @@ def main():
                     manager.sync_to_gdrive()
                     manager.sync_to_release()
                     manager.sync_to_email()
-                    print("Run 'make enrich' to upload photos for new records")
+                    if new_regs:
+                        print(f"Enriching {len(new_regs)} new records...")
+                        manager.enrich_new_records()
                 return
             raise SystemExit(1)
         elif args.command == "sync":
