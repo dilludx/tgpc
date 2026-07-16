@@ -214,6 +214,9 @@ def main():
     # Sync command
     subparsers.add_parser("sync", help="Sync rph.json to all cloud destinations")
 
+    # Enrich command
+    subparsers.add_parser("enrich", help="Upload photos for new records from last scrape")
+
     # Retry-photos command
     subparsers.add_parser("retry-photos", help="Retry uploading failed photos from data/webp/ to R2")
 
@@ -254,7 +257,7 @@ def main():
 
     # Connect WARP for network-level routing (update and sync hit external services)
     global _warp_was_connected
-    if args.command in ("update", "sync", "retry-photos"):
+    if args.command in ("update", "sync", "enrich", "retry-photos"):
         atexit.register(_warp_ensure_disconnected)
         _warp_was_connected = _warp_connect()
 
@@ -279,7 +282,7 @@ def main():
                     manager.sync_to_release()
                     manager.sync_to_email()
                     if status == "updated":
-                        manager.enrich_new_records()
+                        print("Run 'make enrich' to upload photos for new records")
                 return
             raise SystemExit(1)
         elif args.command == "sync":
@@ -290,6 +293,9 @@ def main():
             manager.sync_to_gdrive()
             manager.sync_to_release()
             manager.sync_to_email()
+        elif args.command == "enrich":
+            load_credentials()
+            manager.enrich_new_records()
         elif args.command == "retry-photos":
             load_credentials()
             manager.retry_photos()
