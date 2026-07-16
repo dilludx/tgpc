@@ -710,7 +710,7 @@ class Manager:
         """Encrypt rph.json and upload to GitHub Release."""
         tag = "rphjson"
         file_path = str(self.file_manager.data_dir / "rph.json")
-        archive_path = file_path + ".7z"
+        archive_path = file_path + ".zip"
         repo = os.environ.get("GITHUB_REPOSITORY", "dilludx/tgpc")
         password = os.environ.get("RELEASE_PASSWORD")
 
@@ -728,7 +728,7 @@ class Manager:
 
         try:
             subprocess.run(
-                ["7z", "a", f"-p{password}", "-mhe=on", archive_path, file_path],
+                ["zip", "-e", "-j", "-P", password, archive_path, file_path],
                 capture_output=True,
                 text=True,
                 timeout=120,
@@ -765,7 +765,7 @@ class Manager:
             )
             logger.info(f"Release sync complete ({count:,} records)")
         except FileNotFoundError:
-            logger.error("7z or gh CLI not installed")
+            logger.error("zip or gh CLI not installed")
         except subprocess.CalledProcessError as e:
             logger.error(f"Release sync error: {e}")
         finally:
