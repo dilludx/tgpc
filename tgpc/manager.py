@@ -343,6 +343,7 @@ class Manager:
             "new_cat_stats": new_cat_stats,
             "rem_cat_stats": rem_cat_stats,
             "mod_cat_stats": mod_cat_stats,
+            "total_records": total_count,
         }
 
         if os.environ.get("GITHUB_OUTPUT"):
@@ -856,14 +857,19 @@ class Manager:
                 )
         text += "---\nTGPC RPh Registry\nOpen-Source TGPC Pharmacist Data"
 
-        parts = []
+        total = data.get("total_records", 0)
+        total_fmt = f"{total:,}"
+
+        change_parts = []
         if new:
-            parts.append(f"🌱 {len(new)}")
+            change_parts.append(f"+{len(new)}")
         if mod:
-            parts.append(f"🌀 {len(mod)}")
+            change_parts.append(f"~{len(mod)}")
         if rem:
-            parts.append(f"❌ {len(rem)}")
-        subject = " | ".join(parts + ["RPh Data Sync", subj_time])
+            change_parts.append(f"-{len(rem)}")
+
+        change_str = f"({' '.join(change_parts)})" if change_parts else ""
+        subject = f"{total_fmt} {change_str}·RPh Data Sync·{subj_time}"
 
         import tempfile
 
