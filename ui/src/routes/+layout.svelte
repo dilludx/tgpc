@@ -8,6 +8,8 @@
   import { getStats } from '$lib/api';
   import { supabase } from '$lib/supabase';
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { beforeNavigate } from '$app/navigation';
   import { page } from '$app/stores';
   import type { LayoutProps } from './$types';
   import { CATEGORY_COLORS, CATEGORIES, CATEGORY_KEYS } from '$lib/colors';
@@ -20,6 +22,18 @@
   let status = $state<ConnectionStatus>(ssrStats ? 'Live' : 'Busy');
   let stats = $state<Stats | null>(ssrStats);
   let lastSync = $state<string>(ssrSync);
+
+  let navigated = $state(false);
+
+  beforeNavigate(() => {
+    navigated = true;
+  });
+
+  onMount(() => {
+    if (!navigated && $page.url.pathname !== '/') {
+      goto('/');
+    }
+  });
 
   function cachedOrNull<T>(key: string): T | null {
     try {
