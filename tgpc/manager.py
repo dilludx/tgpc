@@ -56,44 +56,118 @@ class FileManager:
 
 
 class BackupManager:
-    """Handles secure backups."""
+    """Handles secure backups stored in R2."""
 
     def __init__(self, config: Config):
-        self.backup_dir = Path(config.data_directory) / "backups"
-        self.backup_dir.mkdir(parents=True, exist_ok=True)
+        self.config = config
+
+    def _r2_env(self):
+        env = os.environ.copy()
+        env["AWS_ACCESS_KEY_ID"] = os.environ.get("R2_ACCESS_KEY_ID", "")
+        env["AWS_SECRET_ACCESS_KEY"] = os.environ.get("R2_SECRET_ACCESS_KEY", "")
+        return env
+
+    def _r2_endpoint(self):
+        account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+        return f"https://{account_id}.r2.cloudflarestorage.com" if account_id else None
+
+    def _upload_to_r2(self, local_path: Path):
+        endpoint = self._r2_endpoint()
+        env = self._r2_env()
+        if not endpoint:
+            logger.warning("Missing CLOUDFLARE_ACCOUNT_ID — skipping R2 backup upload")
+            return
+
+        r2_key = f"backups/{local_path.name}"
+        result = subprocess.run(
+            [
+                "aws",
+                "s3api",
+                "put-object",
+                "--endpoint-url",
+                endpoint,
+                "--region",
+                "auto",
+                "--bucket",
+                "tgpc",
+                "--key",
+                r2_key,
+                "--body",
+                str(local_path),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            env=env,
+        )
+        if result.returncode != 0:
+            logger.warning(f"R2 backup upload failed for {r2_key}: {result.stderr.strip()}")
+            return
+
+        logger.info(f"Backup uploaded to R2: {r2_key}")
+
+        result = subprocess.run(
+            [
+                "aws",
+                "s3api",
+                "list-objects",
+                "--endpoint-url",
+                endpoint,
+                "--region",
+                "auto",
+                "--bucket",
+                "tgpc",
+                "--prefix",
+                "backups/",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=env,
+        )
+        if result.returncode != 0:
+            return
+
+        import json as _json
+
+        data = _json.loads(result.stdout)
+        objects = sorted(data.get("Contents", []), key=lambda o: o["Key"], reverse=True)
+        for obj in objects[5:]:
+            subprocess.run(
+                [
+                    "aws",
+                    "s3api",
+                    "delete-object",
+                    "--endpoint-url",
+                    endpoint,
+                    "--region",
+                    "auto",
+                    "--bucket",
+                    "tgpc",
+                    "--key",
+                    obj["Key"],
+                ],
+                capture_output=True,
+                timeout=30,
+                env=env,
+            )
+            logger.info(f"Removed old R2 backup: {obj['Key']}")
 
     def create(self, source: Path) -> str:
-        """Create timestamped backup."""
+        """Create timestamped backup, upload to R2, and remove local copy."""
         if not source.exists():
             return ""
 
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        dest = self.backup_dir / f"rph_backup_{ts}.json"
+        dest = Path(self.config.data_directory) / "backups" / f"rph_backup_{ts}.json"
+        dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, dest)
         logger.info(f"Backup created: {dest}")
+
+        self._upload_to_r2(dest)
+        dest.unlink()
+        logger.info(f"Local backup deleted: {dest}")
         return str(dest)
-
-    def cleanup(self, keep: int = 7) -> int:
-        """Keep the most recent N backups, delete older ones. Returns count of deleted files."""
-        files = sorted(self.backup_dir.glob("rph_backup_*.json"), reverse=True)
-        deleted = 0
-        for f in files[keep:]:
-            try:
-                f.unlink()
-                deleted += 1
-            except OSError as e:
-                logger.warning(f"Could not delete backup file {f.name}: {e}")
-        if deleted:
-            logger.info(f"Cleaned {deleted} old backups, kept {min(keep, len(files))}")
-
-        details = self.backup_dir.parent / "update_details.json"
-        if details.exists():
-            try:
-                details.unlink()
-                logger.info("Cleaned update_details.json")
-            except OSError as e:
-                logger.warning(f"Could not delete update_details.json: {e}")
-        return deleted
 
 
 class Manager:
@@ -323,7 +397,6 @@ class Manager:
         mod_cat_stats = get_cat_stats(modified_ids, current_map)  # Use modified_ids, NOT common_ids
 
         self.file_manager.save(list(sorted_records))
-        self.backup_manager.cleanup()
         self._last_new_regs = new_ids
         self._last_modified_regs = modified_ids
         self._last_removed_regs = removed_ids
