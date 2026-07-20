@@ -253,6 +253,7 @@ def main():
             _cmd_creds_delete(args)
         return
 
+    load_credentials()
     manager = Manager()
 
     # Connect WARP for network-level routing (update and sync hit external services)
@@ -269,7 +270,6 @@ def main():
                 return
             if status == "updated":
                 if not args.no_sync:
-                    load_credentials()
                     all_records = manager.file_manager.load()
                     new_regs = getattr(manager, "_last_new_regs", set())
                     mod_regs = getattr(manager, "_last_modified_regs", set())

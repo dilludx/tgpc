@@ -165,8 +165,9 @@ class BackupManager:
         logger.info(f"Backup created: {dest}")
 
         self._upload_to_r2(dest)
-        dest.unlink()
-        logger.info(f"Local backup deleted: {dest}")
+        if dest.exists():
+            dest.unlink()
+            logger.info(f"Local backup deleted: {dest}")
         return str(dest)
 
 
