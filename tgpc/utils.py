@@ -1,12 +1,14 @@
 """
 Core utilities for TGPC system.
-Combines configuration, logging, and exception handling.
+Combines configuration, logging, credentials, and exception handling.
 """
 
 import logging
 import os
+import subprocess
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 # --- Exceptions ---
@@ -76,3 +78,87 @@ def setup_logging(name: str = "tgpc") -> logging.Logger:
         logger.setLevel(logging.INFO)
 
     return logger
+
+
+# --- Credentials ---
+
+KEYCHAIN_SERVICE = "tgpc"
+
+CREDENTIAL_KEYS = [
+    "SUPABASE_URL",
+    "SUPABASE_SECRET_KEY",
+    "SUPABASE_PAT",
+    "CLOUDFLARE_ACCOUNT_ID",
+    "CLOUDFLARE_API_TOKEN",
+    "R2_ACCESS_KEY_ID",
+    "R2_SECRET_ACCESS_KEY",
+    "RCLONE_GDRIVE_CONFIG",
+    "RESEND_API_KEY",
+    "NOTIFICATION_EMAIL",
+    "RELEASE_PASSWORD",
+]
+
+_creds_logger = setup_logging("tgpc.credentials")
+
+
+def _get_keychain(key: str) -> str | None:
+    try:
+        r = subprocess.run(
+            ["security", "find-generic-password", "-s", KEYCHAIN_SERVICE, "-a", key, "-w"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return r.stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
+def _set_keychain(key: str, value: str) -> None:
+    existing = _get_keychain(key)
+    if existing:
+        subprocess.run(
+            ["security", "delete-generic-password", "-s", KEYCHAIN_SERVICE, "-a", key],
+            capture_output=True,
+            check=True,
+        )
+    subprocess.run(
+        ["security", "add-generic-password", "-s", KEYCHAIN_SERVICE, "-a", key, "-w", value, "-U"],
+        capture_output=True,
+        check=True,
+    )
+
+
+def _load_from_files():
+    candidates = [
+        Path.home() / ".config" / "tgpc" / "creds.sh",
+        Path(__file__).parent.parent / "tgpc-creds.sh",
+    ]
+    for creds_file in candidates:
+        if not creds_file.exists():
+            continue
+        loaded = 0
+        try:
+            with open(creds_file, "r") as f:
+                for line in f:
+                    if line.strip().startswith("export "):
+                        var, value = line.strip()[7:].split("=", 1)
+                        value = value.strip("\"'")
+                        if not os.environ.get(var):
+                            os.environ[var] = value
+                            loaded += 1
+            if loaded:
+                _creds_logger.info("Loaded %d credential(s) from %s", loaded, creds_file)
+        except Exception as e:
+            _creds_logger.warning("Could not load %s: %s", creds_file, e)
+
+
+def load_credentials():
+    """Load credentials: env vars → macOS Keychain → file fallback."""
+    _load_from_files()
+    for key in CREDENTIAL_KEYS:
+        if os.environ.get(key):
+            continue
+        val = _get_keychain(key)
+        if val is not None:
+            os.environ[key] = val

@@ -15,7 +15,7 @@ from collections import Counter
 
 from supabase import create_client
 
-from tgpc.utils import Config, setup_logging
+from tgpc.utils import Config, setup_logging, load_credentials
 from tgpc.scraper import Scraper, PharmacistRecord
 
 
@@ -175,6 +175,7 @@ class Manager:
     """Main management class."""
 
     def __init__(self):
+        load_credentials()
         self.config = Config.load()
         self.file_manager = FileManager(self.config)
         self.backup_manager = BackupManager(self.config)

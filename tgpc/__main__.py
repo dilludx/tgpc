@@ -7,25 +7,14 @@ import atexit
 import getpass
 import os
 import subprocess
-from pathlib import Path
 from tgpc.manager import Manager
 from tgpc.quota import show_quotas
-
-KEYCHAIN_SERVICE = "tgpc"
-
-CREDENTIAL_KEYS = [
-    "SUPABASE_URL",
-    "SUPABASE_SECRET_KEY",
-    "SUPABASE_PAT",
-    "CLOUDFLARE_ACCOUNT_ID",
-    "CLOUDFLARE_API_TOKEN",
-    "R2_ACCESS_KEY_ID",
-    "R2_SECRET_ACCESS_KEY",
-    "RCLONE_GDRIVE_CONFIG",
-    "RESEND_API_KEY",
-    "NOTIFICATION_EMAIL",
-    "RELEASE_PASSWORD",
-]
+from tgpc.utils import (
+    KEYCHAIN_SERVICE,
+    CREDENTIAL_KEYS,
+    _get_keychain,
+    _set_keychain,
+)
 
 
 # --- Cloudflare WARP ---
@@ -88,70 +77,7 @@ def _warp_ensure_disconnected():
         _warp_was_connected = False
 
 
-# --- Keychain ---
-
-
-def _get_keychain(key: str) -> str | None:
-    try:
-        r = subprocess.run(
-            ["security", "find-generic-password", "-s", KEYCHAIN_SERVICE, "-a", key, "-w"],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        return r.stdout.strip()
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return None
-
-
-def _set_keychain(key: str, value: str) -> None:
-    existing = _get_keychain(key)
-    if existing:
-        subprocess.run(
-            ["security", "delete-generic-password", "-s", KEYCHAIN_SERVICE, "-a", key],
-            capture_output=True,
-            check=True,
-        )
-    subprocess.run(
-        ["security", "add-generic-password", "-s", KEYCHAIN_SERVICE, "-a", key, "-w", value, "-U"],
-        capture_output=True,
-        check=True,
-    )
-
-
-def _load_from_files():
-    candidates = [
-        Path.home() / ".config" / "tgpc" / "creds.sh",
-        Path(__file__).parent.parent / "tgpc-creds.sh",
-    ]
-    for creds_file in candidates:
-        if not creds_file.exists():
-            continue
-        loaded = 0
-        try:
-            with open(creds_file, "r") as f:
-                for line in f:
-                    if line.strip().startswith("export "):
-                        var, value = line.strip()[7:].split("=", 1)
-                        value = value.strip("\"'")
-                        if not os.environ.get(var):
-                            os.environ[var] = value
-                            loaded += 1
-            if loaded:
-                print(f"Loaded {loaded} credential(s) from {creds_file}")
-        except Exception as e:
-            print(f"Warning: Could not load {creds_file}: {e}")
-
-
-def load_credentials():
-    """Load credentials: env vars → macOS Keychain → file fallback."""
-    _load_from_files()
-    for key in CREDENTIAL_KEYS:
-        if os.environ.get(key):
-            continue
-        val = _get_keychain(key)
-        if val is not None:
-            os.environ[key] = val
+# --- Credential CLI commands ---
 
 
 def _cmd_creds_set(args):
@@ -253,7 +179,6 @@ def main():
             _cmd_creds_delete(args)
         return
 
-    load_credentials()
     manager = Manager()
 
     # Connect WARP for network-level routing (update and sync hit external services)
@@ -290,7 +215,6 @@ def main():
                 return
             raise SystemExit(1)
         elif args.command == "sync":
-            load_credentials()
             manager.sync_to_supabase()
             manager.sync_to_supabase_storage()
             manager.sync_to_r2()
@@ -298,13 +222,10 @@ def main():
             manager.sync_to_release()
             manager.sync_to_email()
         elif args.command == "enrich":
-            load_credentials()
             manager.enrich_new_records()
         elif args.command == "retry-photos":
-            load_credentials()
             manager.retry_photos()
         elif args.command == "quota":
-            load_credentials()
             show_quotas()
     finally:
         if _warp_was_connected:
