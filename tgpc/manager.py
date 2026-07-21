@@ -944,7 +944,7 @@ class Manager:
             change_parts.append(f"-{len(rem)}")
 
         change_str = f"({' '.join(change_parts)})" if change_parts else ""
-        subject = f"{total_fmt} {change_str}·RPh Data Sync·{subj_time}"
+        subject = f"{total_fmt} {change_str}-RPh Data Sync-{subj_time}"
 
         import tempfile
 
