@@ -3,9 +3,6 @@
 </svelte:head>
 
 <script lang="ts">
-  import { browser } from '$app/environment';
-
-  const STORAGE_KEY = 'tgpc_internal_secret';
   const PASSWORD = 'internal';
 
   interface LinkItem {
@@ -20,7 +17,7 @@
   }
 
   let secret = $state('');
-  let authed = $state(browser && sessionStorage.getItem(STORAGE_KEY) !== null);
+  let authed = $state(false);
   let error = $state('');
   let loading = $state(false);
 
@@ -29,7 +26,6 @@
     loading = true;
     error = '';
     if (secret.trim() === PASSWORD) {
-      sessionStorage.setItem(STORAGE_KEY, secret.trim());
       authed = true;
     } else {
       error = 'Wrong password';
@@ -45,12 +41,6 @@
       copied = url;
       setTimeout(() => { copied = ''; }, 2000);
     } catch {}
-  }
-
-  function logout() {
-    sessionStorage.removeItem(STORAGE_KEY);
-    authed = false;
-    secret = '';
   }
 
   const base = 'https://www.pharmacycouncil.telangana.gov.in';
@@ -109,13 +99,11 @@
             bind:value={secret}
             placeholder="Password"
             class="border border-[#e5e7eb] rounded px-3 py-1.5 text-sm flex-1 outline-none focus:border-[#00cc66]"
-            disabled={loading}
           >
           <button
             type="submit"
-            disabled={loading}
-            class="bg-[#00cc66] text-white text-sm font-semibold px-4 py-1.5 rounded disabled:opacity-50"
-          >{loading ? 'Checking...' : 'Unlock'}</button>
+            class="bg-[#00cc66] text-white text-sm font-semibold px-4 py-1.5 rounded"
+          >Unlock</button>
         </div>
         {#if error}
           <p class="text-xs text-[#ef4444] mt-2">{error}</p>
@@ -129,7 +117,6 @@
         <h1 class="text-2xl font-bold">Internal Links</h1>
         <p class="text-xs text-[#6b7280]">TGPC internal admin tools &amp; endpoints</p>
       </div>
-      <button onclick={logout} class="text-xs text-[#6b7280] hover:text-[#ef4444] underline">Logout</button>
     </div>
 
     <div class="space-y-4">
@@ -159,8 +146,6 @@
       {/each}
     </div>
 
-    <p class="text-xs text-[#9ca3af] text-center mt-6">
-      All links open in new tab &middot; Powered by TGPC RPh Registry
-    </p>
+
   {/if}
 </div>

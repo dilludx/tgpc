@@ -1,13 +1,10 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { browser } from '$app/environment';
 
   let { data } = $props<{ data: PageData }>();
 
-  const STORAGE_KEY = 'tgpc_quota_secret';
-
   let secret = $state('');
-  let authed = $state(browser && sessionStorage.getItem(STORAGE_KEY) !== null);
+  let authed = $state(false);
   let error = $state('');
   let loading = $state(false);
   let report = $state(data.report);
@@ -34,7 +31,6 @@
         return;
       }
       if (r.ok) {
-        sessionStorage.setItem(STORAGE_KEY, secret.trim());
         authed = true;
         report = await r.json();
       } else {
@@ -44,13 +40,6 @@
       error = 'Connection error';
     }
     loading = false;
-  }
-
-  function logout() {
-    sessionStorage.removeItem(STORAGE_KEY);
-    authed = false;
-    report = null;
-    secret = '';
   }
 </script>
 
@@ -82,15 +71,12 @@
       {/if}
     </form>
   {:else}
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="text-2xl font-bold mb-1">Free Tier Usage</h1>
-        <p class="text-xs text-[#9ca3af]">
-          Generated {report ? new Date(report.generated_at).toLocaleString() : '—'}
-          &middot; <code class="text-[#00cc66]">make quota</code> for CLI
-        </p>
-      </div>
-      <button onclick={logout} class="text-xs text-[#9ca3af] hover:text-[#ef4444] underline">Logout</button>
+    <div class="mb-6">
+      <h1 class="text-2xl font-bold mb-1">Free Tier Usage</h1>
+      <p class="text-xs text-[#9ca3af]">
+        Generated {report ? new Date(report.generated_at).toLocaleString() : '—'}
+        &middot; <code class="text-[#00cc66]">make quota</code> for CLI
+      </p>
     </div>
 
     {#if report?.missing_vars?.length}
