@@ -29,8 +29,10 @@
     navigated = true;
   });
 
+  const publicRoutes = ['/', '/internal', '/quota'];
+
   onMount(() => {
-    if (!navigated && $page.url.pathname !== '/') {
+    if (!navigated && !publicRoutes.includes($page.url.pathname)) {
       goto('/');
     }
   });
