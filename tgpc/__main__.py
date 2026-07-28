@@ -136,12 +136,22 @@ def main():
         action="store_true",
         help="Skip sync to cloud destinations after update",
     )
+    update_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Override safety caps (e.g. enrich >1000 records)",
+    )
 
     # Sync command
     subparsers.add_parser("sync", help="Sync rph.json to all cloud destinations")
 
     # Enrich command
-    subparsers.add_parser("enrich", help="Upload photos for new records from last scrape")
+    enrich_parser = subparsers.add_parser("enrich", help="Upload photos for new records from last scrape")
+    enrich_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Override safety caps (e.g. enrich >1000 records)",
+    )
 
     # Retry-photos command
     subparsers.add_parser("retry-photos", help="Retry uploading failed photos from data/webp/ to R2")
@@ -211,7 +221,7 @@ def main():
                         print("No changes — skipping full syncs.")
                     if new_regs:
                         print(f"Enriching {len(new_regs)} new records...")
-                        manager.enrich_new_records()
+                        manager.enrich_new_records(force=args.force)
                 return
             raise SystemExit(1)
         elif args.command == "sync":
@@ -222,7 +232,7 @@ def main():
             manager.sync_to_release()
             manager.sync_to_email()
         elif args.command == "enrich":
-            manager.enrich_new_records()
+            manager.enrich_new_records(force=args.force)
         elif args.command == "retry-photos":
             manager.retry_photos()
         elif args.command == "quota":

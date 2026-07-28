@@ -284,11 +284,93 @@ class Manager:
                         serialized = str(value)
                     f.write(f"{key}={serialized}\n")
 
+    def _restore_rph_from_backup(self) -> bool:
+        """Restore data/rph.json from latest R2 backup if local file is missing.
+
+        Returns True if file exists after this call (either already existed or restored).
+        """
+        rph_path = Path(self.config.data_directory) / "rph.json"
+        if rph_path.exists():
+            return True
+
+        logger.warning("data/rph.json not found — attempting restore from R2 backup...")
+        endpoint = self.backup_manager._r2_endpoint()
+        env = self.backup_manager._r2_env()
+        if not endpoint:
+            logger.error("Cannot restore: missing CLOUDFLARE_ACCOUNT_ID")
+            return False
+
+        # List backups to find latest
+        r = subprocess.run(
+            [
+                "aws",
+                "s3api",
+                "list-objects-v2",
+                "--endpoint-url",
+                endpoint,
+                "--region",
+                "auto",
+                "--bucket",
+                "tgpc",
+                "--prefix",
+                "backups/",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=env,
+        )
+        if r.returncode != 0:
+            logger.error(f"Cannot list R2 backups: {r.stderr.strip()}")
+            return False
+
+        data = json.loads(r.stdout)
+        contents = data.get("Contents", [])
+        if not contents:
+            logger.error("No backups found in R2")
+            return False
+
+        latest = max(contents, key=lambda x: x["LastModified"])
+        backup_key = latest["Key"]
+
+        rph_path.parent.mkdir(parents=True, exist_ok=True)
+        r2 = subprocess.run(
+            [
+                "aws",
+                "s3api",
+                "get-object",
+                "--endpoint-url",
+                endpoint,
+                "--region",
+                "auto",
+                "--bucket",
+                "tgpc",
+                "--key",
+                backup_key,
+                str(rph_path),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            env=env,
+        )
+        if r2.returncode != 0:
+            rph_path.unlink(missing_ok=True)
+            logger.error(f"Failed to restore from {backup_key}: {r2.stderr.strip()}")
+            return False
+
+        size = rph_path.stat().st_size
+        logger.info(f"Restored data/rph.json from {backup_key} ({size} bytes)")
+        return True
+
     def run_daily_update(self):
         """Execute daily update workflow."""
         logger.info("Starting daily update...")
 
-        # 0. Health check - abort if blocked
+        # 0a. Restore rph.json from backup if missing (safety against accidental deletion)
+        self._restore_rph_from_backup()
+
+        # 0b. Health check - abort if blocked
         if not self.scraper.health_check():
             logger.error("Health check failed - connection is blocked. Aborting to avoid wasted time.")
             self._write_update_outputs(
@@ -1097,17 +1179,24 @@ class Manager:
         else:
             logger.info("No records processed")
 
-    def enrich_new_records(self):
-        """Auto-enrich records that were newly discovered by the last update."""
+    def enrich_new_records(self, force: bool = False):
+        """Auto-enrich records that were newly discovered by the last update.
+
+        Args:
+            force: If False, abort when >1000 new records (safety guard against
+                   corrupt/missing rph.json causing full re-enrichment).
+        """
         regs = getattr(self, "_last_new_regs", set())
 
-        # Setup shared resources
-        img_dir = Path(self.config.enrichment_directory) / "webp"
-        img_dir.mkdir(parents=True, exist_ok=True)
-
-        url = os.environ.get("SUPABASE_URL")
-        key = os.environ.get("SUPABASE_SECRET_KEY")
-        supabase = create_client(url, key) if url and key else None
+        # Safety cap: require --force if >1000 new records
+        if len(regs) > 1000 and not force:
+            logger.error(
+                f"SAFETY ABORT: {len(regs)} new records detected (limit 1000). "
+                "This usually means data/rph.json is missing or corrupted, "
+                "causing all records to appear as 'new'. "
+                "Run with --force to override and enrich all."
+            )
+            return
 
         if not regs:
             logger.info("No new records to enrich")
@@ -1118,11 +1207,55 @@ class Manager:
             logger.info("No matching records found in rph.json")
             return
 
-        logger.info(f"Auto-enriching {len(records)} new records...")
+        # Check Supabase for already-enriched records
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_SECRET_KEY")
+        supabase = create_client(url, key) if url and key else None
+
+        done_ids: set = set()
+        if supabase:
+            BATCH = 1000
+            for i in range(0, len(records), BATCH):
+                end = min(i + BATCH - 1, len(records) - 1)
+                try:
+                    resp = (
+                        supabase.table("rph")
+                        .select("registration_number, gender, validity_date, status, education, work_experience")
+                        .order("registration_number")
+                        .range(i, end)
+                        .execute()
+                    )
+                    for r in resp.data:
+                        if (
+                            r.get("gender")
+                            or r.get("validity_date")
+                            or r.get("status")
+                            or r.get("education")
+                            or r.get("work_experience")
+                        ):
+                            done_ids.add(r["registration_number"])
+                except Exception as e:
+                    logger.warning(f"Failed to check enrichment status batch {i}: {e}")
+
+            if done_ids:
+                logger.info(f"Skipping {len(done_ids)} already-enriched records")
+                records = [r for r in records if r.registration_number not in done_ids]
+        else:
+            logger.warning("Supabase credentials missing — cannot check enrichment status")
+
+        if not records:
+            logger.info("All records already enriched — nothing to do")
+            return
+
+        # Setup shared resources
+        img_dir = Path(self.config.enrichment_directory) / "webp"
+        img_dir.mkdir(parents=True, exist_ok=True)
+
+        logger.info(f"Enriching {len(records)} records...")
         rph_lookup = {r.serial_number: r for r in records}
 
         processed = self._process_records_sequential(records, rph_lookup, img_dir, supabase=supabase)
-        logger.info(f"Auto-enrich complete: {processed} records processed")
+        logger.info(f"Enrich complete: {processed} records processed")
 
     def _process_records_sequential(
         self, pending_records, rph_lookup, img_dir, ip_rotation_interval=500, supabase=None
