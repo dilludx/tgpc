@@ -1207,22 +1207,22 @@ class Manager:
             logger.info("No matching records found in rph.json")
             return
 
-        # Check Supabase for already-enriched records
+        # Check Supabase for already-enriched records (filtered by registration number)
         url = os.environ.get("SUPABASE_URL")
         key = os.environ.get("SUPABASE_SECRET_KEY")
         supabase = create_client(url, key) if url and key else None
 
         done_ids: set = set()
         if supabase:
-            BATCH = 1000
-            for i in range(0, len(records), BATCH):
-                end = min(i + BATCH - 1, len(records) - 1)
+            reg_list = [r.registration_number for r in records]
+            BATCH = 500
+            for i in range(0, len(reg_list), BATCH):
+                batch = reg_list[i : i + BATCH]
                 try:
                     resp = (
                         supabase.table("rph")
                         .select("registration_number, gender, validity_date, status, education, work_experience")
-                        .order("registration_number")
-                        .range(i, end)
+                        .in_("registration_number", batch)
                         .execute()
                     )
                     for r in resp.data:
