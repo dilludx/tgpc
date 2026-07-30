@@ -1,10 +1,10 @@
 name: ♻️ RPh Sync
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  workflow_dispatch:
     inputs:
       force_sync:
-        description: 'Force Sync to Supabase'
+        description: 'Skip scrape, just re-sync existing data'
         required: false
         type: boolean
         default: false
@@ -25,349 +25,70 @@ jobs:
         python3 -m pip install --upgrade pip
         python3 -m pip install -e .
         python3 -m pip install supabase
+        python3 -m pip install awscli --break-system-packages --quiet 2>&1 | tail -1
+
+    - name: Setup Cloudflare WARP
+      run: |
+        echo "Installing Cloudflare WARP..."
+        curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg 2>/dev/null
+        echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list >/dev/null
+        sudo apt-get update -qq && sudo apt-get install -y -qq cloudflare-warp
+        sudo systemctl start warp-svc
+        echo "Waiting for WARP service..."
+        sleep 5
+        warp-cli register 2>/dev/null || echo "Already registered"
+        warp-cli connect
+        sleep 3
+        echo "WARP connected"
 
     - name: Create data directory
-      run: |
-        mkdir -p data/backups
+      run: mkdir -p data/backups
 
     - name: Restore data from artifact
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
         if [ ! -f data/rph.json ]; then
-          echo "📦 No local data found. Trying artifact restore..."
+          echo "No local data found. Trying artifact restore..."
           if gh run download --repo dilludx/tgpc -n rph-data --dir data/ 2>/dev/null && [ -f data/rph.json ]; then
-            echo "✅ Restored rph.json from artifact ($(wc -c < data/rph.json) bytes)"
+            echo "Restored rph.json from artifact ($(wc -c < data/rph.json) bytes)"
           else
             echo "No artifact found — will do full scrape"
           fi
         else
-          echo "✅ Local rph.json found ($(wc -c < data/rph.json) bytes)"
+          echo "Local rph.json found ($(wc -c < data/rph.json) bytes)"
         fi
 
-    - name: Run data update
+    - name: Run tgpc update
       id: update
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+        R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        RCLONE_GDRIVE_CONFIG: ${{ secrets.RCLONE_GDRIVE_CONFIG }}
+        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
+        RELEASE_PASSWORD: ${{ secrets.RELEASE_PASSWORD }}
+        GITHUB_REPOSITORY: dilludx/tgpc
+        GH_TOKEN: ${{ github.token }}
       run: |
-        if [[ "${{ github.event.inputs.force_sync }}" == "true" ]]; then
-          if [ ! -f data/rph.json ]; then
-            echo "⚠️ No existing data found. Running update instead."
-            python3 -m tgpc update
-          else
-            echo "⚡ FORCE SYNC MODE - Skipping data update, using existing data"
-            {
-              echo "success=True"
-              echo "total_records=$(python3 -c 'import json; print(len(json.load(open("data/rph.json"))))')"
-              echo "new_records=0"
-              echo "modified_records=0"
-              echo "removed_records=0"
-              echo "integrity_score=1.0"
-            } >> "$GITHUB_OUTPUT"
-          fi
+        if [[ "${{ github.event.inputs.force_sync }}" == "true" && -f data/rph.json ]]; then
+          echo "FORCE SYNC MODE — re-syncing existing data"
+          python3 -m tgpc sync || echo "Sync failed"
         else
-          echo "♻️ STARTING TGPC DATA UPDATE..."
+          echo "Starting TGPC data update..."
           python3 -m tgpc update
         fi
 
-    - name: Sync to Supabase
-      if: ${{ steps.update.outputs.success == 'True' }}
-      env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-      run: |
-        echo "♻️ SYNCING DATA TO SUPABASE CLOUD DATABASE..."
-        python3 -c "
-        from tgpc.manager import Manager
-        m = Manager()
-        m.sync_to_supabase()
-        print('✅ Supabase sync complete')
-        "
-
-    - name: Upload to Supabase Storage
-      if: ${{ steps.update.outputs.success == 'True' }}
-      env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-      run: |
-        BUCKET="tgpc"
-        # Ensure bucket exists (create or ignore if already exists)
-        BUCKET_RESP=$(curl -s -X POST "$SUPABASE_URL/storage/v1/bucket" \
-          -H "Authorization: Bearer $SUPABASE_SECRET_KEY" \
-          -H "apikey: $SUPABASE_SECRET_KEY" \
-          -H "Content-Type: application/json" \
-          -d "{\"name\": \"$BUCKET\", \"public\": false}" 2>&1)
-        echo "Bucket create: $BUCKET_RESP"
-        # Upload with upsert (overwrite)
-        echo "📤 Uploading rph.json to Supabase Storage..."
-        curl -s -X POST "$SUPABASE_URL/storage/v1/object/$BUCKET/rph.json" \
-          -H "Authorization: Bearer $SUPABASE_SECRET_KEY" \
-          -H "apikey: $SUPABASE_SECRET_KEY" \
-          -H "Content-Type: application/json" \
-          -H "x-upsert: true" \
-          -d @data/rph.json
-        echo ""
-
-    - name: Upload to Cloudflare R2
-      if: ${{ steps.update.outputs.success == 'True' }}
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      run: |
-        echo "📤 Uploading rph.json to Cloudflare R2..."
-        python3 -m pip install awscli --break-system-packages --quiet 2>&1 | tail -1
-        aws s3api put-object \
-          --endpoint-url "https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com" \
-          --bucket tgpc \
-          --key rph.json \
-          --body data/rph.json
-        echo "✅ R2 upload complete"
-
-    - name: Upload to Google Drive
-      if: ${{ steps.update.outputs.success == 'True' }}
-      env:
-        RCLONE_CONFIG: /tmp/rclone-gdrive.conf
-      run: |
-        echo "📤 Uploading rph.json to Google Drive..."
-        echo "${{ secrets.RCLONE_GDRIVE_CONFIG }}" | base64 -d > /tmp/rclone-gdrive.conf
-        MAX_SERIAL=$(python3 -c "import json; data=json.load(open('data/rph.json')); print(max(r.get('serial_number',0) for r in data if r.get('serial_number')))")
-        # Upload rph.json (always the latest, overwrites any existing)
-        rclone copyto data/rph.json "gdrive:tgpc/rph.json"
-        echo "✅ Uploaded rph.json ($(wc -c < data/rph.json) bytes)"
-        # Upload img.zip and jsn.zip if they exist
-        if [ -f data/jsn.zip ]; then
-          rclone copyto data/jsn.zip "gdrive:tgpc/jsn-${MAX_SERIAL}.zip"
-          rclone delete gdrive:tgpc --include "jsn-*.zip" --exclude "jsn-${MAX_SERIAL}.zip" 2>/dev/null || true
-          echo "✅ Uploaded jsn-${MAX_SERIAL}.zip"
-        fi
-        if [ -f data/img.zip ]; then
-          rclone copyto data/img.zip "gdrive:tgpc/img-${MAX_SERIAL}.zip"
-          rclone delete gdrive:tgpc --include "img-*.zip" --exclude "img-${MAX_SERIAL}.zip" 2>/dev/null || true
-          echo "✅ Uploaded img-${MAX_SERIAL}.zip"
-        fi
-
-    - name: Clean old artifact
-      if: ${{ steps.update.outputs.success == 'True' }}
-      env:
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        gh api --paginate repos/dilludx/tgpc/actions/artifacts --jq '.artifacts[] | select(.name == "rph-data") | .id' 2>/dev/null | while read -r id; do
-          echo "Deleting old artifact $id"
-          gh api -X DELETE "repos/dilludx/tgpc/actions/artifacts/$id"
-        done
-
     - name: Upload data to artifact
-      if: ${{ steps.update.outputs.success == 'True' }}
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: rph-data
         path: data/rph.json
         retention-days: 90
-
-    - name: Create update summary
-      if: always()
-      run: |
-        UPDATE_STATUS='${{ steps.update.outputs.update_status }}'
-        SOURCE_ERROR='${{ steps.update.outputs.source_error }}'
-
-        {
-          echo "### ♻️ RPh Sync • $(TZ='Asia/Kolkata' date '+%a %d %b %Y' | tr '[:lower:]' '[:upper:]') • $(TZ='Asia/Kolkata' date '+%H:%M IST')"
-          echo ""
-        } >> "$GITHUB_STEP_SUMMARY"
-
-        if [ "$UPDATE_STATUS" = "source_unavailable" ] || [ "$UPDATE_STATUS" = "blocked" ]; then
-          {
-            echo "⚠️ TGPC source was unreachable during this run."
-            echo ""
-            if [ -n "$SOURCE_ERROR" ]; then
-              echo "Source error: \`$SOURCE_ERROR\`"
-              echo ""
-            fi
-            echo "Existing data was preserved, and Supabase sync / commit steps were skipped."
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit 1
-        fi
-
-        if [ "$UPDATE_STATUS" = "empty_scrape" ]; then
-          {
-            echo "🛑 Update aborted because the scraper returned no records."
-            echo ""
-            echo "Existing data was preserved."
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit 1
-        fi
-
-        if [ "$UPDATE_STATUS" = "safety_abort" ]; then
-          {
-            echo "🛑 Update aborted by the safety guard."
-            echo ""
-            echo "The new scrape dropped below the 90% integrity threshold, so existing data was preserved."
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit 1
-        fi
-
-        python3 -c "
-        import json, os
-        from pathlib import Path
-
-        details_path = Path('data/update_details.json')
-        if not details_path.exists():
-            print('No update details file found - likely no changes')
-            exit(0)
-
-        with open(details_path) as f:
-            data = json.load(f)
-
-        new_recs = data.get('new_details', [])
-        rem_recs = data.get('removed_details', [])
-        mod_recs = data.get('modified_details', [])
-
-        def fmt_cats(cats):
-            if not cats:
-                return ''
-            sorted_cats = sorted(cats.items(), key=lambda x: x[1], reverse=True)
-            return ', '.join(f'{k}: {v}' for k, v in sorted_cats)
-
-        new_cat_str = fmt_cats(data.get('new_cat_stats', {}))
-        rem_cat_str = fmt_cats(data.get('rem_cat_stats', {}))
-        mod_cat_str = fmt_cats(data.get('mod_cat_stats', {}))
-
-        MAX_SHOW = 20
-
-        if not (new_cat_str or mod_cat_str or rem_cat_str):
-            print('✅ No updates')
-        else:
-            if new_cat_str:
-                print(f'#### 🌱 NEW: {new_cat_str}')
-                for r in new_recs[:MAX_SHOW]:
-                    print(f'- {r}')
-                if len(new_recs) > MAX_SHOW:
-                    print(f'- ... and {len(new_recs) - MAX_SHOW} more')
-                print('')
-            if mod_cat_str:
-                print(f'#### 🌀 CHANGES: {mod_cat_str}')
-                for r in mod_recs[:MAX_SHOW]:
-                    print(f'- {r}')
-                if len(mod_recs) > MAX_SHOW:
-                    print(f'- ... and {len(mod_recs) - MAX_SHOW} more')
-                print('')
-            if rem_cat_str:
-                print(f'#### ❌ REMOVALS: {rem_cat_str}')
-                for r in rem_recs[:MAX_SHOW]:
-                    print(f'- {r}')
-                if len(rem_recs) > MAX_SHOW:
-                    print(f'- ... and {len(rem_recs) - MAX_SHOW} more')
-        " >> "$GITHUB_STEP_SUMMARY"
-
-    - name: Send email notification
-      if: ${{ steps.update.outputs.success == 'True' }}
-      env:
-        RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-        NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
-      run: |
-        python3 << 'EOF'
-        import json, os, re, sys
-        from datetime import datetime, timezone, timedelta
-        from pathlib import Path
-
-        api_key = os.environ.get("RESEND_API_KEY")
-        recipient = os.environ.get("NOTIFICATION_EMAIL")
-        if not api_key or not recipient:
-            print("Missing RESEND_API_KEY or NOTIFICATION_EMAIL")
-            sys.exit(0)
-
-        details_path = Path("data/update_details.json")
-        if details_path.exists():
-            with open(details_path) as f:
-                data = json.load(f)
-            new = data.get("new_details", [])
-            mod = data.get("modified_details", [])
-            rem = data.get("removed_details", [])
-        else:
-            new = mod = rem = []
-
-        if not new and not mod and not rem:
-            print("No changes")
-            sys.exit(0)
-
-        ist = timezone(timedelta(hours=5, minutes=30))
-        now = datetime.now(ist)
-        sync_time = now.strftime("%d %B %Y, %A, %H:%M IST")
-        subj_time = now.strftime("%d%b%Y %a %H:%M IST").upper()
-
-        def cat(s):
-            m = re.search(r'\((.*?)\)', s)
-            if not m:
-                return "Other"
-            return {"BPharm":"BPharm","MPharm":"MPharm","DPharm":"DPharm","PharmD":"PharmD","QC":"QC","QP":"QP"}.get(m.group(1), m.group(1).title())
-
-        def reg_no(s):
-            m = re.search(r'(\d+)', s)
-            return int(m.group(1)) if m else 0
-
-        def fmt_html(title, items, color):
-            if not items:
-                return ""
-            grouped = {}
-            for i in items:
-                grouped.setdefault(cat(i), []).append(i)
-            html = f'<div style="margin-bottom:35px;"><h4 style="margin:0 0 16px;color:{color};font-size:14px;font-weight:700;text-transform:uppercase;border-bottom:2px solid {color};padding-bottom:6px;display:inline-block;letter-spacing:.5px;">{title} ({len(items)})</h4>'
-            for c in sorted(grouped):
-                recs = grouped[c]
-                html += f'<div style="margin-bottom:18px;"><div style="font-size:11px;font-weight:700;color:#111;text-transform:uppercase;margin-bottom:6px;letter-spacing:1px;">{c} ({len(recs)})</div>'
-                for r in sorted(recs, key=reg_no):
-                    parts = r.split(" - ", 1)
-                    reg = parts[0]
-                    name = re.sub(r"\s*\(.*?\)$", "", parts[1] if len(parts) > 1 else r).strip()
-                    html += f'<div style="font-size:13px;color:#6b7280;padding:4px 0;"><span style="font-family:ui-monospace,monospace;">{reg}</span> - {name}</div>'
-                html += "</div>"
-            return html + "</div>"
-
-        MAX_EMAIL = 200
-        def truncate(items):
-            if len(items) > MAX_EMAIL:
-                return items[:MAX_EMAIL] + [f"... and {len(items) - MAX_EMAIL} more"]
-            return items
-
-        new_t, mod_t, rem_t = truncate(new), truncate(mod), truncate(rem)
-
-        text = f"TGPC RPh Registry Sync Report\n{sync_time}\n\n"
-        html = ('<!DOCTYPE html><html><head><meta charset="UTF-8"></head>'
-                '<body style="font-family:-apple-system,sans-serif;background:#fff;padding:15px 20px;color:#333;line-height:1.3;margin:0;">'
-                '<div style="max-width:600px;">'
-                f'<h2 style="margin:0;font-size:17px;line-height:1.2;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">RPh</span> <span style="color:#808080;">Registry</span> Sync Report</h2>'
-                f'<div style="color:#666;font-size:12px;margin-bottom:30px;font-weight:500;">{sync_time}</div>'
-                f'{fmt_html("🌱 NEW", new_t, "#00cc66")}{fmt_html("🌀 CHANGES", mod_t, "#3b82f6")}{fmt_html("❌ REMOVALS", rem_t, "#ef4444")}'
-                '<div style="margin-top:15px;font-size:11px;color:#888;padding-top:10px;">'
-                '<div style="font-weight:700;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">RPh</span> <span style="color:#808080;">Registry</span></div>'
-                '<div>Open-Source TGPC Pharmacist Data</div></div></div></body></html>')
-        for label, items, total in [("NEW",new_t,new),("CHANGES",mod_t,mod),("REMOVALS",rem_t,rem)]:
-            if total:
-                text += f"{label} ({len(total)}):\n" + "\n".join(sorted(items, key=lambda x: (cat(x), reg_no(x)))) + "\n\n"
-        text += "---\nTGPC RPh Registry\nOpen-Source TGPC Pharmacist Data"
-        parts = []
-        if new: parts.append(f"🌱 {len(new)}")
-        if mod: parts.append(f"🌀 {len(mod)}")
-        if rem: parts.append(f"❌ {len(rem)}")
-        subject = " | ".join(parts + ["RPh Data Sync", subj_time])
-
-        payload = json.dumps({"from":"RPh Data Sync <onboarding@resend.dev>","to":[recipient],"subject":subject,"text":text,"html":html})
-        import subprocess, tempfile, os
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-            f.write(payload)
-            f.flush()
-            result = subprocess.run([
-                'curl', '-s', '-X', 'POST', 'https://api.resend.com/emails',
-                '-H', f'Authorization: Bearer {api_key}',
-                '-H', 'Content-Type: application/json',
-                '-d', f'@{f.name}'
-            ], capture_output=True, text=True, timeout=30)
-            os.unlink(f.name)
-        if result.returncode == 0 and 'error' not in result.stdout:
-            print(f"Email sent: {result.stdout.strip()}")
-        else:
-            print(f"Resend API error: {result.stdout.strip()}")
-            sys.exit(1)
-        EOF
 
     - name: Clean up update details
       if: always()
@@ -376,5 +97,4 @@ jobs:
     - name: Notify on failure
       if: failure()
       run: |
-        echo "❌ Daily update failed! Check the logs above for details."
-        echo "The rph.json file was not updated due to validation failures or errors."
+        echo "Daily update failed! Check the logs above for details."
