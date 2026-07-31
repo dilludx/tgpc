@@ -36,6 +36,8 @@ export interface DispatchFile {
 
 export interface Stats {
   total: number;
+  active: number;
+  inactive: number;
   BPharm: number;
   DPharm: number;
   MPharm: number;

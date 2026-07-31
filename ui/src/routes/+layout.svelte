@@ -173,6 +173,10 @@
           </span>
           <span style="background:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">{lastSync || '—'}</span>
           <span style="opacity:0.4">|</span>
+          <span>Active: <span style="color:#00cc66;font-weight:600">{val('active')}</span></span>
+          <span style="opacity:0.4">|</span>
+          <span>Inactive: <span style="color:#ef4444;font-weight:600">{val('inactive')}</span></span>
+          <span style="opacity:0.4">|</span>
           <span style="color:#9ca3af">Unofficial data — Not for legal use</span>
         </div>
       </div>

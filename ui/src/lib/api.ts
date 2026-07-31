@@ -20,9 +20,11 @@ export async function getStats(): Promise<Stats | null> {
     const { data, error } = await supabase.rpc('get_rph_stats');
     if (error) throw error;
     if (data && typeof data === 'object') {
-      const d = data as { total: number; categories: Record<string, number> };
+      const d = data as { total: number; active: number; inactive: number; categories: Record<string, number> };
       return {
         total: d.total ?? 0,
+        active: d.active ?? 0,
+        inactive: d.inactive ?? 0,
         BPharm: d.categories?.BPharm ?? 0,
         DPharm: d.categories?.DPharm ?? 0,
         MPharm: d.categories?.MPharm ?? 0,
