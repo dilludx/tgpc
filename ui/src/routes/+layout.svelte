@@ -29,7 +29,7 @@
     navigated = true;
   });
 
-  const publicRoutes = ['/', '/internal', '/quota'];
+  const publicRoutes = ['/', '/admin'];
 
   onMount(() => {
     if (!navigated && !publicRoutes.includes($page.url.pathname)) {
@@ -101,10 +101,11 @@
 
   let sortedCategories = $derived.by(() => {
     if (!stats) return CATEGORIES;
+    const s = stats;
     return [...CATEGORIES].sort((a, b) => {
       const ka = CATEGORY_KEYS[CATEGORIES.indexOf(a)] as keyof Stats;
       const kb = CATEGORY_KEYS[CATEGORIES.indexOf(b)] as keyof Stats;
-      return (stats[kb] ?? 0) - (stats[ka] ?? 0);
+      return (s[kb] ?? 0) - (s[ka] ?? 0);
     });
   });
 
@@ -187,7 +188,9 @@
       <a href="/notice" bind:this={noticeRef} style="text-decoration:none;padding:2px 4px;font-weight:700;color:{activeTab === 'notice' ? '#00cc66' : '#6b7280'};white-space:nowrap">NOTICES</a>
       <span style="color:#d1d5db;font-weight:300;padding:0 2px;user-select:none">/</span>
       <a href="/dispatch" bind:this={dispatchRef} style="text-decoration:none;padding:2px 4px;font-weight:700;color:{activeTab === 'dispatch' ? '#00cc66' : '#6b7280'};white-space:nowrap">DISPATCH LIST</a>
+      {#if sliderStyle}
       <div style="position:absolute;bottom:0;left:0;height:2px;background:#00cc66;border-radius:1px;transition:transform 0.25s ease-out,width 0.25s ease-out;will-change:transform,width;{sliderStyle}"></div>
+      {/if}
     </div>
   </header>
 
