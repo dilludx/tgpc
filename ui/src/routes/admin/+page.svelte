@@ -65,6 +65,10 @@
   let tab = $state<'quota' | 'links'>('quota');
   let report = $state<QuotaReport | null>(data.report);
 
+  if (import.meta.env.DEV) {
+    authed = true;
+  }
+
   function barColor(pct: string): string {
     const n = parseFloat(pct);
     if (isNaN(n)) return '#e5e7eb';
@@ -113,16 +117,34 @@
     secret = '';
     tab = 'quota';
   }
+
+  let panelHeight = $state(0);
+
+  function measure(section: HTMLDivElement): { destroy: () => void } | void {
+    const update = () => {
+      const main = document.querySelector('main');
+      if (main) {
+        const bottom = main.getBoundingClientRect().bottom;
+        const pb = parseFloat(getComputedStyle(main).paddingBottom) || 0;
+        panelHeight = Math.max(0, Math.floor(bottom - pb - section.getBoundingClientRect().top));
+      } else {
+        panelHeight = Math.max(0, Math.floor(window.innerHeight - section.getBoundingClientRect().top));
+      }
+    };
+    update();
+    window.addEventListener('resize', update);
+    return { destroy: () => window.removeEventListener('resize', update) };
+  }
 </script>
 
 <svelte:head>
   <title>Admin — TGPC RPh Registry</title>
 </svelte:head>
 
-<div class="py-6" style="height:calc(100dvh - 110px);overflow:hidden;display:flex;flex-direction:column">
+<div use:measure style="height:{panelHeight}px;overflow:hidden;display:flex;flex-direction:column">
   {#if !authed}
     <div class="text-center py-16">
-      <h1 class="text-2xl font-bold mb-1 inline-flex items-center gap-2"><span>🔐</span> <span>Admin</span></h1>
+      <h1 class="text-2xl font-bold mb-1">Admin</h1>
       <form onsubmit={(e) => { e.preventDefault(); login(); }} class="max-w-xs mx-auto">
         <div class="flex items-center gap-2 border border-[#e5e7eb] rounded focus-within:border-[#00cc66] bg-white">
           <input
@@ -138,7 +160,11 @@
             class="shrink-0 px-2 py-1 text-[#6b7280] hover:text-[#00cc66] text-sm"
             aria-label={show ? 'Hide password' : 'Show password'}
             tabindex="-1"
-          >{show ? '🙈' : '👁️'}</button>
+          >{#if show}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>
+          {:else}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          {/if}</button>
         </div>
         <button
           type="submit"
@@ -151,22 +177,20 @@
       </form>
     </div>
   {:else}
-    <div class="flex items-center justify-between mb-4">
-      <div>
-        <h1 class="text-2xl font-bold mb-1">Admin</h1>
+    <div class="flex items-center justify-between pb-1">
+      <div class="flex items-center gap-0.5" style="font-size:0.7rem;padding-bottom:3px">
+        <button style="text-decoration:none;padding:2px 4px;font-weight:700;color:#ef4444;white-space:nowrap;cursor:default;border:none;background:transparent">ADMIN</button>
+        <span style="color:#d1d5db;font-weight:300;padding:0;user-select:none">—</span>
+        <button onclick={() => tab = 'quota'}
+          style="text-decoration:none;padding:2px 4px;font-weight:700;color:{tab === 'quota' ? '#00cc66' : '#6b7280'};white-space:nowrap;cursor:pointer;border:none;background:transparent">FREE TIER USAGE</button>
+        <span style="color:#d1d5db;font-weight:300;padding:0;user-select:none">/</span>
+        <button onclick={() => tab = 'links'}
+          style="text-decoration:none;padding:2px 4px;font-weight:700;color:{tab === 'links' ? '#00cc66' : '#6b7280'};white-space:nowrap;cursor:pointer;border:none;background:transparent">INTERNAL LINKS</button>
       </div>
       <button onclick={logout}
         class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded border border-[#e5e7eb] text-[#6b7280] hover:bg-[#f8f9fa] hover:text-[#ef4444] transition-colors">
-        Logout
+        LOGOUT
       </button>
-    </div>
-
-    <div class="w-full border-b border-[#e5e7eb] mb-4" style="display:flex;align-items:center;gap:2px;font-size:0.7rem;padding-top:3px;padding-bottom:3px;overflow-x:auto">
-      <button onclick={() => tab = 'quota'}
-        style="text-decoration:none;padding:2px 4px;font-weight:700;color:{tab === 'quota' ? '#00cc66' : '#6b7280'};white-space:nowrap;cursor:pointer;border:none;background:transparent">FREE TIER USAGE</button>
-      <span style="color:#d1d5db;font-weight:300;padding:0 2px;user-select:none">/</span>
-      <button onclick={() => tab = 'links'}
-        style="text-decoration:none;padding:2px 4px;font-weight:700;color:{tab === 'links' ? '#00cc66' : '#6b7280'};white-space:nowrap;cursor:pointer;border:none;background:transparent">INTERNAL LINKS</button>
     </div>
 
     <div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column">
@@ -223,11 +247,11 @@
           {/each}
         </div>
       {:else}
-        <div class="border border-[#e5e7eb] rounded-lg overflow-hidden" style="flex:1;min-height:0;overflow-y:auto">
-          <div class="divide-y divide-[#e5e7eb]">
+        <div class="border border-[#e5e7eb] rounded-lg overflow-hidden" style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column">
+          <div class="divide-y divide-[#e5e7eb]" style="flex:1;display:flex;flex-direction:column">
             {#each groups as group}
-              <div>
-                <div class="bg-[#f8f9fa] px-3 py-2 font-semibold text-sm border-b border-[#e5e7eb] text-[#111827] sticky top-0">
+              <div style="flex:1">
+                <div class="bg-[#f8f9fa] px-3 py-2 font-semibold text-sm border-b border-[#e5e7eb] text-[#111827]">
                   {group.name}
                 </div>
                 <div class="divide-y divide-[#e5e7eb]">
@@ -243,7 +267,7 @@
                         target="_blank"
                         rel="noopener noreferrer"
                         class="shrink-0 bg-[#00cc66] text-white text-xs font-semibold px-2 py-1 rounded hover:bg-[#00b359] transition-colors"
-                      >Open ↗</a>
+                      >Open <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3 inline" aria-hidden="true"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg></a>
                     </div>
                   {/each}
                 </div>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PharmacistRecord, Category, CategoryFilter } from '$lib/types';
-  import { searchRecords } from '$lib/api';
+  import { searchRecords, suggestNames } from '$lib/api';
   import { CATEGORY_COLORS, CATEGORY_BG, CATEGORIES as CAT_NAMES } from '$lib/colors';
   import { PUBLIC_R2_PHOTO_BASE } from '$env/static/public';
   import jsPDF from 'jspdf';
@@ -16,6 +16,11 @@
   let loading = $state(false);
   let results = $state<PharmacistRecord[]>([]);
   let searched = $state(false);
+
+  let suggestions = $state<PharmacistRecord[]>([]);
+  let showSug = $state(false);
+  let sugIndex = $state(-1);
+  let sugTimer: ReturnType<typeof setTimeout> | undefined;
 
   const CATEGORY_FILTERS: CategoryFilter[] = ['all', ...CAT_NAMES];
 
@@ -36,6 +41,61 @@
     searched = true;
     results = await searchRecords(query);
     loading = false;
+    suggestions = [];
+    showSug = false;
+    sugIndex = -1;
+  }
+
+  function onInputChange() {
+    clearTimeout(sugTimer);
+    suggestions = [];
+    sugIndex = -1;
+    const q = query.trim();
+    if (q.length < 2) {
+      showSug = false;
+      return;
+    }
+    showSug = true;
+    sugTimer = setTimeout(async () => {
+      const s = await suggestNames(q);
+      if (s.length === 0) { showSug = false; return; }
+      suggestions = s;
+      sugIndex = -1;
+    }, 150);
+  }
+
+  function selectSuggestion(r: PharmacistRecord) {
+    query = r.name;
+    showSug = false;
+    suggestions = [];
+    if (query.trim().length >= 3) doSearch();
+  }
+
+  function onSearchKeydown(e: KeyboardEvent) {
+    if (suggestions.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        sugIndex = (sugIndex + 1) % suggestions.length;
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        sugIndex = sugIndex <= 0 ? suggestions.length - 1 : sugIndex - 1;
+        return;
+      }
+      if (e.key === 'Enter' && sugIndex >= 0) {
+        e.preventDefault();
+        selectSuggestion(suggestions[sugIndex]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        showSug = false;
+        suggestions = [];
+        sugIndex = -1;
+        return;
+      }
+    }
+    if (e.key === 'Enter') doSearch();
   }
 
   function chipStyle(cat: CategoryFilter): string {
@@ -150,9 +210,13 @@
         <input
           type="text"
           bind:value={query}
-          onkeydown={(e) => e.key === 'Enter' && doSearch()}
+          oninput={onInputChange}
+          onfocus={() => { if (query.trim().length >= 2) showSug = true; }}
+          onblur={() => setTimeout(() => { showSug = false; }, 150)}
+          onkeydown={onSearchKeydown}
           placeholder="Search by Name or Registered Pharmacist Certificate (RPC) Number"
           aria-label="Search"
+          autocomplete="off"
           class="col-start-1 row-start-1 w-full pl-9 {searched ? 'pr-36' : 'pr-16'} py-1.5 text-[0.95rem] bg-transparent outline-none max-sm:text-base"
         />
         {#if query.trim()}
@@ -171,6 +235,24 @@
                 Clear
               </button>
             {/if}
+          </div>
+        {/if}
+        {#if showSug && suggestions.length > 0}
+          <div class="absolute left-0 right-0 top-full mt-1 bg-white border border-[#e5e7eb] rounded-lg shadow-lg z-20 overflow-hidden" style="max-height:280px;overflow-y:auto" transition:fade={{ duration: 100 }}>
+            {#each suggestions as s, i}
+              <button
+                type="button"
+                onmousedown={(e) => e.preventDefault()}
+                onclick={() => selectSuggestion(s)}
+                onmouseenter={() => sugIndex = i}
+                class="w-full text-left px-3 py-1.5 flex items-center gap-2 text-[0.8rem] border-b border-[#f3f4f6] last:border-b-0 cursor-pointer"
+                style="background:{i === sugIndex ? '#f0fdf4' : '#fff'}"
+              >
+                <span class="font-semibold text-[#2563eb] whitespace-nowrap">{s.registration_number}</span>
+                <span class="truncate text-[#374151]" title={s.name}>{s.name}</span>
+                <span class="ml-auto text-[0.65rem] whitespace-nowrap" style="color:{CATEGORY_COLORS[s.category]}">{s.category}</span>
+              </button>
+            {/each}
           </div>
         {/if}
       </div>

@@ -2,14 +2,38 @@ import type { PharmacistRecord, Notice, DispatchFile, Stats } from './types';
 import { supabase } from './supabase';
 
 export async function searchRecords(query: string): Promise<PharmacistRecord[]> {
-  if (query.trim().length < 3) return [];
+  const q = query.trim();
+  if (q.length < 3) return [];
   try {
-    const { data } = await supabase
+    const { data, error } = await supabase.rpc('search_pharmacists', { q, lim: 100000 });
+    if (error) throw error;
+    return (data as PharmacistRecord[]) || [];
+  } catch {
+    try {
+      const { data } = await supabase
+        .from('rph')
+        .select('registration_number, name, father_name, category, gender, validity_date, status, photo_url')
+        .or(`registration_number.ilike.%${q}%,name.ilike.%${q}%`)
+        .limit(100000);
+      return sortRecords(data || []);
+    } catch {
+      return [];
+    }
+  }
+}
+
+export async function suggestNames(query: string): Promise<PharmacistRecord[]> {
+  const q = query.trim();
+  if (q.length < 2) return [];
+  try {
+    const { data, error } = await supabase
       .from('rph')
-      .select('registration_number, name, father_name, category, gender, validity_date, status, photo_url')
-      .or(`registration_number.ilike.%${query}%,name.ilike.%${query}%`)
-      .limit(100000);
-    return sortRecords(data || []);
+      .select('registration_number, name, category')
+      .or(`registration_number.ilike.${q}%,name.ilike.${q}%`)
+      .order('registration_number', { ascending: true })
+      .limit(12);
+    if (error) throw error;
+    return (data as PharmacistRecord[]) || [];
   } catch {
     return [];
   }
