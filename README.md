@@ -18,3 +18,8 @@ Public-facing search portal for the Telangana State Pharmacy Council pharmacist 
 ## Disclaimer
 
 **NO LIABILITY.** Unofficial tool not affiliated with TGPC. Data for reference only. Operated under fair dealing (Indian Copyright Act, 1957, Section 52).
+
+## Contribution
+
+- **Agents/contributors:** read `AGENTS.md` first — it contains the mandatory
+  TGPC brand-color guideline and repo conventions.

@@ -8,6 +8,7 @@ export interface PharmacistRecord {
   validity_date?: string | null;
   status?: string | null;
   photo_url?: string | null;
+  score?: number;
 }
 
 export type Category = 'BPharm' | 'DPharm' | 'MPharm' | 'PharmD' | 'QC' | 'QP';

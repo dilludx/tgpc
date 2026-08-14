@@ -1,4 +1,4 @@
-import type { PharmacistRecord, Notice, DispatchFile, Stats } from './types';
+import type { PharmacistRecord, Notice, DispatchFile, Stats, Category } from './types';
 import { supabase } from './supabase';
 
 export async function searchRecords(query: string): Promise<PharmacistRecord[]> {
@@ -7,7 +7,7 @@ export async function searchRecords(query: string): Promise<PharmacistRecord[]> 
   try {
     const { data, error } = await supabase.rpc('search_pharmacists', { q, lim: 100000 });
     if (error) throw error;
-    return (data as PharmacistRecord[]) || [];
+    return sortRecords((data as PharmacistRecord[]) || []);
   } catch {
     try {
       const { data } = await supabase
@@ -22,18 +22,52 @@ export async function searchRecords(query: string): Promise<PharmacistRecord[]> 
   }
 }
 
-export async function suggestNames(query: string): Promise<PharmacistRecord[]> {
-  const q = query.trim();
-  if (q.length < 2) return [];
+export interface AdvancedFilters {
+  name?: string;
+  father_name?: string;
+  registration_number?: string;
+  category?: Category[];
+  gender?: string;
+  status?: string;
+  valid_till?: string;
+}
+
+const VALIDITY_RE = /^(\d{2})-([A-Za-z]{3})-(\d{4})$/;
+const MONTHS: Record<string, number> = {
+  Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+  Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+};
+
+function parseValidityDate(v: string): Date | null {
+  const m = v.trim().match(VALIDITY_RE);
+  if (!m) return null;
+  const month = MONTHS[m[2]];
+  if (month === undefined) return null;
+  return new Date(parseInt(m[3], 10), month, parseInt(m[1], 10));
+}
+
+export async function advancedSearch(f: AdvancedFilters): Promise<PharmacistRecord[]> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('rph')
-      .select('registration_number, name, category')
-      .or(`registration_number.ilike.${q}%,name.ilike.${q}%`)
-      .order('registration_number', { ascending: true })
-      .limit(12);
+      .select('registration_number, name, father_name, category, gender, validity_date, status, photo_url');
+    if (f.name && f.name.trim()) query = query.ilike('name', `%${f.name.trim()}%`);
+    if (f.father_name && f.father_name.trim()) query = query.ilike('father_name', `%${f.father_name.trim()}%`);
+    if (f.registration_number && f.registration_number.trim()) query = query.ilike('registration_number', `${f.registration_number.trim()}%`);
+    if (f.category && f.category.length > 0) query = query.in('category', f.category);
+    if (f.gender && f.gender !== 'Any') query = query.eq('gender', f.gender);
+    if (f.status && f.status !== 'Any') query = query.eq('status', f.status);
+    const { data, error } = await query.limit(100000);
     if (error) throw error;
-    return (data as PharmacistRecord[]) || [];
+    const rows = (data as PharmacistRecord[]) || [];
+    if (!f.valid_till) return sortRecords(rows);
+    const ref = new Date(f.valid_till + 'T00:00:00');
+    const filtered = rows.filter((r) => {
+      const d = parseValidityDate(r.validity_date || '');
+      if (!d) return false;
+      return d.getTime() === ref.getTime();
+    });
+    return sortRecords(filtered);
   } catch {
     return [];
   }

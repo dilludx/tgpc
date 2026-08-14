@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { PharmacistRecord, Category, CategoryFilter } from '$lib/types';
-  import { searchRecords, suggestNames } from '$lib/api';
-  import { CATEGORY_COLORS, CATEGORY_BG, CATEGORIES as CAT_NAMES } from '$lib/colors';
+  import { searchRecords, advancedSearch, type AdvancedFilters } from '$lib/api';
+  import DatePicker from '$lib/DatePicker.svelte';
+  import { CATEGORY_COLORS, CATEGORIES as CAT_NAMES } from '$lib/colors';
   import { PUBLIC_R2_PHOTO_BASE } from '$env/static/public';
   import jsPDF from 'jspdf';
   import autoTable from 'jspdf-autotable';
@@ -16,18 +17,17 @@
   let loading = $state(false);
   let results = $state<PharmacistRecord[]>([]);
   let searched = $state(false);
-
-  let suggestions = $state<PharmacistRecord[]>([]);
-  let showSug = $state(false);
-  let sugIndex = $state(-1);
-  let sugTimer: ReturnType<typeof setTimeout> | undefined;
+  let advMode = $state(false);
 
   const CATEGORY_FILTERS: CategoryFilter[] = ['all', ...CAT_NAMES];
+
+  let advFilters = $state<AdvancedFilters>({ valid_till: '' });
+  let advCats = $state<Category[]>([]);
 
   let filtered = $derived(category === 'all' ? results : results.filter(r => r.category === category));
 
   $effect(() => {
-    if (query.trim() === '' && searched) {
+    if (query.trim() === '' && searched && !advMode) {
       searched = false;
       results = [];
       category = 'all';
@@ -39,62 +39,49 @@
     if (q.length < 3) return;
     loading = true;
     searched = true;
+    advMode = false;
     results = await searchRecords(query);
     loading = false;
-    suggestions = [];
-    showSug = false;
-    sugIndex = -1;
   }
 
-  function onInputChange() {
-    clearTimeout(sugTimer);
-    suggestions = [];
-    sugIndex = -1;
-    const q = query.trim();
-    if (q.length < 2) {
-      showSug = false;
-      return;
+  async function applyAdvanced() {
+    const hasAny =
+      (advFilters.name ?? '').trim() ||
+      (advFilters.father_name ?? '').trim() ||
+      (advFilters.registration_number ?? '').trim() ||
+      advCats.length > 0 ||
+      (advFilters.gender ?? '') ||
+      (advFilters.status ?? '') ||
+      (advFilters.valid_till ?? '');
+    if (!hasAny) return;
+    loading = true;
+    searched = true;
+    advMode = true;
+    query = '';
+    category = 'all';
+    const payload: AdvancedFilters = {
+      ...advFilters,
+      category: advCats.length > 0 ? advCats : undefined
+    };
+    results = await advancedSearch(payload);
+    loading = false;
+  }
+
+  function clearAdvanced() {
+    advFilters = { valid_till: '' };
+    advCats = [];
+    if (searched && advMode) {
+      results = [];
+      searched = false;
+      category = 'all';
     }
-    showSug = true;
-    sugTimer = setTimeout(async () => {
-      const s = await suggestNames(q);
-      if (s.length === 0) { showSug = false; return; }
-      suggestions = s;
-      sugIndex = -1;
-    }, 150);
   }
 
-  function selectSuggestion(r: PharmacistRecord) {
-    query = r.name;
-    showSug = false;
-    suggestions = [];
-    if (query.trim().length >= 3) doSearch();
+  function toggleAdvanced() {
+    advMode = !advMode;
   }
 
   function onSearchKeydown(e: KeyboardEvent) {
-    if (suggestions.length > 0) {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        sugIndex = (sugIndex + 1) % suggestions.length;
-        return;
-      }
-      if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        sugIndex = sugIndex <= 0 ? suggestions.length - 1 : sugIndex - 1;
-        return;
-      }
-      if (e.key === 'Enter' && sugIndex >= 0) {
-        e.preventDefault();
-        selectSuggestion(suggestions[sugIndex]);
-        return;
-      }
-      if (e.key === 'Escape') {
-        showSug = false;
-        suggestions = [];
-        sugIndex = -1;
-        return;
-      }
-    }
     if (e.key === 'Enter') doSearch();
   }
 
@@ -103,11 +90,24 @@
     return 'background:#00cc66;color:#fff';
   }
 
+  function advCatStyle(cat: Category): string {
+    return advCats.includes(cat)
+      ? 'background:#00cc66;color:#fff'
+      : 'background:#f3f4f6;color:#6b7280';
+  }
+
+  function toggleAdvCat(cat: Category) {
+    advCats = advCats.includes(cat) ? advCats.filter(c => c !== cat) : [...advCats, cat];
+  }
+
   function reset() {
     query = '';
     category = 'all';
     results = [];
     searched = false;
+    advMode = false;
+    advFilters = { valid_till: '' };
+    advCats = [];
   }
 
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -129,10 +129,12 @@
     const title = `TGPC RPh Registry - Search: ${kw} - ${fmtDate(now)}`;
     const body = filtered.map(r => [r.registration_number, r.name, r.father_name || '—', r.gender || '—', r.category, r.validity_date || '—', r.status || '—']);
 
-    const TEXTS: Record<string, number[]> = {
-      BPharm: [0, 204, 102], DPharm: [239, 68, 68], MPharm: [124, 58, 237],
-      PharmD: [245, 158, 11], QC: [8, 145, 178], QP: [120, 113, 108]
-    };
+    const TEXTS = Object.fromEntries(
+      Object.entries(CATEGORY_COLORS).map(([k, hex]) => [
+        k,
+        [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)]
+      ])
+    );
 
     autoTable(doc, {
       startY: 15,
@@ -145,8 +147,8 @@
       margin: { top: 12, left: 10, right: 10, bottom: 12 },
       tableWidth: 'auto',
       didParseCell: (data) => {
-        if (data.section === 'body' && data.row.raw) {
-          const cat = (data.row.raw as string[])[4];
+        if (data.section === 'body' && data.column.index === 4) {
+          const cat = (data.cell.raw as string);
           const text = TEXTS[cat];
           if (text) data.cell.styles.textColor = text as [number, number, number];
         }
@@ -210,9 +212,6 @@
         <input
           type="text"
           bind:value={query}
-          oninput={onInputChange}
-          onfocus={() => { if (query.trim().length >= 2) showSug = true; }}
-          onblur={() => setTimeout(() => { showSug = false; }, 150)}
           onkeydown={onSearchKeydown}
           placeholder="Search by Name or Registered Pharmacist Certificate (RPC) Number"
           aria-label="Search"
@@ -223,44 +222,36 @@
           <div class="absolute right-0.5 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1">
             <button onclick={doSearch} disabled={query.trim().length < 3}
               class="rounded cursor-pointer border-none transition-colors disabled:opacity-30 disabled:cursor-not-allowed {searched ? 'px-2.5 py-1 text-[0.65rem] font-medium' : 'px-3 py-1 text-[0.7rem] font-semibold'}"
-              style="background:{query.trim().length >= 3 ? (searched ? '#f0fdf4' : '#00cc66') : '#f3f4f6'};color:{query.trim().length >= 3 ? (searched ? '#16a34a' : '#fff') : '#9ca3af'}"
+              style="background:{query.trim().length >= 3 ? (searched ? '#f0fdf4' : '#00cc66') : '#f3f4f6'};color:{query.trim().length >= 3 ? (searched ? '#00cc66' : '#fff') : '#9ca3af'}"
               transition:fly={{ y: 4, duration: 120, opacity: 0 }}>
               SEARCH
             </button>
             {#if searched}
               <button onclick={reset}
                 class="px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer border-none transition-colors uppercase"
-                style="background:#fef2f2;color:#dc2626"
+                style="background:#fef2f2;color:#ef4444"
                 transition:fly={{ y: 4, duration: 120, opacity: 0 }}>
                 Clear
               </button>
             {/if}
           </div>
         {/if}
-        {#if showSug && suggestions.length > 0}
-          <div class="absolute left-0 right-0 top-full mt-1 bg-white border border-[#e5e7eb] rounded-lg shadow-lg z-20 overflow-hidden" style="max-height:280px;overflow-y:auto" transition:fade={{ duration: 100 }}>
-            {#each suggestions as s, i}
-              <button
-                type="button"
-                onmousedown={(e) => e.preventDefault()}
-                onclick={() => selectSuggestion(s)}
-                onmouseenter={() => sugIndex = i}
-                class="w-full text-left px-3 py-1.5 flex items-center gap-2 text-[0.8rem] border-b border-[#f3f4f6] last:border-b-0 cursor-pointer"
-                style="background:{i === sugIndex ? '#f0fdf4' : '#fff'}"
-              >
-                <span class="font-semibold text-[#2563eb] whitespace-nowrap">{s.registration_number}</span>
-                <span class="truncate text-[#374151]" title={s.name}>{s.name}</span>
-                <span class="ml-auto text-[0.65rem] whitespace-nowrap" style="color:{CATEGORY_COLORS[s.category]}">{s.category}</span>
-              </button>
-            {/each}
-          </div>
-        {/if}
       </div>
     </div>
+
+    <button onclick={toggleAdvanced}
+      class="flex-shrink-0 rounded px-3 py-1.5 text-[0.7rem] font-semibold uppercase cursor-pointer border transition-colors"
+      style="border-color:{advMode ? '#00cc66' : '#e5e7eb'};background:{advMode ? '#f0fdf4' : '#fff'};color:{advMode ? '#00cc66' : '#374151'}"
+      transition:fly={{ y: 4, duration: 120, opacity: 0 }}>
+      Advanced
+    </button>
 
     {#if searched}
       <div class="flex items-center gap-1 min-w-0 flex-1" transition:fly={{ y: 6, duration: 200, opacity: 0 }}>
         <span class="text-[0.75rem] text-[#9ca3af] tabular-nums flex-shrink-0">{filtered.length.toLocaleString()} results</span>
+        {#if advMode}
+          <span class="text-[0.65rem] font-semibold uppercase rounded px-1.5 py-0.5 flex-shrink-0" style="background:#f0fdf4;color:#00cc66">Advanced</span>
+        {/if}
         <span class="ml-auto flex items-center gap-1.5">
           {#each CATEGORY_FILTERS as cat}
             <button onclick={() => category = cat}
@@ -269,12 +260,104 @@
               {cat === 'all' ? 'All' : cat}
             </button>
           {/each}
-          <button onclick={exportCSV} class="flex items-center gap-1 px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer border-none transition-colors" style="background:#f0fdf4;color:#16a34a">EXPORT CSV</button>
-          <button onclick={exportPDF} class="flex items-center gap-1 px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer border-none transition-colors" style="background:#fef2f2;color:#dc2626">EXPORT PDF</button>
+          <button onclick={exportCSV} class="flex items-center gap-1 px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer border-none transition-colors" style="background:#f0fdf4;color:#00cc66">EXPORT CSV</button>
+          <button onclick={exportPDF} class="flex items-center gap-1 px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer border-none transition-colors" style="background:#fef2f2;color:#ef4444">EXPORT PDF</button>
         </span>
       </div>
     {/if}
   </div>
+
+  {#if advMode}
+    <div class="relative rounded-lg border border-[#e5e7eb] bg-white shadow-sm" transition:fade={{ duration: 150 }}>
+      <button onclick={toggleAdvanced} aria-label="Close advanced search"
+        class="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded text-[#9ca3af] hover:text-[#374151] hover:bg-[#f3f4f6] cursor-pointer border-none transition-colors">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+
+      <div class="px-3.5 py-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-2.5">
+          <label class="block">
+            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">RPC Number</span>
+            <input type="text" bind:value={advFilters.registration_number}
+              placeholder="RPC NUMBER"
+              class="w-full h-8 px-2.5 text-[0.8rem] rounded-md border border-[#e5e7eb] bg-white outline-none transition-colors focus:border-[#00cc66]" />
+          </label>
+          <label class="block">
+            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">Name</span>
+            <input type="text" bind:value={advFilters.name}
+              placeholder="NAME"
+              class="w-full h-8 px-2.5 text-[0.8rem] rounded-md border border-[#e5e7eb] bg-white outline-none transition-colors focus:border-[#00cc66]" />
+          </label>
+          <label class="block">
+            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">Father</span>
+            <input type="text" bind:value={advFilters.father_name}
+              placeholder="FATHER NAME"
+              class="w-full h-8 px-2.5 text-[0.8rem] rounded-md border border-[#e5e7eb] bg-white outline-none transition-colors focus:border-[#00cc66]" />
+          </label>
+
+          <div>
+            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">Gender</span>
+            <div class="flex h-8 rounded-md border border-[#e5e7eb] overflow-hidden bg-white">
+              <button onclick={() => advFilters.gender = ''}
+                class="flex-1 px-2 text-[0.75rem] font-medium cursor-pointer border-none transition-colors"
+                style="{!advFilters.gender ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">All</button>
+              <button onclick={() => advFilters.gender = 'Male'}
+                class="flex-1 px-2 text-[0.75rem] font-medium cursor-pointer border-r border-[#e5e7eb] transition-colors"
+                style="{advFilters.gender === 'Male' ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">Male</button>
+              <button onclick={() => advFilters.gender = 'Female'}
+                class="flex-1 px-2 text-[0.75rem] font-medium cursor-pointer border-r border-[#e5e7eb] transition-colors"
+                style="{advFilters.gender === 'Female' ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">Female</button>
+            </div>
+          </div>
+          <div>
+            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">Status</span>
+            <div class="flex h-8 rounded-md border border-[#e5e7eb] overflow-hidden bg-white">
+              <button onclick={() => advFilters.status = ''}
+                class="flex-1 px-2 text-[0.75rem] font-medium cursor-pointer border-none transition-colors"
+                style="{!advFilters.status ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">All</button>
+              <button onclick={() => advFilters.status = 'Active'}
+                class="flex-1 px-2 text-[0.75rem] font-medium cursor-pointer border-r border-[#e5e7eb] transition-colors"
+                style="{advFilters.status === 'Active' ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">Active</button>
+              <button onclick={() => advFilters.status = 'Inactive'}
+                class="flex-1 px-2 text-[0.75rem] font-medium cursor-pointer border-r border-[#e5e7eb] transition-colors"
+                style="{advFilters.status === 'Inactive' ? 'background:#ef4444;color:#fff' : 'background:#fff;color:#6b7280'}">Inactive</button>
+            </div>
+          </div>
+          <div>
+            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">Valid Till</span>
+            <DatePicker bind:value={advFilters.valid_till} />
+          </div>
+
+          <div class="sm:col-span-2 lg:col-span-2">
+            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">Category</span>
+            <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div class="flex flex-wrap items-center gap-1.5">
+                {#each CAT_NAMES as cat}
+                  <button onclick={() => toggleAdvCat(cat)}
+                    class="px-3 h-8 rounded-md text-[0.75rem] font-medium cursor-pointer border-none transition-colors"
+                    style={advCatStyle(cat)}>
+                    {cat}
+                  </button>
+                {/each}
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick={clearAdvanced}
+                  class="h-8 px-3.5 rounded-md text-[0.7rem] font-semibold uppercase cursor-pointer border-none transition-colors"
+                  style="background:#fff;color:#ef4444;border:1px solid #fecaca">
+                  Reset
+                </button>
+                <button onclick={applyAdvanced}
+                  class="h-8 px-4 rounded-md text-[0.7rem] font-semibold uppercase cursor-pointer border-none transition-colors"
+                  style="background:#00cc66;color:#fff">
+                  Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
 
   <!-- Results -->
   {#if searched}

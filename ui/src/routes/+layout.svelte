@@ -155,24 +155,24 @@
           <div style="border-right:1px solid #e5e7eb;padding-right:12px">
               <div style="display:flex;flex-direction:column;gap:4px;text-align:center">
               <div style="font-size:0.8rem;font-weight:500;letter-spacing:0.5px;color:#9ca3af">TOTAL <span style="color:#ef4444">RPh</span></div>
-              <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val('total')}</div>
+              <div style="font-size:1.25rem;font-weight:700;color:#111827;line-height:1;font-variant-numeric:tabular-nums">{val('total')}</div>
             </div>
           </div>
           {#each sortedCategories as cat, i}
             <div style="border-right:{i < 5 ? '1px solid #e5e7eb' : 'none'};padding-right:{i < 5 ? '12px' : '0'}">
               <div style="display:flex;flex-direction:column;gap:4px;text-align:center">
-                <div style="font-size:0.8rem;font-weight:500;letter-spacing:0.5px;color:#9ca3af">{cat}</div>
-                <div style="font-size:1.25rem;font-weight:700;color:#1a1a1a;line-height:1;font-variant-numeric:tabular-nums">{val(CATEGORY_KEYS[CATEGORIES.indexOf(cat)] as keyof Stats)}</div>
+                <div style="font-size:0.8rem;font-weight:500;letter-spacing:0.5px;color:{CATEGORY_COLORS[cat]}">{cat}</div>
+                <div style="font-size:1.25rem;font-weight:700;color:#111827;line-height:1;font-variant-numeric:tabular-nums">{val(CATEGORY_KEYS[CATEGORIES.indexOf(cat)] as keyof Stats)}</div>
               </div>
             </div>
           {/each}
         </div>
-             <div style="font-size:0.5rem;color:#a1a1aa;font-weight:500;letter-spacing:0.3px;text-transform:uppercase;margin-top:4px;padding-top:4px;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+             <div style="font-size:0.5rem;color:#9ca3af;font-weight:500;letter-spacing:0.3px;text-transform:uppercase;margin-top:4px;padding-top:4px;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span style="display:inline-flex;align-items:center;gap:3px;background:rgba(0,204,102,0.1);padding:1px 6px 1px 4px;border-radius:10px">
             <span style="display:inline-flex;align-items:center;justify-content:center;width:10px;height:10px;background:#00cc66;border-radius:50%;color:white;font-size:6px;font-weight:bold">&#10003;</span>
             <span style="color:#00cc66;font-size:0.45rem;font-weight:600;text-transform:uppercase;letter-spacing:0.3px">Synced</span>
           </span>
-          <span style="background:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">{lastSync || '—'}</span>
+          <span style="background:linear-gradient(135deg,#2563eb 0%,#00b359 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">{lastSync || '—'}</span>
           <span style="opacity:0.4">|</span>
           <span>Active: <span style="color:#00cc66;font-weight:600">{val('active')}</span></span>
           <span style="opacity:0.4">|</span>
@@ -184,9 +184,9 @@
     </div>
     <div class="w-full px-4 sm:px-6 border-b border-[#e5e7eb]" style="display:flex;align-items:center;gap:2px;font-size:0.7rem;padding-top:3px;padding-bottom:3px;overflow-x:auto;position:relative">
       <a href="/" bind:this={searchRef} style="text-decoration:none;padding:2px 4px;font-weight:700;color:{activeTab === 'search' ? '#00cc66' : '#6b7280'};white-space:nowrap">SEARCH</a>
-      <span style="color:#d1d5db;font-weight:300;padding:0 2px;user-select:none">/</span>
+      <span style="color:#e5e7eb;font-weight:300;padding:0 2px;user-select:none">/</span>
       <a href="/notice" bind:this={noticeRef} style="text-decoration:none;padding:2px 4px;font-weight:700;color:{activeTab === 'notice' ? '#00cc66' : '#6b7280'};white-space:nowrap">NOTICES</a>
-      <span style="color:#d1d5db;font-weight:300;padding:0 2px;user-select:none">/</span>
+      <span style="color:#e5e7eb;font-weight:300;padding:0 2px;user-select:none">/</span>
       <a href="/dispatch" bind:this={dispatchRef} style="text-decoration:none;padding:2px 4px;font-weight:700;color:{activeTab === 'dispatch' ? '#00cc66' : '#6b7280'};white-space:nowrap">DISPATCH LIST</a>
       {#if sliderStyle}
       <div style="position:absolute;bottom:0;left:0;height:2px;background:#00cc66;border-radius:1px;transition:transform 0.25s ease-out,width 0.25s ease-out;will-change:transform,width;{sliderStyle}"></div>

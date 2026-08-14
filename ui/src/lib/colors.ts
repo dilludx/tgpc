@@ -1,21 +1,23 @@
 import type { Category } from './types';
 
-export const CATEGORY_COLORS: Record<Category, string> = {
-  BPharm: '#9C27B0',
-  DPharm: '#4285F4',
-  MPharm: '#34A853',
-  PharmD: '#EA4335',
-  QC: '#FBBC05',
-  QP: '#757575'
-};
+export const TGPC = {
+  green: '#00cc66',
+  greenDark: '#00b359',
+  red: '#ef4444',
+  grey: '#9ca3af',
+  blue: '#2563eb',
+  text: '#111827',
+  muted: '#6b7280',
+  border: '#e5e7eb'
+} as const;
 
-export const CATEGORY_BG: Record<Category, string> = {
-  BPharm: '#f3e5f5',
-  DPharm: '#e3f2fd',
-  MPharm: '#e8f5e9',
-  PharmD: '#ffebee',
-  QC: '#fffde7',
-  QP: '#f5f5f5'
+export const CATEGORY_COLORS: Record<Category, string> = {
+  BPharm: '#2563eb',
+  DPharm: '#00cc66',
+  MPharm: '#111827',
+  PharmD: '#ef4444',
+  QC: '#00b359',
+  QP: '#9ca3af'
 };
 
 export const CATEGORY_LABELS: Record<Category, string> = {
