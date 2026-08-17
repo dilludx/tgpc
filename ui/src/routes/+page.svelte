@@ -18,6 +18,7 @@
   let results = $state<PharmacistRecord[]>([]);
   let searched = $state(false);
   let advMode = $state(false);
+  let advActive = $state(false);
 
   const CATEGORY_FILTERS: CategoryFilter[] = ['all', ...CAT_NAMES];
 
@@ -27,7 +28,7 @@
   let filtered = $derived(category === 'all' ? results : results.filter(r => r.category === category));
 
   $effect(() => {
-    if (query.trim() === '' && searched && !advMode) {
+    if (query.trim() === '' && searched && !advActive) {
       searched = false;
       results = [];
       category = 'all';
@@ -40,6 +41,7 @@
     loading = true;
     searched = true;
     advMode = false;
+    advActive = false;
     results = await searchRecords(query);
     loading = false;
   }
@@ -56,7 +58,7 @@
     if (!hasAny) return;
     loading = true;
     searched = true;
-    advMode = true;
+    advActive = true;
     query = '';
     category = 'all';
     const payload: AdvancedFilters = {
@@ -65,15 +67,17 @@
     };
     results = await advancedSearch(payload);
     loading = false;
+    advMode = false;
   }
 
   function clearAdvanced() {
     advFilters = { valid_till: '' };
     advCats = [];
-    if (searched && advMode) {
+    if (searched && advActive) {
       results = [];
       searched = false;
       category = 'all';
+      advActive = false;
     }
   }
 
@@ -106,6 +110,7 @@
     results = [];
     searched = false;
     advMode = false;
+    advActive = false;
     advFilters = { valid_till: '' };
     advCats = [];
   }
@@ -249,7 +254,7 @@
     {#if searched}
       <div class="flex items-center gap-1 min-w-0 flex-1" transition:fly={{ y: 6, duration: 200, opacity: 0 }}>
         <span class="text-[0.75rem] text-[#9ca3af] tabular-nums flex-shrink-0">{filtered.length.toLocaleString()} results</span>
-        {#if advMode}
+        {#if advActive}
           <span class="text-[0.65rem] font-semibold uppercase rounded px-1.5 py-0.5 flex-shrink-0" style="background:#f0fdf4;color:#00cc66">Advanced</span>
         {/if}
         <span class="ml-auto flex items-center gap-1.5">
