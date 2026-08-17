@@ -27,6 +27,38 @@
 
   let filtered = $derived(category === 'all' ? results : results.filter(r => r.category === category));
 
+  let resultsBox: HTMLDivElement | undefined;
+  let resultsMaxH = $state('calc(100vh - 240px)');
+
+  function measureResultsBox() {
+    if (!resultsBox) return;
+    const main = resultsBox.closest('main');
+    const padBottom = main ? (parseFloat(getComputedStyle(main).paddingBottom) || 0) : 0;
+    const boxTop = resultsBox.getBoundingClientRect().top;
+    const available = Math.floor(window.innerHeight - boxTop - padBottom);
+    if (available > 0) resultsMaxH = `${available}px`;
+  }
+
+  let resizeObserver: ResizeObserver | undefined;
+
+  $effect(() => {
+    const panelOpen = advMode;
+    const hasSearched = searched;
+    if (resultsBox && (panelOpen || hasSearched)) {
+      measureResultsBox();
+    }
+  });
+
+  $effect(() => {
+    if (resultsBox) {
+      measureResultsBox();
+      resizeObserver?.disconnect();
+      resizeObserver = new ResizeObserver(measureResultsBox);
+      resizeObserver.observe(resultsBox);
+      return () => resizeObserver?.disconnect();
+    }
+  });
+
   $effect(() => {
     if (query.trim() === '' && searched && !advActive) {
       searched = false;
@@ -383,7 +415,7 @@
       <p class="text-[0.85rem] text-[#9ca3af] py-8 text-center">No results</p>
     {:else}
       <div class="hidden md:block">
-        <div style="max-height:calc(100vh - 240px);overflow-y:auto;overflow-x:auto">
+        <div style="max-height:{resultsMaxH};overflow-y:auto;overflow-x:auto" bind:this={resultsBox}>
         <table class="w-full" style="table-layout:auto">
           <thead class="sticky top-0 bg-white z-10">
             <tr class="text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider">
