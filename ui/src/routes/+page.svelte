@@ -37,13 +37,16 @@
 
   async function doSearch() {
     const q = query.trim();
-    if (q.length < 3) return;
+    if (q.length < 3 || loading) return;
     loading = true;
     searched = true;
     advMode = false;
     advActive = false;
-    results = await searchRecords(query);
-    loading = false;
+    try {
+      results = await searchRecords(query);
+    } finally {
+      loading = false;
+    }
   }
 
   async function applyAdvanced() {
@@ -55,7 +58,7 @@
       (advFilters.gender ?? '') ||
       (advFilters.status ?? '') ||
       (advFilters.valid_till ?? '');
-    if (!hasAny) return;
+    if (!hasAny || loading) return;
     loading = true;
     searched = true;
     advActive = true;
@@ -65,9 +68,12 @@
       ...advFilters,
       category: advCats.length > 0 ? advCats : undefined
     };
-    results = await advancedSearch(payload);
-    loading = false;
-    advMode = false;
+    try {
+      results = await advancedSearch(payload);
+    } finally {
+      loading = false;
+      advMode = false;
+    }
   }
 
   function clearAdvanced() {
