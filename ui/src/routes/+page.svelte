@@ -40,12 +40,24 @@
   }
 
   let resizeObserver: ResizeObserver | undefined;
+  let measureTimer: ReturnType<typeof setTimeout> | undefined;
 
   $effect(() => {
     const panelOpen = advMode;
     const hasSearched = searched;
     if (resultsBox && (panelOpen || hasSearched)) {
       measureResultsBox();
+      if (!panelOpen && hasSearched) {
+        clearTimeout(measureTimer);
+        const waitForPanelGone = () => {
+          if (!document.querySelector('input[placeholder="RPC NUMBER"]')) {
+            measureResultsBox();
+          } else {
+            measureTimer = setTimeout(waitForPanelGone, 50);
+          }
+        };
+        measureTimer = setTimeout(waitForPanelGone, 160);
+      }
     }
   });
 
