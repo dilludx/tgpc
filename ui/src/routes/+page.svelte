@@ -36,7 +36,7 @@
     const boxTop = resultsBox.getBoundingClientRect().top;
     const footer = document.querySelector('footer');
     const footerTop = footer ? footer.getBoundingClientRect().top : window.innerHeight;
-    const available = Math.round(footerTop - boxTop - 20);
+    const available = Math.round(footerTop - boxTop - 10);
     if (available > 0) {
       resultsMaxH = `${available}px`;
       resultsMinH = `${available}px`;
