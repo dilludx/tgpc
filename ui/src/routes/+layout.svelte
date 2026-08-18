@@ -150,8 +150,8 @@
             </div>
           </div>
       </div>
-      <div style="background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px 4px 10px;display:flex;flex-direction:column;gap:0;flex-shrink:0">
-        <div style="display:flex;gap:10px;align-items:center;justify-content:center">
+      <div style="background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px 4px 10px;display:flex;flex-direction:column;gap:0;min-width:0;max-width:100%">
+        <div style="display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center;justify-content:center">
           <div style="border-right:1px solid #e5e7eb;padding-right:12px">
               <div style="display:flex;flex-direction:column;gap:4px;text-align:center">
               <div style="font-size:0.8rem;font-weight:500;letter-spacing:0.5px;color:#9ca3af">TOTAL <span style="color:#ef4444">RPh</span></div>

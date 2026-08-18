@@ -27,7 +27,7 @@
 
   let filtered = $derived(category === 'all' ? results : results.filter(r => r.category === category));
 
-  let resultsBox: HTMLDivElement | undefined;
+  let resultsBox = $state<HTMLDivElement | undefined>();
   let resultsMaxH = $state('calc(100vh - 240px)');
 
   function measureResultsBox() {
@@ -290,12 +290,12 @@
     </button>
 
     {#if searched}
-      <div class="flex items-center gap-1 min-w-0 flex-1" transition:fly={{ y: 6, duration: 200, opacity: 0 }}>
+      <div class="flex flex-wrap items-center gap-1 min-w-0 flex-1" transition:fly={{ y: 6, duration: 200, opacity: 0 }}>
         <span class="text-[0.75rem] text-[#9ca3af] tabular-nums flex-shrink-0">{filtered.length.toLocaleString()} results</span>
         {#if advActive}
           <span class="text-[0.65rem] font-semibold uppercase rounded px-1.5 py-0.5 flex-shrink-0" style="background:#f0fdf4;color:#00cc66">Advanced</span>
         {/if}
-        <span class="ml-auto flex items-center gap-1.5">
+        <span class="ml-auto flex flex-wrap items-center gap-1.5">
           {#each CATEGORY_FILTERS as cat}
             <button onclick={() => category = cat}
               class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none"
