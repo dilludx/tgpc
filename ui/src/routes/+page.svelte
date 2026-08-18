@@ -33,10 +33,10 @@
 
   function measureResultsBox() {
     if (!resultsBox) return;
-    const main = resultsBox.closest('main');
-    const padBottom = main ? (parseFloat(getComputedStyle(main).paddingBottom) || 0) : 0;
     const boxTop = resultsBox.getBoundingClientRect().top;
-    const available = Math.floor(window.innerHeight - boxTop - padBottom);
+    const footer = document.querySelector('footer');
+    const footerTop = footer ? footer.getBoundingClientRect().top : window.innerHeight;
+    const available = Math.round(footerTop - boxTop - 20);
     if (available > 0) {
       resultsMaxH = `${available}px`;
       resultsMinH = `${available}px`;

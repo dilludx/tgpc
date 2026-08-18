@@ -194,7 +194,7 @@
     </div>
   </header>
 
-  <main class="flex-1 w-full px-4 sm:px-6 pt-1 pb-14">
+  <main class="flex-1 w-full px-4 sm:px-6 pt-1 pb-12">
     {@render children()}
   </main>
 
