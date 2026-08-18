@@ -29,6 +29,7 @@
 
   let resultsBox = $state<HTMLDivElement | undefined>();
   let resultsMaxH = $state('calc(100vh - 240px)');
+  let resultsMinH = $state('0px');
 
   function measureResultsBox() {
     if (!resultsBox) return;
@@ -36,7 +37,10 @@
     const padBottom = main ? (parseFloat(getComputedStyle(main).paddingBottom) || 0) : 0;
     const boxTop = resultsBox.getBoundingClientRect().top;
     const available = Math.floor(window.innerHeight - boxTop - padBottom);
-    if (available > 0) resultsMaxH = `${available}px`;
+    if (available > 0) {
+      resultsMaxH = `${available}px`;
+      resultsMinH = `${available}px`;
+    }
   }
 
   let resizeObserver: ResizeObserver | undefined;
@@ -427,7 +431,7 @@
       <p class="text-[0.85rem] text-[#9ca3af] py-8 text-center">No results</p>
     {:else}
       <div class="hidden md:block">
-        <div style="max-height:{resultsMaxH};overflow-y:auto;overflow-x:auto" bind:this={resultsBox}>
+        <div style="max-height:{resultsMaxH};min-height:{resultsMinH};overflow-y:auto;overflow-x:auto" bind:this={resultsBox}>
         <table class="w-full" style="table-layout:auto">
           <thead class="sticky top-0 bg-white z-10">
             <tr class="text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider">
