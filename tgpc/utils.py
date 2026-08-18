@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from tgpc.progress import BarHandler
+
 # --- Exceptions ---
 
 
@@ -67,13 +69,11 @@ class Config:
 
 
 def setup_logging(name: str = "tgpc") -> logging.Logger:
-    """Set up minimal logging."""
+    """Set up minimal logging to stderr (keeps progress bars on stdout clean)."""
     logger = logging.getLogger(name)
 
     if not logger.handlers:
-        handler = logging.StreamHandler(sys.stdout)
-        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-        handler.setFormatter(formatter)
+        handler = BarHandler(sys.stderr)
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)
 

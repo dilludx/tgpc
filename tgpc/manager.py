@@ -17,6 +17,7 @@ from supabase import create_client
 
 from tgpc.utils import Config, setup_logging, load_credentials
 from tgpc.scraper import Scraper, PharmacistRecord
+from tgpc.progress import ProgressBar, Phase, heartbeat
 
 
 logger = setup_logging("tgpc.manager")
@@ -368,42 +369,53 @@ class Manager:
         logger.info("Starting daily update...")
 
         # 0a. Restore rph.json from backup if missing (safety against accidental deletion)
-        self._restore_rph_from_backup()
+        with Phase("Restore rph.json from backup", 1, 5):
+            with heartbeat("Restoring rph.json from R2 backup"):
+                self._restore_rph_from_backup()
 
         # 0b. Health check - abort if blocked
-        if not self.scraper.health_check():
-            logger.error("Health check failed - connection is blocked. Aborting to avoid wasted time.")
-            self._write_update_outputs(
-                update_status="blocked",
-                success=False,
-                blocked=True,
-                total_records=len(self.file_manager.load()),
-            )
-            return "blocked"
+        with Phase("Health check", 2, 5) as p:
+            with heartbeat("Checking source availability"):
+                healthy = self.scraper.health_check()
+            if not healthy:
+                p.fail()
+                logger.error("Health check failed - connection is blocked. Aborting to avoid wasted time.")
+                self._write_update_outputs(
+                    update_status="blocked",
+                    success=False,
+                    blocked=True,
+                    total_records=len(self.file_manager.load()),
+                )
+                return "blocked"
 
         # 1. Backup existing
-        rph_path = Path(self.config.data_directory) / "rph.json"
-        self.backup_manager.create(rph_path)
-        existing_records = self.file_manager.load()
+        with Phase("Backup existing data", 3, 5):
+            rph_path = Path(self.config.data_directory) / "rph.json"
+            with heartbeat("Uploading backup to R2"):
+                self.backup_manager.create(rph_path)
+            existing_records = self.file_manager.load()
 
         # 2. Scrape fresh data
-        try:
-            fresh_records = self.scraper.extract_basic_records()
-        except Exception as e:
-            if self._is_source_unavailable_error(e):
-                source_error = self._source_error_label(e)
-                logger.warning(
-                    "TGPC source is temporarily unavailable (%s). Preserving existing data and skipping sync.",
-                    source_error,
-                )
-                self._write_update_outputs(
-                    update_status="source_unavailable",
-                    source_error=source_error,
-                    success=False,
-                    total_records=len(existing_records),
-                )
-                return "source_unavailable"
-            raise
+        with Phase("Scrape fresh data", 4, 5) as p:
+            with heartbeat("Extracting basic records"):
+                try:
+                    fresh_records = self.scraper.extract_basic_records()
+                except Exception as e:
+                    if self._is_source_unavailable_error(e):
+                        p.fail()
+                        source_error = self._source_error_label(e)
+                        logger.warning(
+                            "TGPC source is temporarily unavailable (%s). Preserving existing data and skipping sync.",
+                            source_error,
+                        )
+                        self._write_update_outputs(
+                            update_status="source_unavailable",
+                            source_error=source_error,
+                            success=False,
+                            total_records=len(existing_records),
+                        )
+                        return "source_unavailable"
+                    raise
 
         if not fresh_records:
             logger.error("No records extracted, aborting update")
@@ -427,104 +439,105 @@ class Manager:
             return "safety_abort"
 
         # 3. Validate & Save
-        # Simple deduplication by registration number
-        unique_records = {r.registration_number: r for r in fresh_records}.values()
-        sorted_records = sorted(unique_records, key=lambda r: r.serial_number or 0)
+        with Phase("Validate & save", 5, 5):
+            # Simple deduplication by registration number
+            unique_records = {r.registration_number: r for r in fresh_records}.values()
+            sorted_records = sorted(unique_records, key=lambda r: r.serial_number or 0)
 
-        # Calculate stats
-        existing_map = {r.registration_number: r for r in existing_records}
-        current_map = {r.registration_number: r for r in sorted_records}
+            # Calculate stats
+            existing_map = {r.registration_number: r for r in existing_records}
+            current_map = {r.registration_number: r for r in sorted_records}
 
-        existing_ids = set(existing_map.keys())
-        current_ids = set(current_map.keys())
+            existing_ids = set(existing_map.keys())
+            current_ids = set(current_map.keys())
 
-        new_ids = current_ids - existing_ids
-        removed_ids = existing_ids - current_ids
-        common_ids = current_ids & existing_ids
+            new_ids = current_ids - existing_ids
+            removed_ids = existing_ids - current_ids
+            common_ids = current_ids & existing_ids
 
-        new_count = len(new_ids)
-        removed_count = len(removed_ids)
-        total_count = len(sorted_records)
-        duplicates = len(fresh_records) - len(sorted_records)
+            new_count = len(new_ids)
+            removed_count = len(removed_ids)
+            total_count = len(sorted_records)
+            duplicates = len(fresh_records) - len(sorted_records)
 
-        def detail_sort_key(record: PharmacistRecord):
-            return (
-                record.serial_number is None,
-                record.serial_number if record.serial_number is not None else 0,
-                record.registration_number,
+            def detail_sort_key(record: PharmacistRecord):
+                return (
+                    record.serial_number is None,
+                    record.serial_number if record.serial_number is not None else 0,
+                    record.registration_number,
+                )
+
+            def format_detail(record: PharmacistRecord) -> str:
+                return f"{record.registration_number} - {record.name} ({record.category})"
+
+            sorted_new_ids = sorted(new_ids, key=lambda rid: detail_sort_key(current_map[rid]))
+            sorted_removed_ids = sorted(removed_ids, key=lambda rid: detail_sort_key(existing_map[rid]))
+
+            # Detailed changes
+            new_details = [format_detail(current_map[rid]) for rid in sorted_new_ids]
+            removed_details = [format_detail(existing_map[rid]) for rid in sorted_removed_ids]
+
+            modified_ids = sorted(
+                [rid for rid in common_ids if existing_map[rid] != current_map[rid]],
+                key=lambda rid: detail_sort_key(current_map[rid]),
+            )
+            modified_count = len(modified_ids)
+            modified_details = [format_detail(current_map[rid]) for rid in modified_ids]
+
+            # Category Statistics
+            def get_cat_stats(ids, mapping):
+                counts = Counter(mapping[i].category for i in ids)
+                return dict(sorted(counts.items()))
+
+            new_cat_stats = get_cat_stats(sorted_new_ids, current_map)
+            rem_cat_stats = get_cat_stats(sorted_removed_ids, existing_map)
+            mod_cat_stats = get_cat_stats(modified_ids, current_map)  # Use modified_ids, NOT common_ids
+
+            self.file_manager.save(list(sorted_records))
+            self._last_new_regs = new_ids
+            self._last_modified_regs = modified_ids
+            self._last_removed_regs = removed_ids
+
+            logger.info(
+                "Update complete. Total: %d, 🌱 NEW: %d, 🌀 CHANGES: %d, ❌ REMOVALS: %d",
+                total_count,
+                new_count,
+                modified_count,
+                removed_count,
             )
 
-        def format_detail(record: PharmacistRecord) -> str:
-            return f"{record.registration_number} - {record.name} ({record.category})"
+            self._last_update_details = {
+                "new_details": new_details,
+                "modified_details": modified_details,
+                "removed_details": removed_details,
+                "new_cat_stats": new_cat_stats,
+                "rem_cat_stats": rem_cat_stats,
+                "mod_cat_stats": mod_cat_stats,
+                "total_records": total_count,
+            }
 
-        sorted_new_ids = sorted(new_ids, key=lambda rid: detail_sort_key(current_map[rid]))
-        sorted_removed_ids = sorted(removed_ids, key=lambda rid: detail_sort_key(existing_map[rid]))
+            if os.environ.get("GITHUB_OUTPUT"):
+                details_path = Path(self.file_manager.data_dir) / "update_details.json"
+                with open(details_path, "w", encoding="utf-8") as f:
+                    json.dump(self._last_update_details, f, indent=2, ensure_ascii=False)
 
-        # Detailed changes
-        new_details = [format_detail(current_map[rid]) for rid in sorted_new_ids]
-        removed_details = [format_detail(existing_map[rid]) for rid in sorted_removed_ids]
-
-        modified_ids = sorted(
-            [rid for rid in common_ids if existing_map[rid] != current_map[rid]],
-            key=lambda rid: detail_sort_key(current_map[rid]),
-        )
-        modified_count = len(modified_ids)
-        modified_details = [format_detail(current_map[rid]) for rid in modified_ids]
-
-        # Category Statistics
-        def get_cat_stats(ids, mapping):
-            counts = Counter(mapping[i].category for i in ids)
-            return dict(sorted(counts.items()))
-
-        new_cat_stats = get_cat_stats(sorted_new_ids, current_map)
-        rem_cat_stats = get_cat_stats(sorted_removed_ids, existing_map)
-        mod_cat_stats = get_cat_stats(modified_ids, current_map)  # Use modified_ids, NOT common_ids
-
-        self.file_manager.save(list(sorted_records))
-        self._last_new_regs = new_ids
-        self._last_modified_regs = modified_ids
-        self._last_removed_regs = removed_ids
-
-        logger.info(
-            "Update complete. Total: %d, 🌱 NEW: %d, 🌀 CHANGES: %d, ❌ REMOVALS: %d",
-            total_count,
-            new_count,
-            modified_count,
-            removed_count,
-        )
-
-        self._last_update_details = {
-            "new_details": new_details,
-            "modified_details": modified_details,
-            "removed_details": removed_details,
-            "new_cat_stats": new_cat_stats,
-            "rem_cat_stats": rem_cat_stats,
-            "mod_cat_stats": mod_cat_stats,
-            "total_records": total_count,
-        }
-
-        if os.environ.get("GITHUB_OUTPUT"):
-            details_path = Path(self.file_manager.data_dir) / "update_details.json"
-            with open(details_path, "w", encoding="utf-8") as f:
-                json.dump(self._last_update_details, f, indent=2, ensure_ascii=False)
-
-        self._write_update_outputs(
-            update_status="updated",
-            success=True,
-            total_records=total_count,
-            new_records=new_count,
-            removed_records=removed_count,
-            modified_records=modified_count,
-            duplicates_removed=duplicates,
-            integrity_score=1.0,
-            new_details=new_details,
-            removed_details=removed_details,
-            modified_details=modified_details,
-            new_cat_stats=new_cat_stats,
-            rem_cat_stats=rem_cat_stats,
-            mod_cat_stats=mod_cat_stats,
-        )
-        return "updated"
+            self._write_update_outputs(
+                update_status="updated",
+                success=True,
+                total_records=total_count,
+                new_records=new_count,
+                removed_records=removed_count,
+                modified_records=modified_count,
+                duplicates_removed=duplicates,
+                integrity_score=1.0,
+                new_details=new_details,
+                removed_details=removed_details,
+                modified_details=modified_details,
+                new_cat_stats=new_cat_stats,
+                rem_cat_stats=rem_cat_stats,
+                mod_cat_stats=mod_cat_stats,
+            )
+            return "updated"
 
     def sync_to_supabase(self, delta_records=None):
         """Sync data to Supabase. If delta_records provided, only upsert those."""
@@ -551,10 +564,12 @@ class Manager:
 
             # Batch upsert (5 core fields only — enrichment fields already in Supabase)
             batch_size = 1000
-            for i in range(0, len(records), batch_size):
-                batch = [r.to_dict() for r in records[i : i + batch_size]]
-                supabase.table("rph").upsert(batch, on_conflict="registration_number").execute()
-                logger.info(f"Synced batch {i // batch_size + 1}")
+            num_batches = (len(records) + batch_size - 1) // batch_size
+            with ProgressBar(total=num_batches, label="Upserting to Supabase") as bar:
+                for i in range(0, len(records), batch_size):
+                    batch = [r.to_dict() for r in records[i : i + batch_size]]
+                    supabase.table("rph").upsert(batch, on_conflict="registration_number").execute()
+                    bar.update(1, detail=f"batch {i // batch_size + 1}/{num_batches}")
 
             # Update last_sync timestamp in metadata table
             try:
@@ -577,9 +592,12 @@ class Manager:
                         f"Running full sync to fix..."
                     )
                     all_records = self.file_manager.load()
-                    for i in range(0, len(all_records), batch_size):
-                        batch = [r.to_dict() for r in all_records[i : i + batch_size]]
-                        supabase.table("rph").upsert(batch, on_conflict="registration_number").execute()
+                    fix_batches = (len(all_records) + batch_size - 1) // batch_size
+                    with ProgressBar(total=fix_batches, label="Full re-sync to Supabase") as bar:
+                        for i in range(0, len(all_records), batch_size):
+                            batch = [r.to_dict() for r in all_records[i : i + batch_size]]
+                            supabase.table("rph").upsert(batch, on_conflict="registration_number").execute()
+                            bar.update(1, detail=f"batch {i // batch_size + 1}/{fix_batches}")
                     result = supabase.table("rph").select("registration_number", count="exact").execute()
                     remote_count = result.count
                     if local_count == remote_count:
@@ -604,24 +622,25 @@ class Manager:
             logger.error("Missing Supabase credentials")
             return
         file_path = self.file_manager.data_dir / "rph.json"
-        try:
-            with open(file_path, "rb") as f:
-                resp = requests.post(
-                    f"{url}/storage/v1/object/tgpc/rph.json",
-                    headers={
-                        "Authorization": f"Bearer {key}",
-                        "apikey": key,
-                        "x-upsert": "true",
-                    },
-                    data=f,
-                    timeout=300,
-                )
-            if resp.ok:
-                logger.info("Supabase Storage sync complete")
-            else:
-                logger.error(f"Supabase Storage sync failed: {resp.status_code} {resp.text}")
-        except Exception as e:
-            logger.error(f"Supabase Storage sync error: {e}")
+        with heartbeat("Syncing rph.json to Supabase Storage"):
+            try:
+                with open(file_path, "rb") as f:
+                    resp = requests.post(
+                        f"{url}/storage/v1/object/tgpc/rph.json",
+                        headers={
+                            "Authorization": f"Bearer {key}",
+                            "apikey": key,
+                            "x-upsert": "true",
+                        },
+                        data=f,
+                        timeout=300,
+                    )
+                if resp.ok:
+                    logger.info("Supabase Storage sync complete")
+                else:
+                    logger.error(f"Supabase Storage sync failed: {resp.status_code} {resp.text}")
+            except Exception as e:
+                logger.error(f"Supabase Storage sync error: {e}")
 
     def sync_to_r2(self):
         """Sync rph.json to Cloudflare R2. Photos are uploaded during enrichment."""
@@ -639,36 +658,37 @@ class Manager:
         file_path = str(self.file_manager.data_dir / "rph.json")
 
         # Upload rph.json
-        try:
-            result = subprocess.run(
-                [
-                    "aws",
-                    "s3api",
-                    "put-object",
-                    "--endpoint-url",
-                    endpoint,
-                    "--region",
-                    "auto",
-                    "--bucket",
-                    "tgpc",
-                    "--key",
-                    "rph.json",
-                    "--body",
-                    file_path,
-                ],
-                capture_output=True,
-                text=True,
-                timeout=120,
-                env=self._get_r2_env(),
-            )
-            if result.returncode == 0:
-                logger.info("R2 rph.json sync complete")
-            else:
-                logger.error(f"R2 rph.json sync failed: {result.stderr.strip()}")
-        except FileNotFoundError:
-            logger.error("awscli not installed. Run: pip install awscli")
-        except Exception as e:
-            logger.error(f"R2 rph.json sync error: {e}")
+        with heartbeat("Uploading rph.json to R2"):
+            try:
+                result = subprocess.run(
+                    [
+                        "aws",
+                        "s3api",
+                        "put-object",
+                        "--endpoint-url",
+                        endpoint,
+                        "--region",
+                        "auto",
+                        "--bucket",
+                        "tgpc",
+                        "--key",
+                        "rph.json",
+                        "--body",
+                        file_path,
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                    env=self._get_r2_env(),
+                )
+                if result.returncode == 0:
+                    logger.info("R2 rph.json sync complete")
+                else:
+                    logger.error(f"R2 rph.json sync failed: {result.stderr.strip()}")
+            except FileNotFoundError:
+                logger.error("awscli not installed. Run: pip install awscli")
+            except Exception as e:
+                logger.error(f"R2 rph.json sync error: {e}")
 
     def retry_photos(self):
         """Retry uploading all local WebP files to R2. Resolves failures from the same session."""
@@ -686,17 +706,19 @@ class Manager:
         succeeded = 0
         failed = []
 
-        for photo_file in webp_files:
-            reg_no = photo_file.stem
-            r2_key = f"photos/{reg_no}.webp"
+        with ProgressBar(total=len(webp_files), label="Retrying photos to R2") as bar:
+            for photo_file in webp_files:
+                reg_no = photo_file.stem
+                r2_key = f"photos/{reg_no}.webp"
 
-            if self._upload_and_verify_photo(photo_file, r2_key):
-                photo_file.unlink()
-                succeeded += 1
-                logger.info(f"Retry OK + local deleted: {reg_no}")
-            else:
-                failed.append(reg_no)
-                logger.error(f"Retry FAILED: {reg_no} — local file kept")
+                if self._upload_and_verify_photo(photo_file, r2_key):
+                    photo_file.unlink()
+                    succeeded += 1
+                    logger.info(f"Retry OK + local deleted: {reg_no}")
+                else:
+                    failed.append(reg_no)
+                    logger.error(f"Retry FAILED: {reg_no} — local file kept")
+                bar.update(1, detail=reg_no)
 
         logger.info(f"Retry complete: {succeeded} uploaded, {len(failed)} failed")
         if failed:
@@ -838,31 +860,32 @@ class Manager:
             return
 
         config_path = Path("/tmp/rclone-gdrive.conf")
-        try:
-            import base64
+        with heartbeat("Syncing rph.json to Google Drive"):
+            try:
+                import base64
 
-            config_path.write_bytes(base64.b64decode(gdrive_config_b64))
-            result = subprocess.run(
-                [
-                    "rclone",
-                    "copyto",
-                    str(self.file_manager.data_dir / "rph.json"),
-                    "gdrive:tgpc/rph.json",
-                ],
-                capture_output=True,
-                text=True,
-                timeout=300,
-                env={**os.environ, "RCLONE_CONFIG": str(config_path)},
-            )
-            config_path.unlink(missing_ok=True)
-            if result.returncode == 0:
-                logger.info("GDrive sync complete")
-            else:
-                logger.error(f"GDrive sync failed: {result.stderr.strip()}")
-        except FileNotFoundError:
-            logger.error("rclone not installed")
-        except Exception as e:
-            logger.error(f"GDrive sync error: {e}")
+                config_path.write_bytes(base64.b64decode(gdrive_config_b64))
+                result = subprocess.run(
+                    [
+                        "rclone",
+                        "copyto",
+                        str(self.file_manager.data_dir / "rph.json"),
+                        "gdrive:tgpc/rph.json",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                    env={**os.environ, "RCLONE_CONFIG": str(config_path)},
+                )
+                config_path.unlink(missing_ok=True)
+                if result.returncode == 0:
+                    logger.info("GDrive sync complete")
+                else:
+                    logger.error(f"GDrive sync failed: {result.stderr.strip()}")
+            except FileNotFoundError:
+                logger.error("rclone not installed")
+            except Exception as e:
+                logger.error(f"GDrive sync error: {e}")
 
     def sync_to_release(self):
         """Encrypt rph.json and upload to GitHub Release."""
@@ -884,51 +907,52 @@ class Manager:
 
         title = f"{count:,} records — rph.json"
 
-        try:
-            subprocess.run(
-                ["zip", "-e", "-j", "-P", password, archive_path, file_path],
-                capture_output=True,
-                text=True,
-                timeout=120,
-                check=True,
-            )
-            logger.info(f"Encrypted release archive created ({count:,} records)")
-
-            result = subprocess.run(
-                ["gh", "release", "view", tag, "--repo", repo],
-                capture_output=True,
-                text=True,
-                timeout=15,
-            )
-            if result.returncode != 0:
-                logger.info(f"Creating release {tag}...")
+        with heartbeat("Publishing encrypted GitHub Release"):
+            try:
                 subprocess.run(
-                    ["gh", "release", "create", tag, "--repo", repo, "--title", title, "--notes", title],
+                    ["zip", "-e", "-j", "-P", password, archive_path, file_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                    check=True,
+                )
+                logger.info(f"Encrypted release archive created ({count:,} records)")
+
+                result = subprocess.run(
+                    ["gh", "release", "view", tag, "--repo", repo],
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                )
+                if result.returncode != 0:
+                    logger.info(f"Creating release {tag}...")
+                    subprocess.run(
+                        ["gh", "release", "create", tag, "--repo", repo, "--title", title, "--notes", title],
+                        capture_output=True,
+                        text=True,
+                        timeout=30,
+                    )
+
+                subprocess.run(
+                    ["gh", "release", "upload", tag, archive_path, "--repo", repo, "--clobber"],
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
+                subprocess.run(
+                    ["gh", "release", "edit", tag, "--repo", repo, "--title", title, "--notes", title],
                     capture_output=True,
                     text=True,
                     timeout=30,
                 )
-
-            subprocess.run(
-                ["gh", "release", "upload", tag, archive_path, "--repo", repo, "--clobber"],
-                capture_output=True,
-                text=True,
-                timeout=120,
-            )
-            subprocess.run(
-                ["gh", "release", "edit", tag, "--repo", repo, "--title", title, "--notes", title],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-            logger.info(f"Release sync complete ({count:,} records)")
-        except FileNotFoundError:
-            logger.error("zip or gh CLI not installed")
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Release sync error: {e}")
-        finally:
-            if os.path.exists(archive_path):
-                os.remove(archive_path)
+                logger.info(f"Release sync complete ({count:,} records)")
+            except FileNotFoundError:
+                logger.error("zip or gh CLI not installed")
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Release sync error: {e}")
+            finally:
+                if os.path.exists(archive_path):
+                    os.remove(archive_path)
 
     def sync_to_email(self):
         """Send update report via Resend email."""
@@ -1039,36 +1063,37 @@ class Manager:
                 "html": html,
             }
         )
-        try:
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-                f.write(payload)
-                f.flush()
-                tmp = f.name
-            result = subprocess.run(
-                [
-                    "curl",
-                    "-s",
-                    "-X",
-                    "POST",
-                    "https://api.resend.com/emails",
-                    "-H",
-                    f"Authorization: Bearer {api_key}",
-                    "-H",
-                    "Content-Type: application/json",
-                    "-d",
-                    f"@{tmp}",
-                ],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-            os.unlink(tmp)
-            if result.returncode == 0 and "error" not in result.stdout:
-                logger.info(f"Email sent: {result.stdout.strip()}")
-            else:
-                logger.warning(f"Resend API error: {result.stdout.strip()}")
-        except Exception as e:
-            logger.warning(f"Email send error: {e}")
+        with heartbeat("Sending email report via Resend"):
+            try:
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+                    f.write(payload)
+                    f.flush()
+                    tmp = f.name
+                result = subprocess.run(
+                    [
+                        "curl",
+                        "-s",
+                        "-X",
+                        "POST",
+                        "https://api.resend.com/emails",
+                        "-H",
+                        f"Authorization: Bearer {api_key}",
+                        "-H",
+                        "Content-Type: application/json",
+                        "-d",
+                        f"@{tmp}",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
+                os.unlink(tmp)
+                if result.returncode == 0 and "error" not in result.stdout:
+                    logger.info(f"Email sent: {result.stdout.strip()}")
+                else:
+                    logger.warning(f"Resend API error: {result.stdout.strip()}")
+            except Exception as e:
+                logger.warning(f"Email send error: {e}")
 
     def run_enrichment(
         self,
@@ -1264,98 +1289,106 @@ class Manager:
         total_processed = 0
         failed_photos = []
 
-        for idx, record in enumerate(pending_records):
-            serial = record.serial_number
-            reg_no = record.registration_number
-            try:
-                # Scrape using original synchronous scraper
-                details = self.scraper.extract_detailed_info(reg_no, img_dir)
-                if not details:
-                    continue
+        with ProgressBar(total=len(pending_records), label="Enriching records") as bar:
+            for idx, record in enumerate(pending_records):
+                serial = record.serial_number
+                reg_no = record.registration_number
+                bar.set_detail(reg_no)
+                try:
+                    # Scrape using original synchronous scraper
+                    details = self.scraper.extract_detailed_info(reg_no, img_dir)
+                    if not details:
+                        continue
 
-                # Upload photo to R2, verify, delete local
-                photo_file = img_dir / f"{reg_no}.webp"
-                if photo_file.is_file():
-                    account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
-                    r2_key = f"photos/{reg_no}.webp"
+                    # Upload photo to R2, verify, delete local
+                    photo_file = img_dir / f"{reg_no}.webp"
+                    if photo_file.is_file():
+                        account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+                        r2_key = f"photos/{reg_no}.webp"
 
-                    if self._upload_and_verify_photo(photo_file, r2_key):
-                        photo_file.unlink()
-                        logger.info(f"Photo uploaded + verified + local deleted: {reg_no}")
-                    else:
-                        failed_photos.append(reg_no)
-                        logger.error(f"FAILED after 5 attempts: {reg_no} — local file kept at {photo_file}")
+                        if self._upload_and_verify_photo(photo_file, r2_key):
+                            photo_file.unlink()
+                            logger.info(f"Photo uploaded + verified + local deleted: {reg_no}")
+                        else:
+                            failed_photos.append(reg_no)
+                            logger.error(f"FAILED after 5 attempts: {reg_no} — local file kept at {photo_file}")
 
-                    if account_id:
-                        details.photo_url = f"https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/{r2_key}"
+                        if account_id:
+                            details.photo_url = f"https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/{r2_key}"
 
-                # Get basic info from rph.json lookup for validation
-                basic_info = rph_lookup.get(serial)
+                    # Get basic info from rph.json lookup for validation
+                    basic_info = rph_lookup.get(serial)
 
-                # CRITICAL SAFETY CHECK - Validate all details match
-                mismatches = []
-                if details.registration_number and details.registration_number.lower() != reg_no.lower():
-                    mismatches.append(f"registration_number: expected '{reg_no}', got '{details.registration_number}'")
-                if details.name and basic_info and details.name.strip().lower() != basic_info.name.strip().lower():
-                    mismatches.append(f"name: expected '{basic_info.name}', got '{details.name}'")
-                if (
-                    details.father_name
-                    and basic_info
-                    and details.father_name.strip().lower() != basic_info.father_name.strip().lower()
-                ):
-                    mismatches.append(f"father_name: expected '{basic_info.father_name}', got '{details.father_name}'")
-                if (
-                    details.category
-                    and basic_info
-                    and details.category.strip().lower() != basic_info.category.strip().lower()
-                ):
-                    mismatches.append(f"category: expected '{basic_info.category}', got '{details.category}'")
+                    # CRITICAL SAFETY CHECK - Validate all details match
+                    mismatches = []
+                    if details.registration_number and details.registration_number.lower() != reg_no.lower():
+                        mismatches.append(
+                            f"registration_number: expected '{reg_no}', got '{details.registration_number}'"
+                        )
+                    if details.name and basic_info and details.name.strip().lower() != basic_info.name.strip().lower():
+                        mismatches.append(f"name: expected '{basic_info.name}', got '{details.name}'")
+                    if (
+                        details.father_name
+                        and basic_info
+                        and details.father_name.strip().lower() != basic_info.father_name.strip().lower()
+                    ):
+                        mismatches.append(
+                            f"father_name: expected '{basic_info.father_name}', got '{details.father_name}'"
+                        )
+                    if (
+                        details.category
+                        and basic_info
+                        and details.category.strip().lower() != basic_info.category.strip().lower()
+                    ):
+                        mismatches.append(f"category: expected '{basic_info.category}', got '{details.category}'")
 
-                if mismatches:
-                    logger.critical(
-                        f"DATA CORRUPTION PREVENTED for serial {serial} ({reg_no}): " + "; ".join(mismatches)
+                    if mismatches:
+                        logger.critical(
+                            f"DATA CORRUPTION PREVENTED for serial {serial} ({reg_no}): " + "; ".join(mismatches)
+                        )
+                        raise DataIntegrityError(
+                            f"Data Integrity Violation: Mismatched fields for {reg_no}. Stopping to prevent corruption."
+                        )
+
+                    logger.info(
+                        f"✅ DATA VALIDATION PASSED: serial {serial} ({reg_no}) - {details.name} ({details.category})"
                     )
-                    raise DataIntegrityError(
-                        f"Data Integrity Violation: Mismatched fields for {reg_no}. Stopping to prevent corruption."
-                    )
 
-                logger.info(
-                    f"✅ DATA VALIDATION PASSED: serial {serial} ({reg_no}) - {details.name} ({details.category})"
-                )
+                    basic_info = rph_lookup.get(serial)
+                    if not basic_info:
+                        logger.warning(f"Basic info not found for {reg_no}, using scraped data")
 
-                basic_info = rph_lookup.get(serial)
-                if not basic_info:
-                    logger.warning(f"Basic info not found for {reg_no}, using scraped data")
+                    basic_data = {
+                        "registration_number": (
+                            basic_info.registration_number if basic_info else details.registration_number
+                        ),
+                        "name": (basic_info.name if basic_info else details.name),
+                        "father_name": (basic_info.father_name if basic_info else details.father_name),
+                        "gender": details.gender or "",
+                        "category": (basic_info.category if basic_info else details.category),
+                        "status": details.status or "",
+                        "serial_number": (basic_info.serial_number if basic_info else None),
+                    }
 
-                basic_data = {
-                    "registration_number": (
-                        basic_info.registration_number if basic_info else details.registration_number
-                    ),
-                    "name": (basic_info.name if basic_info else details.name),
-                    "father_name": (basic_info.father_name if basic_info else details.father_name),
-                    "gender": details.gender or "",
-                    "category": (basic_info.category if basic_info else details.category),
-                    "status": details.status or "",
-                    "serial_number": (basic_info.serial_number if basic_info else None),
-                }
+                    # Combine basic info + extracted details
+                    extracted_data = details.to_detailed_dict()
+                    data = {**extracted_data, **basic_data}
 
-                # Combine basic info + extracted details
-                extracted_data = details.to_detailed_dict()
-                data = {**extracted_data, **basic_data}
+                    total_processed += 1
 
-                total_processed += 1
+                    # Upsert to Supabase immediately
+                    if supabase:
+                        try:
+                            supabase.table("rph").upsert(data, on_conflict="registration_number").execute()
+                        except Exception as e:
+                            logger.warning(f"Failed to upsert enriched record {reg_no} to Supabase: {e}")
 
-                # Upsert to Supabase immediately
-                if supabase:
-                    try:
-                        supabase.table("rph").upsert(data, on_conflict="registration_number").execute()
-                    except Exception as e:
-                        logger.warning(f"Failed to upsert enriched record {reg_no} to Supabase: {e}")
-
-            except DataIntegrityError:
-                raise
-            except Exception as e:
-                logger.error(f"Enrichment failed for {reg_no}: {e}")
+                except DataIntegrityError:
+                    raise
+                except Exception as e:
+                    logger.error(f"Enrichment failed for {reg_no}: {e}")
+                finally:
+                    bar.update(1, detail=reg_no)
 
         if failed_photos:
             logger.critical(
