@@ -118,30 +118,47 @@
     tab = 'quota';
   }
 
+  let panel = $state<HTMLDivElement | undefined>();
   let panelHeight = $state(0);
 
-  function measure(section: HTMLDivElement): { destroy: () => void } | void {
-    const update = () => {
-      const main = document.querySelector('main');
-      if (main) {
-        const bottom = main.getBoundingClientRect().bottom;
-        const pb = parseFloat(getComputedStyle(main).paddingBottom) || 0;
-        panelHeight = Math.max(0, Math.floor(bottom - pb - section.getBoundingClientRect().top));
-      } else {
-        panelHeight = Math.max(0, Math.floor(window.innerHeight - section.getBoundingClientRect().top));
-      }
-    };
-    update();
-    window.addEventListener('resize', update);
-    return { destroy: () => window.removeEventListener('resize', update) };
+  function measurePanel() {
+    if (!panel) return;
+    const panelTop = panel.getBoundingClientRect().top;
+    const footer = document.querySelector('footer');
+    const footerTop = footer ? footer.getBoundingClientRect().top : window.innerHeight;
+    const available = Math.round(footerTop - panelTop - 10);
+    if (available > 0) {
+      panelHeight = available;
+    }
   }
+
+  let resizeObserver: ResizeObserver | undefined;
+  let measureRaf = 0;
+
+  $effect(() => {
+    if (!panel) return;
+    cancelAnimationFrame(measureRaf);
+    measureRaf = requestAnimationFrame(() => {
+      measurePanel();
+      measureRaf = 0;
+    });
+    resizeObserver?.disconnect();
+    resizeObserver = new ResizeObserver(measurePanel);
+    resizeObserver.observe(panel);
+    window.addEventListener('resize', measurePanel);
+    return () => {
+      cancelAnimationFrame(measureRaf);
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', measurePanel);
+    };
+  });
 </script>
 
 <svelte:head>
   <title>Admin — TGPC RPh Registry</title>
 </svelte:head>
 
-<div use:measure style="height:{panelHeight}px;overflow:hidden;display:flex;flex-direction:column">
+<div bind:this={panel} style="height:{panelHeight}px;overflow:hidden;display:flex;flex-direction:column">
   {#if !authed}
     <div class="text-center py-16">
       <h1 class="text-2xl font-bold mb-1">Admin</h1>
