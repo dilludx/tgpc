@@ -1,72 +1,24 @@
 <script lang="ts">
+  import { invalidateAll } from '$app/navigation';
   import type { UsageReport } from '$lib/types';
+  import type { PageData } from './$types';
 
-  const base = 'https://www.pharmacycouncil.telangana.gov.in';
+  let { data }: { data: PageData } = $props();
 
-  interface LinkItem {
-    heading: string;
-    url: string;
-    desc: string;
-  }
-
-  interface LinkGroup {
-    name: string;
-    items: LinkItem[];
-  }
-
-  const groups: LinkGroup[] = [
-    {
-      name: 'Search & Profile',
-      items: [
-        { heading: 'Pharmacist Detail View', url: `${base}/pharmacy/viewpharmacist?referenceid=5428UN062011&random_no1=MMD6XSDJ8LL9`, desc: 'View individual pharmacist profile with full details' },
-        { heading: 'Pharmacist Search (POST)', url: `${base}/pharmacy/getsearchpharmacist`, desc: 'Search endpoint — POST registration_no to get results' },
-        { heading: 'Admin Dashboard', url: `${base}/pharmacy/dashboard`, desc: 'TGPC admin dashboard' },
-      ],
-    },
-    {
-      name: 'Document Management',
-      items: [
-        { heading: 'Upload Rejected Docs', url: `${base}/pharmacy/editupload_rejected_docs`, desc: 'Form to upload documents that were rejected' },
-        { heading: 'Rejected Docs API (POST)', url: `${base}/pharmacy/getrejecteddocsupload`, desc: 'API endpoint for rejected document uploads' },
-        { heading: 'BillDesk TID Excel Upload', url: `${base}/site/billdesk_tid_excelreport_upload`, desc: 'Upload BillDesk TID Excel reports' },
-      ],
-    },
-    {
-      name: 'Workflow & Tracking',
-      items: [
-        { heading: 'Workflow Status', url: `${base}/pharmacy/workflowstatus`, desc: 'Detailed workflow tracking for applications' },
-        { heading: 'Workflow Info API (POST)', url: `${base}/pharmacy/workflowstatusinfo.action`, desc: 'API endpoint for workflow status information' },
-      ],
-    },
-    {
-      name: 'Payments & Verification',
-      items: [
-        { heading: 'Payment Status Check', url: `${base}/pharmacy/getpmentstatusmeseva`, desc: 'Check payment status via Meseva' },
-        { heading: 'Email Verify', url: `${base}/pharmacy/getemailverify?rid1=661JCM272512&rid2=ACPYI0K3KLQJ&rid3=f7b3fdc6-e2f0-4983-a281-d89a26569e02`, desc: 'Verify pharmacist email with verification tokens' },
-      ],
-    },
-    {
-      name: 'Reports & Admin',
-      items: [
-        { heading: 'Dispatch List Report', url: `${base}/pharmacy/dispatchlistreprt`, desc: 'View dispatch list report' },
-        { heading: 'Admin Console', url: `${base}/aconsole/adminconsole`, desc: 'TGPC admin console panel' },
-      ],
-    },
-  ];
+  // Authorization is decided server-side in +page.server.ts and the link list
+  // is only present in `data.groups` for an authenticated session, so flipping
+  // client state cannot reveal anything.
+  const authed = $derived(data.authed);
+  const groups = $derived(data.groups);
 
   let secret = $state('');
   let show = $state(false);
-  let authed = $state(false);
   let error = $state('');
   let loading = $state(false);
   let tab = $state<'usage' | 'links'>('usage');
   let report = $state<UsageReport | null>(null);
   let usageLoading = $state(false);
   let usageError = $state('');
-
-  if (import.meta.env.DEV) {
-    authed = true;
-  }
 
   async function login() {
     if (!secret.trim()) return;
@@ -84,7 +36,10 @@
         return;
       }
       if (r.ok) {
-        authed = true;
+        // The secret is no longer needed client-side — the session cookie
+        // carries authorization from here on.
+        secret = '';
+        await invalidateAll();
         await loadUsage();
       } else {
         error = 'Server error';
@@ -99,9 +54,7 @@
     usageLoading = true;
     usageError = '';
     try {
-      const r = await fetch('/api/usage', {
-        headers: secret.trim() ? { 'x-quota-secret': secret.trim() } : {}
-      });
+      const r = await fetch('/api/usage');
       if (r.status === 403) {
         usageError = 'Unauthorized';
       } else if (r.ok) {
@@ -125,11 +78,15 @@
     } catch {}
   }
 
-  function logout() {
-    authed = false;
+  async function logout() {
     secret = '';
     tab = 'usage';
     report = null;
+    usageError = '';
+    try {
+      await fetch('/api/admin', { method: 'DELETE' });
+    } catch {}
+    await invalidateAll();
   }
 
   let panel = $state<HTMLDivElement | undefined>();

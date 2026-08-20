@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:unit": "node --experimental-strip-types --test 'src/**/*.test.ts'"
   },
   "devDependencies": {
     "@sveltejs/adapter-cloudflare": "^5.0.0",

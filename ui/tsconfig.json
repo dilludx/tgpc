@@ -4,6 +4,7 @@
     "strict": true,
     "moduleResolution": "bundler",
     "target": "ESNext",
-    "module": "ESNext"
+    "module": "ESNext",
+    "allowImportingTsExtensions": true
   }
 }

@@ -1,5 +1,7 @@
 import { json } from '@sveltejs/kit';
+import { getAdminSecret, isAuthed, safeEqual } from '$lib/server/auth';
 import type { UsageReport, ServiceUsage } from '$lib/types';
+import type { RequestHandler } from './$types';
 
 function fmt(n: number | null): string {
   if (n === null) return '?';
@@ -102,18 +104,32 @@ async function checkR2(env: Record<string, string>): Promise<ServiceUsage> {
   return { name: 'Cloudflare R2', items };
 }
 
-export async function GET({ request, platform }) {
+export const GET: RequestHandler = async ({ request, platform, cookies }) => {
   const env: Record<string, string> = (platform?.env || {}) as Record<string, string>;
 
-  const adminSecret = env['ADMIN_SECRET'] || env['QUOTA_SECRET'];
-  if (adminSecret) {
-    const header = request.headers.get('x-quota-secret');
-    if (header !== adminSecret) {
-      return new Response('Unauthorized', { status: 403 });
-    }
+  // Fail closed. An unconfigured secret must deny everyone — this handler holds
+  // an account-level Supabase PAT and can execute SQL, so an open default is
+  // not survivable. (CODE_REVIEW.md finding C3.)
+  const adminSecret = getAdminSecret(platform);
+  if (!adminSecret) {
+    return new Response('Not configured', { status: 500 });
+  }
+
+  // Browser callers authenticate with the admin session cookie. The header is
+  // kept for non-browser callers (scripts, CI) that hold the secret directly.
+  const header = request.headers.get('x-quota-secret');
+  const authorized =
+    (await isAuthed(cookies, platform)) ||
+    (header !== null && (await safeEqual(header, adminSecret)));
+
+  if (!authorized) {
+    return new Response('Unauthorized', { status: 403 });
   }
 
   const missing: string[] = [];
+  for (const key of ['SUPABASE_PAT', 'SUPABASE_URL', 'CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID']) {
+    if (!env[key]) missing.push(key);
+  }
 
   const services = await Promise.all([
     checkSupabase(env),

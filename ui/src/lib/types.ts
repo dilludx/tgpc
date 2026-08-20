@@ -74,3 +74,14 @@ export interface UsageReport {
   services: ServiceUsage[];
   missing_vars: string[];
 }
+
+export interface LinkItem {
+  heading: string;
+  url: string;
+  desc: string;
+}
+
+export interface LinkGroup {
+  name: string;
+  items: LinkItem[];
+}
