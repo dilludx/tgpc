@@ -135,6 +135,63 @@ class ManagerEnrichmentTests(unittest.TestCase):
             del os.environ["SUPABASE_URL"]
             del os.environ["SUPABASE_SECRET_KEY"]
 
+    @patch("tgpc.manager.create_client")
+    def test_run_enrichment_resolves_records_with_null_serial_number(self, mock_create_client):
+        """Regression guard for CODE_REVIEW M2.
+
+        Two records with `serial_number=None` used to collide on the dict key
+        `None`, so the last one in the list was attributed to both. Lookup must
+        be keyed by registration_number, not serial_number.
+        """
+        with tempfile.TemporaryDirectory() as temp_dir:
+            os.environ["SUPABASE_URL"] = "https://test.supabase.co"
+            os.environ["SUPABASE_SECRET_KEY"] = "test-key"
+            fake_client = MagicMock()
+            fake_client.table.return_value.select.return_value.order.return_value.range.return_value.execute.return_value = MagicMock(
+                data=[]
+            )
+            mock_create_client.return_value = fake_client
+
+            manager = self._make_manager(
+                temp_dir,
+                {
+                    "RPH001": PharmacistRecord(
+                        registration_number="RPH001",
+                        name="Alpha",
+                        father_name="Parent",
+                        category="BPharm",
+                    ),
+                    "RPH002": PharmacistRecord(
+                        registration_number="RPH002",
+                        name="Beta",
+                        father_name="Parent2",
+                        category="MPharm",
+                    ),
+                },
+            )
+            manager.file_manager.save(
+                [
+                    record("RPH001", name="Alpha", father="Parent", category="BPharm", serial=None),
+                    record("RPH002", name="Beta", father="Parent2", category="MPharm", serial=None),
+                ]
+            )
+
+            manager.run_enrichment()
+
+            upsert_calls = fake_client.table.return_value.upsert.call_args_list
+            self.assertEqual(len(upsert_calls), 2)
+            data_rph001 = upsert_calls[0][0][0]
+            self.assertEqual(data_rph001["registration_number"], "RPH001")
+            self.assertEqual(data_rph001["name"], "Alpha")
+            self.assertEqual(data_rph001["father_name"], "Parent")
+            data_rph002 = upsert_calls[1][0][0]
+            self.assertEqual(data_rph002["registration_number"], "RPH002")
+            self.assertEqual(data_rph002["name"], "Beta")
+            self.assertEqual(data_rph002["father_name"], "Parent2")
+
+            del os.environ["SUPABASE_URL"]
+            del os.environ["SUPABASE_SECRET_KEY"]
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1127,8 +1127,8 @@ class Manager:
         # Load Data
         rph_records = self.file_manager.load("rph.json")
 
-        # Create lookup by registration number
-        rph_lookup = {r.serial_number: r for r in rph_records}
+        # Create lookup by registration number (serial_number is nullable/non-unique)
+        rph_lookup = {r.registration_number: r for r in rph_records}
 
         # Identify Pending - check Supabase for already enriched records
         done_ids = set()
@@ -1279,7 +1279,7 @@ class Manager:
         img_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Enriching {len(records)} records...")
-        rph_lookup = {r.serial_number: r for r in records}
+        rph_lookup = {r.registration_number: r for r in records}
 
         processed = self._process_records_sequential(records, rph_lookup, img_dir, supabase=supabase)
         logger.info(f"Enrich complete: {processed} records processed")
@@ -1320,7 +1320,7 @@ class Manager:
                             details.photo_url = f"https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/{r2_key}"
 
                     # Get basic info from rph.json lookup for validation
-                    basic_info = rph_lookup.get(serial)
+                    basic_info = rph_lookup.get(reg_no)
 
                     # CRITICAL SAFETY CHECK - Validate all details match
                     step(f"validating {reg_no}")
@@ -1358,7 +1358,7 @@ class Manager:
                         f"✅ DATA VALIDATION PASSED: serial {serial} ({reg_no}) - {details.name} ({details.category})"
                     )
 
-                    basic_info = rph_lookup.get(serial)
+                    basic_info = rph_lookup.get(reg_no)
                     if not basic_info:
                         logger.warning(f"Basic info not found for {reg_no}, using scraped data")
 
