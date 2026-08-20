@@ -540,13 +540,16 @@ class Manager:
             return "updated"
 
     def sync_to_supabase(self, delta_records=None):
-        """Sync data to Supabase. If delta_records provided, only upsert those."""
+        """Sync data to Supabase. If delta_records provided, only upsert those.
+
+        Returns True on success, False on failure so callers can propagate it.
+        """
         url = os.environ.get("SUPABASE_URL")
         key = os.environ.get("SUPABASE_SECRET_KEY")
 
         if not url or not key:
             logger.error("Missing Supabase credentials")
-            return
+            return False
 
         try:
             supabase = create_client(url, key)
@@ -558,7 +561,7 @@ class Manager:
 
             if not records:
                 logger.info("No records to sync")
-                return
+                return True
 
             logger.info(f"Syncing {len(records)} records to Supabase...")
 
@@ -613,6 +616,9 @@ class Manager:
 
         except Exception as e:
             logger.error(f"Sync failed: {e}")
+            return False
+
+        return True
 
     def sync_to_supabase_storage(self):
         """Upload rph.json to Supabase Storage (tgpc bucket)."""
@@ -620,7 +626,7 @@ class Manager:
         key = os.environ.get("SUPABASE_SECRET_KEY")
         if not url or not key:
             logger.error("Missing Supabase credentials")
-            return
+            return False
         file_path = self.file_manager.data_dir / "rph.json"
         with heartbeat("Syncing rph.json to Supabase Storage"):
             try:
@@ -637,23 +643,29 @@ class Manager:
                     )
                 if resp.ok:
                     logger.info("Supabase Storage sync complete")
+                    return True
                 else:
                     logger.error(f"Supabase Storage sync failed: {resp.status_code} {resp.text}")
+                    return False
             except Exception as e:
                 logger.error(f"Supabase Storage sync error: {e}")
+                return False
 
     def sync_to_r2(self):
-        """Sync rph.json to Cloudflare R2. Photos are uploaded during enrichment."""
+        """Sync rph.json to Cloudflare R2. Photos are uploaded during enrichment.
+
+        Returns True on success, False on failure so callers can propagate it.
+        """
         endpoint = self._get_r2_endpoint()
         if not endpoint:
             logger.error("Missing CLOUDFLARE_ACCOUNT_ID for R2 sync")
-            return
+            return False
 
         access_key = os.environ.get("R2_ACCESS_KEY_ID")
         secret_key = os.environ.get("R2_SECRET_ACCESS_KEY")
         if not all([access_key, secret_key]):
             logger.error("Missing R2 credentials")
-            return
+            return False
 
         file_path = str(self.file_manager.data_dir / "rph.json")
 
@@ -683,12 +695,16 @@ class Manager:
                 )
                 if result.returncode == 0:
                     logger.info("R2 rph.json sync complete")
+                    return True
                 else:
                     logger.error(f"R2 rph.json sync failed: {result.stderr.strip()}")
+                    return False
             except FileNotFoundError:
                 logger.error("awscli not installed. Run: pip install awscli")
+                return False
             except Exception as e:
                 logger.error(f"R2 rph.json sync error: {e}")
+                return False
 
     def retry_photos(self):
         """Retry uploading all local WebP files to R2. Resolves failures from the same session."""
@@ -855,11 +871,14 @@ class Manager:
             return False
 
     def sync_to_gdrive(self):
-        """Sync rph.json to Google Drive via rclone."""
+        """Sync rph.json to Google Drive via rclone.
+
+        Returns True on success, False on failure so callers can propagate it.
+        """
         gdrive_config_b64 = os.environ.get("RCLONE_GDRIVE_CONFIG")
         if not gdrive_config_b64:
             logger.error("Missing RCLONE_GDRIVE_CONFIG")
-            return
+            return False
 
         config_path = Path("/tmp/rclone-gdrive.conf")
         with heartbeat("Syncing rph.json to Google Drive"):
@@ -882,15 +901,22 @@ class Manager:
                 config_path.unlink(missing_ok=True)
                 if result.returncode == 0:
                     logger.info("GDrive sync complete")
+                    return True
                 else:
                     logger.error(f"GDrive sync failed: {result.stderr.strip()}")
+                    return False
             except FileNotFoundError:
                 logger.error("rclone not installed")
+                return False
             except Exception as e:
                 logger.error(f"GDrive sync error: {e}")
+                return False
 
     def sync_to_release(self):
-        """Encrypt rph.json and upload to GitHub Release."""
+        """Encrypt rph.json and upload to GitHub Release.
+
+        Returns True on success, False on failure so callers can propagate it.
+        """
         tag = "rphjson"
         file_path = str(self.file_manager.data_dir / "rph.json")
         archive_path = file_path + ".zip"
@@ -899,7 +925,7 @@ class Manager:
 
         if not password:
             logger.warning("RELEASE_PASSWORD not set, skipping release sync")
-            return
+            return True
 
         try:
             with open(file_path) as f:
@@ -948,26 +974,32 @@ class Manager:
                     timeout=30,
                 )
                 logger.info(f"Release sync complete ({count:,} records)")
+                return True
             except FileNotFoundError:
                 logger.error("zip or gh CLI not installed")
+                return False
             except subprocess.CalledProcessError as e:
                 logger.error(f"Release sync error: {e}")
+                return False
             finally:
                 if os.path.exists(archive_path):
                     os.remove(archive_path)
 
     def sync_to_email(self):
-        """Send update report via Resend email."""
+        """Send update report via Resend email.
+
+        Returns True on success, False on failure so callers can propagate it.
+        """
         api_key = os.environ.get("RESEND_API_KEY")
         recipient = os.environ.get("NOTIFICATION_EMAIL")
         if not api_key or not recipient:
             logger.warning("Missing RESEND_API_KEY or NOTIFICATION_EMAIL")
-            return
+            return True
 
         data = getattr(self, "_last_update_details", None)
         if not data:
             logger.info("No update details found — skipping email")
-            return
+            return True
 
         new = data.get("new_details", [])
         mod = data.get("modified_details", [])
@@ -975,7 +1007,7 @@ class Manager:
 
         if not new and not mod and not rem:
             logger.info("No changes — skipping email")
-            return
+            return True
 
         import re
 
@@ -1092,10 +1124,13 @@ class Manager:
                 os.unlink(tmp)
                 if result.returncode == 0 and "error" not in result.stdout:
                     logger.info(f"Email sent: {result.stdout.strip()}")
+                    return True
                 else:
                     logger.warning(f"Resend API error: {result.stdout.strip()}")
+                    return False
             except Exception as e:
                 logger.warning(f"Email send error: {e}")
+                return False
 
     def run_enrichment(
         self,

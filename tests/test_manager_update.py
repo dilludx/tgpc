@@ -247,6 +247,46 @@ class ManagerUpdateTests(unittest.TestCase):
 
             os.unlink(github_output)
 
+    def test_sync_to_supabase_returns_false_on_missing_credentials(self):
+        """H1: sync methods must return a status so callers can propagate failures."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch("tgpc.manager.load_credentials"):
+                with patch(
+                    "tgpc.manager.Config.load",
+                    return_value=Config(data_directory=temp_dir, enrichment_directory=temp_dir),
+                ):
+                    manager = Manager()
+            with patch("tgpc.manager.os.environ", {}):
+                self.assertFalse(manager.sync_to_supabase())
+
+    def test_sync_to_supabase_returns_true_on_success(self):
+        """H1: a completed sync must report success."""
+        with tempfile.TemporaryDirectory():
+            with patch("tgpc.manager.load_credentials"):
+                manager = Manager()
+            with patch(
+                "tgpc.manager.os.environ",
+                {"SUPABASE_URL": "https://test.supabase.co", "SUPABASE_SECRET_KEY": "test-key"},
+            ):
+                fake_client = MagicMock()
+                fake_client.table.return_value.upsert.return_value.execute.return_value = MagicMock(data=[])
+                fake_client.table.return_value.select.return_value.count = 0
+                manager.file_manager.save([record("RPH001", "Name", "Father", "BPharm", 1)])
+                with patch("tgpc.manager.create_client", return_value=fake_client):
+                    self.assertTrue(manager.sync_to_supabase())
+
+    def test_sync_to_r2_returns_false_on_missing_credentials(self):
+        """H1: R2 sync reports failure rather than returning None."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch("tgpc.manager.load_credentials"):
+                with patch(
+                    "tgpc.manager.Config.load",
+                    return_value=Config(data_directory=temp_dir, enrichment_directory=temp_dir),
+                ):
+                    manager = Manager()
+            with patch("tgpc.manager.os.environ", {}):
+                self.assertFalse(manager.sync_to_r2())
+
 
 if __name__ == "__main__":
     unittest.main()

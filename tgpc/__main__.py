@@ -7,6 +7,7 @@ import atexit
 import getpass
 import os
 import subprocess
+import sys
 from tgpc.manager import Manager
 from tgpc.progress import Phase
 from tgpc.quota import show_quotas
@@ -213,15 +214,20 @@ def main():
                         mod_regs = getattr(manager, "_last_modified_regs", set())
                         delta_ids = new_regs | set(mod_regs)
                         delta = [r for r in all_records if r.registration_number in delta_ids] if delta_ids else []
-                        manager.sync_to_supabase(delta_records=delta)
+                        sync_results = [manager.sync_to_supabase(delta_records=delta)]
                         if delta_ids:
-                            manager.sync_to_supabase_storage()
-                            manager.sync_to_r2()
-                            manager.sync_to_gdrive()
-                            manager.sync_to_release()
-                            manager.sync_to_email()
+                            sync_results += [
+                                manager.sync_to_supabase_storage(),
+                                manager.sync_to_r2(),
+                                manager.sync_to_gdrive(),
+                                manager.sync_to_release(),
+                                manager.sync_to_email(),
+                            ]
                         else:
                             print("No changes — skipping full syncs.")
+                        if not all(sync_results):
+                            print("One or more sync destinations failed", file=sys.stderr)
+                            raise SystemExit(1)
                     if new_regs:
                         with Phase("Enrich new records", 3, 4):
                             print(f"Enriching {len(new_regs)} new records...")
@@ -230,12 +236,17 @@ def main():
             raise SystemExit(1)
         elif args.command == "sync":
             with Phase("Sync to cloud destinations", 1, 1):
-                manager.sync_to_supabase()
-                manager.sync_to_supabase_storage()
-                manager.sync_to_r2()
-                manager.sync_to_gdrive()
-                manager.sync_to_release()
-                manager.sync_to_email()
+                sync_results = [
+                    manager.sync_to_supabase(),
+                    manager.sync_to_supabase_storage(),
+                    manager.sync_to_r2(),
+                    manager.sync_to_gdrive(),
+                    manager.sync_to_release(),
+                    manager.sync_to_email(),
+                ]
+                if not all(sync_results):
+                    print("One or more sync destinations failed", file=sys.stderr)
+                    raise SystemExit(1)
         elif args.command == "enrich":
             with Phase("Enrich new records", 1, 1):
                 manager.enrich_new_records(force=args.force)

@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       actions: write
-      contents: read
+      contents: write
 
     steps:
     - name: Checkout repository
@@ -76,7 +76,7 @@ jobs:
       run: |
         if [[ "${{ github.event.inputs.force_sync }}" == "true" && -f data/rph.json ]]; then
           echo "FORCE SYNC MODE — re-syncing existing data"
-          python3 -m tgpc sync || echo "Sync failed"
+          python3 -m tgpc sync
         else
           echo "Starting TGPC data update..."
           python3 -m tgpc update
