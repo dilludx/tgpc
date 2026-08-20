@@ -184,7 +184,7 @@
     <div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column">
       {#if tab === 'usage'}
         <div style="flex:1;min-height:0;overflow-y:auto">
-          <div class="flex items-center mb-2 whitespace-nowrap">
+          <div class="flex items-center justify-end mb-2 whitespace-nowrap">
             <button onclick={loadUsage} disabled={usageLoading}
               class="shrink-0 bg-[#00cc66] text-white text-xs font-semibold px-3 py-1 rounded hover:bg-[#00b359] disabled:opacity-50">
               {usageLoading ? 'Loading...' : 'Refresh'}
