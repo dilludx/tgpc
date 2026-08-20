@@ -71,6 +71,7 @@ class ProgressBar:
         self._spinner = itertools.cycle("|/-\\")
         self._stop = threading.Event()
         self._thread: Optional[threading.Thread] = None
+        self._lock = threading.RLock()
 
     # --- lifecycle ----------------------------------------------------
 
@@ -97,20 +98,34 @@ class ProgressBar:
     # --- API ---------------------------------------------------------
 
     def update(self, n: int = 1, detail: Optional[str] = None) -> None:
-        self.n += n
-        if detail is not None:
-            self.detail = detail
-        self.last_line = time.monotonic()
-        if self.tty:
-            self.draw()
-        elif self.total is None or self.n >= self.total or self.n % self.cadence == 0:
-            self._line(self._frame())
+        with self._lock:
+            self.n += n
+            if detail is not None:
+                self.detail = detail
+            self.last_line = time.monotonic()
+            if self.tty:
+                self.draw()
+            elif self.total is None or self.n >= self.total or self.n % self.cadence == 0:
+                self._line(self._frame())
 
     def set_detail(self, detail: str) -> None:
-        self.detail = detail
-        self.last_line = time.monotonic()
+        with self._lock:
+            self.detail = detail
+            self.last_line = time.monotonic()
+            if self.tty:
+                self.draw()
+
+    def substep(self, text: str) -> None:
+        """Emit a granular sub-step line for the current operation.
+
+        On a TTY this folds into the bar's detail line (no separate output);
+        when not a TTY (background/CI) it prints its own discrete line so
+        every operation that runs during the process is visible in the log.
+        """
         if self.tty:
-            self.draw()
+            self.set_detail(text)
+        else:
+            self._line(f"  ↳ {text}")
 
     # --- rendering ----------------------------------------------------
 
@@ -129,7 +144,8 @@ class ProgressBar:
         line = f"[{self.label}] {core}" if self.label else core
         if self.detail:
             line += f" · {self.detail}"
-        self._max_len = max(self._max_len, len(line))
+        with self._lock:
+            self._max_len = max(self._max_len, len(line))
         return line
 
     def _spin(self) -> None:
@@ -137,22 +153,26 @@ class ProgressBar:
             if self.tty:
                 self.draw()
             else:
-                if time.monotonic() - self.last_line >= self.heartbeat_interval:
-                    self._line(self._frame())
-                    self.last_line = time.monotonic()
+                with self._lock:
+                    if time.monotonic() - self.last_line >= self.heartbeat_interval:
+                        self._line(self._frame())
+                        self.last_line = time.monotonic()
 
     def draw(self) -> None:
-        self.stream.write("\r" + self._frame())
-        self.stream.flush()
+        with self._lock:
+            self.stream.write("\r" + self._frame())
+            self.stream.flush()
 
     def clear_line(self) -> None:
         if self.tty:
-            self.stream.write("\r" + " " * (self._max_len + 2) + "\r")
-            self.stream.flush()
+            with self._lock:
+                self.stream.write("\r" + " " * (self._max_len + 2) + "\r")
+                self.stream.flush()
 
     def _line(self, text: str) -> None:
-        self.stream.write(text + "\n")
-        self.stream.flush()
+        with self._lock:
+            self.stream.write(text + "\n")
+            self.stream.flush()
 
 
 class Phase:
@@ -219,6 +239,20 @@ def _unregister(bar: ProgressBar) -> None:
 def _current_bar() -> Optional[ProgressBar]:
     with _registry_lock:
         return _active_bars[-1] if _active_bars else None
+
+
+def step(text: str) -> None:
+    """Report a granular sub-step of the currently active progress bar.
+
+    Safe to call from anywhere in the pipeline (scraper, manager, sweeps):
+    if a bar is active its detail/substep line reflects the message; if not,
+    the message is printed as a plain line so it is never lost.
+    """
+    bar = _current_bar()
+    if bar is not None:
+        bar.substep(text)
+    else:
+        print(f"  ↳ {text}", flush=True)
 
 
 class BarHandler(logging.Handler):

@@ -14,6 +14,7 @@ import requests
 from bs4 import BeautifulSoup
 from tenacity import retry, stop_after_attempt, wait_exponential
 
+from tgpc.progress import step
 from tgpc.utils import Config, setup_logging
 
 logger = setup_logging("tgpc.scraper")
@@ -258,6 +259,7 @@ class Scraper:
     def extract_detailed_info(self, reg_no: str, img_dir: Path = None) -> Optional[PharmacistRecord]:
         try:
             logger.info(f"Enriching {reg_no}...")
+            step(f"searching {reg_no}")
             response = self._request(
                 "POST",
                 self.urls["search"],
@@ -297,6 +299,7 @@ class Scraper:
                 import base64
                 from io import BytesIO
 
+                step(f"downloading photo for {reg_no}")
                 image_bytes = None
                 if "base64" in src:
                     if src.startswith("data:"):
@@ -315,6 +318,7 @@ class Scraper:
                         logger.warning(f"Failed to download photo from {src}: {e}")
 
                 if image_bytes and len(image_bytes) > 100:
+                    step(f"processing photo for {reg_no}")
                     try:
                         from PIL import Image, ImageOps
 

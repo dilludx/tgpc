@@ -17,7 +17,7 @@ from supabase import create_client
 
 from tgpc.utils import Config, setup_logging, load_credentials
 from tgpc.scraper import Scraper, PharmacistRecord
-from tgpc.progress import ProgressBar, Phase, heartbeat
+from tgpc.progress import ProgressBar, Phase, heartbeat, step
 
 
 logger = setup_logging("tgpc.manager")
@@ -745,6 +745,7 @@ class Manager:
         import time
 
         for attempt in range(1, max_retries + 1):
+            step(f"uploading photo to R2 (attempt {attempt}/{max_retries})")
             uploaded = self._upload_photo_to_r2(local_path, r2_key)
             if not uploaded:
                 if attempt < max_retries:
@@ -758,6 +759,7 @@ class Manager:
 
             verified = self._verify_photo_on_r2(r2_key, local_path.stat().st_size)
             if verified:
+                step("photo verified on R2")
                 return True
 
             if attempt < max_retries:
@@ -1296,6 +1298,7 @@ class Manager:
                 bar.set_detail(reg_no)
                 try:
                     # Scrape using original synchronous scraper
+                    step(f"fetching details for {reg_no}")
                     details = self.scraper.extract_detailed_info(reg_no, img_dir)
                     if not details:
                         continue
@@ -1320,6 +1323,7 @@ class Manager:
                     basic_info = rph_lookup.get(serial)
 
                     # CRITICAL SAFETY CHECK - Validate all details match
+                    step(f"validating {reg_no}")
                     mismatches = []
                     if details.registration_number and details.registration_number.lower() != reg_no.lower():
                         mismatches.append(
@@ -1378,6 +1382,7 @@ class Manager:
 
                     # Upsert to Supabase immediately
                     if supabase:
+                        step(f"upserting {reg_no} to Supabase")
                         try:
                             supabase.table("rph").upsert(data, on_conflict="registration_number").execute()
                         except Exception as e:
