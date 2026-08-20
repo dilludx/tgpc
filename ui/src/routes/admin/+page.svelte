@@ -185,15 +185,15 @@
       {#if tab === 'usage'}
         <div style="flex:1;min-height:0;overflow-y:auto">
           <div class="flex items-center mb-2 whitespace-nowrap">
-            <span class="text-xs text-[#9ca3af]">
+            <button onclick={loadUsage} disabled={usageLoading}
+              class="shrink-0 bg-[#00cc66] text-white text-xs font-semibold px-3 py-1 rounded hover:bg-[#00b359] disabled:opacity-50">
+              {usageLoading ? 'Loading...' : 'Refresh'}
+            </button>
+            <span class="text-xs text-[#9ca3af] ml-1">
               {#if report?.generated_at}
                 Updated {new Date(report.generated_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
               {/if}
             </span>
-            <button onclick={loadUsage} disabled={usageLoading}
-              class="shrink-0 ml-1 bg-[#00cc66] text-white text-xs font-semibold px-3 py-1 rounded hover:bg-[#00b359] disabled:opacity-50">
-              {usageLoading ? 'Loading...' : 'Refresh'}
-            </button>
           </div>
 
           {#if report?.missing_vars?.length}
