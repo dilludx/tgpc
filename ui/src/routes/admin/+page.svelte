@@ -227,14 +227,14 @@
     <div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column">
       {#if tab === 'usage'}
         <div style="flex:1;min-height:0;overflow-y:auto">
-          <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2 mb-2">
             <span class="text-xs text-[#9ca3af]">
               {#if report?.generated_at}
                 Updated {new Date(report.generated_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
               {/if}
             </span>
             <button onclick={loadUsage} disabled={usageLoading}
-              class="shrink-0 text-xs font-semibold px-2 py-1 rounded border border-[#e5e7eb] text-[#6b7280] hover:bg-[#f8f9fa] disabled:opacity-50">
+              class="shrink-0 bg-[#00cc66] text-white text-xs font-semibold px-3 py-1 rounded hover:bg-[#00b359] disabled:opacity-50">
               {usageLoading ? 'Loading...' : 'Refresh'}
             </button>
           </div>
