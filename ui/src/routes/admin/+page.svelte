@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { UsageReport } from '$lib/types';
+
   const base = 'https://www.pharmacycouncil.telangana.gov.in';
 
   interface LinkItem {
@@ -57,6 +59,10 @@
   let authed = $state(false);
   let error = $state('');
   let loading = $state(false);
+  let tab = $state<'usage' | 'links'>('usage');
+  let report = $state<UsageReport | null>(null);
+  let usageLoading = $state(false);
+  let usageError = $state('');
 
   if (import.meta.env.DEV) {
     authed = true;
@@ -79,6 +85,7 @@
       }
       if (r.ok) {
         authed = true;
+        await loadUsage();
       } else {
         error = 'Server error';
       }
@@ -86,6 +93,26 @@
       error = 'Connection error';
     }
     loading = false;
+  }
+
+  async function loadUsage() {
+    usageLoading = true;
+    usageError = '';
+    try {
+      const r = await fetch('/api/usage', {
+        headers: secret.trim() ? { 'x-quota-secret': secret.trim() } : {}
+      });
+      if (r.status === 403) {
+        usageError = 'Unauthorized';
+      } else if (r.ok) {
+        report = await r.json();
+      } else {
+        usageError = 'Server error';
+      }
+    } catch {
+      usageError = 'Connection error';
+    }
+    usageLoading = false;
   }
 
   let copied = $state('');
@@ -101,6 +128,8 @@
   function logout() {
     authed = false;
     secret = '';
+    tab = 'usage';
+    report = null;
   }
 
   let panel = $state<HTMLDivElement | undefined>();
@@ -183,7 +212,11 @@
       <div class="flex items-center gap-0.5" style="font-size:0.7rem;padding-bottom:3px">
         <button style="text-decoration:none;padding:2px 4px;font-weight:700;color:#ef4444;white-space:nowrap;cursor:default;border:none;background:transparent">ADMIN</button>
         <span style="color:#d1d5db;font-weight:300;padding:0;user-select:none">—</span>
-        <span style="padding:2px 4px;font-weight:700;color:#00cc66;white-space:nowrap">INTERNAL LINKS</span>
+        <button onclick={() => tab = 'usage'}
+          style="text-decoration:none;padding:2px 4px;font-weight:700;color:{tab === 'usage' ? '#00cc66' : '#6b7280'};white-space:nowrap;cursor:pointer;border:none;background:transparent">USAGE</button>
+        <span style="color:#d1d5db;font-weight:300;padding:0;user-select:none">/</span>
+        <button onclick={() => tab = 'links'}
+          style="text-decoration:none;padding:2px 4px;font-weight:700;color:{tab === 'links' ? '#00cc66' : '#6b7280'};white-space:nowrap;cursor:pointer;border:none;background:transparent">INTERNAL LINKS</button>
       </div>
       <button onclick={logout}
         class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded border border-[#e5e7eb] text-[#6b7280] hover:bg-[#f8f9fa] hover:text-[#ef4444] transition-colors">
@@ -192,7 +225,67 @@
     </div>
 
     <div style="flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column">
-      <div class="border border-[#e5e7eb] rounded-lg overflow-hidden" style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column">
+      {#if tab === 'usage'}
+        <div style="flex:1;min-height:0;overflow-y:auto">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs text-[#9ca3af]">
+              {#if report?.generated_at}
+                Updated {new Date(report.generated_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+              {/if}
+            </span>
+            <button onclick={loadUsage} disabled={usageLoading}
+              class="shrink-0 text-xs font-semibold px-2 py-1 rounded border border-[#e5e7eb] text-[#6b7280] hover:bg-[#f8f9fa] disabled:opacity-50">
+              {usageLoading ? 'Loading...' : 'Refresh'}
+            </button>
+          </div>
+
+          {#if report?.missing_vars?.length}
+            <div class="text-xs bg-[#fff3cd] border border-[#ffc107] text-[#856404] rounded px-3 py-2 mb-4">
+              <strong>Note:</strong> Some credentials are not configured as Cloudflare Pages environment variables:
+              {report.missing_vars.join(', ')}. Set them in the Cloudflare dashboard for live data.
+            </div>
+          {/if}
+
+          {#if usageError}
+            <div class="text-xs text-[#ef4444] mb-4">{usageError}</div>
+          {/if}
+
+          {#if report}
+            {#each report.services as service}
+              <div class="mb-5 border border-[#e5e7eb] rounded-lg overflow-hidden">
+                <div class="bg-[#f8f9fa] px-3 py-2 font-semibold text-sm border-b border-[#e5e7eb]">
+                  {service.name}
+                </div>
+                {#if service.error}
+                  <div class="px-3 py-3 text-xs text-[#ef4444]">{service.error}</div>
+                {:else if service.items.length === 0}
+                  <div class="px-3 py-3 text-xs text-[#9ca3af]">No data available.</div>
+                {:else}
+                  <table class="w-full text-xs">
+                    <thead>
+                      <tr class="text-left text-[#9ca3af] border-b border-[#e5e7eb]">
+                        <th class="px-3 py-1.5 font-medium">Metric</th>
+                        <th class="px-3 py-1.5 font-medium text-right">Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {#each service.items as item}
+                        <tr class="border-b border-[#e5e7eb] last:border-b-0">
+                          <td class="px-3 py-1.5">{item.label}</td>
+                          <td class="px-3 py-1.5 text-right font-mono">{item.used}</td>
+                        </tr>
+                      {/each}
+                    </tbody>
+                  </table>
+                {/if}
+              </div>
+            {/each}
+          {:else if !usageLoading && !usageError}
+            <div class="px-3 py-3 text-xs text-[#9ca3af]">No usage data yet.</div>
+          {/if}
+        </div>
+      {:else}
+        <div class="border border-[#e5e7eb] rounded-lg overflow-hidden" style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column">
           <div class="divide-y divide-[#e5e7eb]" style="flex:1;display:flex;flex-direction:column">
             {#each groups as group}
               <div style="flex:1">
@@ -220,6 +313,7 @@
             {/each}
           </div>
         </div>
-      </div>
+      {/if}
+    </div>
   {/if}
 </div>

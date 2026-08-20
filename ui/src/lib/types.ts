@@ -55,3 +55,22 @@ export interface BadgeColor {
 }
 
 export type CategoryFilter = 'all' | Category;
+
+export interface ServiceUsageItem {
+  label: string;
+  used: string | null;
+  limit: string | null;
+  pct: string;
+}
+
+export interface ServiceUsage {
+  name: string;
+  items: ServiceUsageItem[];
+  error?: string;
+}
+
+export interface UsageReport {
+  generated_at: string;
+  services: ServiceUsage[];
+  missing_vars: string[];
+}
