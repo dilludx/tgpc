@@ -27,6 +27,7 @@
   let tab = $state<string | null>(null);
   let query = $state('');
   let loading = $state(true);
+  let stale = $state(false);
 
   function parse(n: string) {
     const m = n.match(/DL(\d{2})(\d{2})(\d{4})[A-Z]*\.pdf/i);
@@ -39,9 +40,10 @@
 
   let sizes = $state<Record<string, number>>({});
 
-  function build(raw: { name: string; size?: number }[]) {
+  function build(raw: { name: string; size?: number; stale?: boolean }[]) {
+    stale = raw.some((f) => f.stale);
     raw.forEach(f => { if (f.size) sizes[f.name] = f.size; });
-    files = raw.map(f => ({ name: f.name, parsed: parse(f.name), size: f.size }))
+    files = raw.map(f => ({ name: f.name, parsed: parse(f.name), size: f.size, stale: f.stale }))
       .filter(f => f.parsed)
       .sort((a, b) => b.parsed!.date.getTime() - a.parsed!.date.getTime());
     years = [...new Set(files.map(f => f.parsed!.y))].sort((a, b) => +b - +a);
@@ -56,7 +58,7 @@
     return f.name.toLowerCase().includes(q) || fmt(f.parsed).toLowerCase().includes(q);
   }));
 
-  const cached = browser && cachedOrNull<{ name: string; size?: number }[]>('tgpc_dispatch');
+  const cached = browser && cachedOrNull<{ name: string; size?: number; stale?: boolean }[]>("tgpc_dispatch");
   const initial = cached || data.files;
   if (initial.length > 0) { build(initial); loading = false; }
 
@@ -70,6 +72,11 @@
 </script>
 
 <div class="space-y-4">
+  {#if stale && !loading}
+    <div class="text-[0.65rem] text-[#6b7280] bg-[#f4f4f5] border border-[#e5e7eb] rounded px-3 py-1.5">
+      Showing the last-known file list — the R2 bucket could not be reached.
+    </div>
+  {/if}
   <div class="flex items-center gap-2">
     <div class="relative flex-1">
       <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">

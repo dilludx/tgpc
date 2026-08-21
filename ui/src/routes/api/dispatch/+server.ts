@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 
-const FALLBACK_DATA = [
+const FALLBACK_FILES = [
   'DL27042026.pdf', 'DL23022026.pdf', 'DL20042026.pdf', 'DL16022026.pdf',
   'DL10032026.pdf', 'DL09022026.pdf', 'DL04052026.pdf', 'DL04042026.pdf',
   'DL27022026.pdf', 'DL07012026.pdf', 'DL22012026.pdf', 'DL30012026.pdf',
@@ -11,9 +11,7 @@ const FALLBACK_DATA = [
   'DL18042019.pdf', 'DL21022018.pdf', 'DL30032019.pdf', 'DL31012025.pdf'
 ];
 
-const LIVE_API = 'https://tgpc.pages.dev/api/dispatch';
-
-export async function GET({ platform, fetch }) {
+export async function GET({ platform }) {
   try {
     const bucket: any = platform?.env?.DISPATCH;
     if (bucket && typeof bucket.list === 'function') {
@@ -22,18 +20,15 @@ export async function GET({ platform, fetch }) {
         name: obj.key.replace('dispatch/', ''),
         size: obj.size
       }));
-      if (files.length > 0) return json(files, { headers: { 'Cache-Control': 'public, max-age=300' } });
+      if (files.length > 0) {
+        return json(files, { headers: { 'Cache-Control': 'public, max-age=300' } });
+      }
     }
   } catch {}
 
-  try {
-    const resp = await fetch(LIVE_API);
-    if (resp.ok) return json(await resp.json());
-  } catch {}
-
-  const fallback = FALLBACK_DATA.map(n => ({
-    name: n,
-    size: Math.round(50000 + Math.random() * 200000)
-  }));
-  return json(fallback, { headers: { 'Cache-Control': 'public, max-age=300' } });
+  // R2 binding unavailable: return the last-known file list instead of 503
+  // so the dispatch page stays usable, but flag every entry stale and omit
+  // fabricated sizes (CODE_REVIEW.md M3).
+  const files = FALLBACK_FILES.map((n) => ({ name: n, stale: true }));
+  return json(files, { headers: { 'Cache-Control': 'public, max-age=300' } });
 }

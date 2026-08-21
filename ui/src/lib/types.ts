@@ -27,6 +27,7 @@ export interface NoticeLink {
 export interface DispatchFile {
   name: string;
   size?: number;
+  stale?: boolean;
   parsed?: {
     d: string;
     mo: string;
