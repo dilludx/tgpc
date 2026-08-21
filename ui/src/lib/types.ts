@@ -50,11 +50,6 @@ export interface Stats {
 
 export type ConnectionStatus = 'Live' | 'Busy' | 'Offline';
 
-export interface BadgeColor {
-  bg: string;
-  text: string;
-}
-
 export type CategoryFilter = 'all' | Category;
 
 export interface ServiceUsageItem {
