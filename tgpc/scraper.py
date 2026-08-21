@@ -6,11 +6,14 @@ Simple, clean scraper for local use only.
 import time
 import random
 import re
+import ssl
 from pathlib import Path
 from typing import List, Dict, Optional
 from dataclasses import dataclass
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.ssl_ import create_urllib3_context
 from bs4 import BeautifulSoup
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -18,6 +21,24 @@ from tgpc.progress import step
 from tgpc.utils import Config, setup_logging
 
 logger = setup_logging("tgpc.scraper")
+
+
+class _TGPCTLSAdapter(HTTPAdapter):
+    """HTTPS adapter used only for the TGPC host.
+
+    Validates the server certificate *chain* (`CERT_REQUIRED`) so MITM
+    against a tampered cert is still detected, but skips the hostname
+    match (`check_hostname = False`) because the TGPC certificate is
+    issued for a different name (CODE_REVIEW.md C4).
+    """
+
+    def init_poolmanager(self, *args, **kwargs):
+        ctx = create_urllib3_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_REQUIRED
+        kwargs["ssl_context"] = ctx
+        return super().init_poolmanager(*args, **kwargs)
+
 
 # --- Models ---
 
@@ -96,14 +117,22 @@ class Scraper:
         self.config = Config.load()
         self.rate_limiter = RateLimiter(self.config)
 
-        # Simple browser session with connection pooling
-        import urllib3
-
-        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        # Browser-like session with connection pooling.
+        #
+        # TLS policy (CODE_REVIEW.md C4): certificate *chain* validation stays
+        # enabled for every request. Only the hostname match is relaxed, and
+        # only for the TGPC host, whose certificate is issued for a different
+        # name. Every other host (including photo CDNs) is fully verified.
         self.session = requests.Session()
-        self.session.verify = False  # Site cert doesn't match hostname
+        tgpc_tls = _TGPCTLSAdapter(
+            pool_connections=10,
+            pool_maxsize=10,
+            max_retries=3,
+        )
+        self.session.mount("https://www.pharmacycouncil.telangana.gov.in", tgpc_tls)
+        self.session.mount("https://pharmacycouncil.telangana.gov.in", tgpc_tls)
 
-        # Configure adapter with connection pooling and faster DNS via Cloudflare
+        # Fully verifying adapter for every other host
         adapter = requests.adapters.HTTPAdapter(
             pool_connections=10,  # Number of connection pools to cache
             pool_maxsize=10,  # Maximum number of connections in pool

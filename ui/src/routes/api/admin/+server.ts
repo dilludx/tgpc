@@ -6,10 +6,20 @@ import {
   getAdminSecret,
   safeEqual
 } from '$lib/server/auth';
+import { rateLimited } from '$lib/server/rateLimit';
 import type { RequestHandler } from './$types';
 
 /** Log in: verify the shared secret, then issue an HttpOnly session cookie. */
-export const POST: RequestHandler = async ({ request, platform, cookies }) => {
+export const POST: RequestHandler = async (event) => {
+  const { request, platform, cookies } = event;
+
+  if (rateLimited(event.getClientAddress())) {
+    return new Response('Too Many Requests', {
+      status: 429,
+      headers: { 'Retry-After': '60' }
+    });
+  }
+
   const adminSecret = getAdminSecret(platform);
   if (!adminSecret) {
     return new Response('Not configured', { status: 500 });
