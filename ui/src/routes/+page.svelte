@@ -239,7 +239,7 @@
           if (text) data.cell.styles.textColor = text as [number, number, number];
         }
       },
-      didDrawPage: (data) => {
+      didDrawPage: (_data) => {
         doc.setFontSize(11);
         doc.setTextColor(0, 204, 102);
         doc.text(title, 10, 10);

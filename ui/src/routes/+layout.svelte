@@ -11,7 +11,6 @@
   import { goto } from '$app/navigation';
   import { beforeNavigate } from '$app/navigation';
   import { page } from '$app/stores';
-  import type { LayoutProps } from './$types';
   import { CATEGORY_COLORS, CATEGORIES, CATEGORY_KEYS } from '$lib/colors';
 
   import Clock from '$lib/components/Clock.svelte';
@@ -36,16 +35,6 @@
       goto('/');
     }
   });
-
-  function cachedOrNull<T>(key: string): T | null {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return null;
-      const { data, expiry } = JSON.parse(raw);
-      if (Date.now() > expiry) { localStorage.removeItem(key); return null; }
-      return data as T;
-    } catch { return null; }
-  }
 
   function setCache<T>(key: string, data: T, ttl = 300_000) {
     try { localStorage.setItem(key, JSON.stringify({ data, expiry: Date.now() + ttl })); } catch {}

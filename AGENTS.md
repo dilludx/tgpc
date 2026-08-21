@@ -34,8 +34,10 @@ Supporting neutrals: `#111827` text, `#6b7280` muted, `#e5e7eb` border,
 ## Commands
 
 - Frontend dev: `cd ui && npm run dev`
-- Type/lint check: `cd ui && npx svelte-check --threshold error`
-- Pre-existing known issue: `PublicKeyCredentialFuture` error is upstream, do not fix.
+- Type check: `cd ui && npm run check` (svelte-check, must stay at 0 errors)
+- JS/Svelte lint: `cd ui && npm run lint` (eslint, 0 errors; `require-each-key`
+  warnings are accepted debt)
+- Unit tests: `cd ui && npm run test:unit`
 - Data pipeline: `make` targets (see `Makefile`); run via `cd tgpc` as needed.
 
 ## Workflow

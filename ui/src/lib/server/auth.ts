@@ -85,7 +85,7 @@ export async function verifySession(
  * everybody.
  */
 export async function isAuthed(
-  cookies: { get: (name: string) => string | undefined },
+  cookies: { get: (_name: string) => string | undefined },
   platform: App.Platform | undefined
 ): Promise<boolean> {
   const secret = getAdminSecret(platform);

@@ -113,7 +113,7 @@
         {#each WEEKDAYS as w}
           <span class="text-[0.55rem] font-semibold text-[#9ca3af] py-0.5">{w}</span>
         {/each}
-        {#each cells() as d, i}
+        {#each cells() as d}
           {#if d}
             <button type="button" onclick={() => select(d)}
               class="h-6 text-[0.7rem] rounded transition-colors hover:bg-[#f0fdf4] cursor-pointer border-none"

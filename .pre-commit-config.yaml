@@ -5,3 +5,19 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+
+  # Frontend quality gate (CODE_REVIEW.md T2). Requires node/npm on PATH.
+  - repo: local
+    hooks:
+      - id: ui-eslint
+        name: ui eslint
+        entry: bash -c 'cd ui && npx eslint src'
+        language: system
+        pass_filenames: false
+        files: ^ui/src/.*\.(svelte|ts|js)$
+      - id: ui-svelte-check
+        name: ui svelte-check
+        entry: bash -c 'cd ui && npx svelte-check --threshold error'
+        language: system
+        pass_filenames: false
+        files: ^ui/src/.*\.(svelte|ts|js)$
