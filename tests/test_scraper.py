@@ -1,11 +1,12 @@
 import sys
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 # Mock supabase before importing tgpc package modules
 sys.modules["supabase"] = MagicMock()
 
-from tgpc.scraper import Scraper
+from tgpc.scraper import Scraper, _is_blocked, BLOCKED_MARKERS
+from tgpc.utils import BlockedError
 
 
 def make_response(html: str) -> MagicMock:
@@ -37,6 +38,49 @@ class ScraperParsingTests(unittest.TestCase):
             timeout=(scraper.config.connect_timeout, scraper.config.read_timeout),
         )
         record_result.assert_called_once_with(True)
+
+    def test_request_raises_blocked_error_on_waf_page(self):
+        scraper = Scraper()
+        response = MagicMock()
+        response.status_code = 200
+        response.text = "<html><body>Access Denied - your request was blocked</body></html>"
+        response.raise_for_status.return_value = None
+
+        with (
+            patch.object(scraper.rate_limiter, "wait"),
+            patch.object(scraper.rate_limiter, "record_result") as record_result,
+            patch.object(scraper.session, "request", return_value=response),
+        ):
+            with self.assertRaises(BlockedError):
+                scraper._request("GET", "https://example.com")
+
+        # tenacity retries on BlockedError, so record_result(False) may fire
+        # several times — assert the last call, not the count.
+        self.assertTrue(record_result.called)
+        self.assertEqual(record_result.call_args_list[-1], call(False))
+
+    def test_request_passes_through_clean_response(self):
+        scraper = Scraper()
+        clean = "<table><tr><th>S.No</th></tr></table>" + "x" * 990
+        response = MagicMock()
+        response.status_code = 200
+        response.text = clean
+        response.raise_for_status.return_value = None
+
+        with (
+            patch.object(scraper.rate_limiter, "wait"),
+            patch.object(scraper.rate_limiter, "record_result") as record_result,
+            patch.object(scraper.session, "request", return_value=response),
+        ):
+            result = scraper._request("GET", "https://example.com")
+
+        self.assertIs(result, response)
+        record_result.assert_called_once_with(True)
+
+    def test_is_blocked_detects_known_markers(self):
+        for marker in BLOCKED_MARKERS:
+            self.assertTrue(_is_blocked(f"<body>{marker}</body>"), marker)
+        self.assertFalse(_is_blocked("<body><table>real content " + "x" * 1000 + "</table></body>"))
 
     def test_extract_basic_records_falls_back_to_first_table_and_skips_bad_rows(self):
         html = """

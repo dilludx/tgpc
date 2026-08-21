@@ -18,9 +18,26 @@ from bs4 import BeautifulSoup
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from tgpc.progress import step
-from tgpc.utils import Config, setup_logging
+from tgpc.utils import Config, BlockedError, setup_logging
 
 logger = setup_logging("tgpc.scraper")
+
+BLOCKED_MARKERS = (
+    "access denied",
+    "forbidden",
+    "captcha",
+    "blocked",
+    "suspicious",
+    "security check",
+    "unusual traffic",
+)
+
+
+def _is_blocked(content: str) -> bool:
+    """True if a (successful HTTP) response body looks like a block/WAF page
+    rather than the real pharmacy council content (CODE_REVIEW.md M9)."""
+    lowered = content.lower()
+    return any(marker in lowered for marker in BLOCKED_MARKERS)
 
 
 class _TGPCTLSAdapter(HTTPAdapter):
@@ -176,24 +193,9 @@ class Scraper:
                 logger.warning(f"Health check failed: status {response.status_code}")
                 return False
 
-            content = response.text.lower()
-            blocked_indicators = [
-                "access denied",
-                "forbidden",
-                "captcha",
-                "blocked",
-                "suspicious",
-                "security check",
-                "unusual traffic",
-            ]
-
-            for indicator in blocked_indicators:
-                if indicator in content:
-                    logger.warning(f"Health check failed: blocked indicator '{indicator}'")
-                    return False
-
-            if len(response.text) < 1000:
-                logger.warning(f"Health check failed: too small response ({len(response.text)} bytes)")
+            if _is_blocked(response.text):
+                marker = next(m for m in BLOCKED_MARKERS if m in response.text.lower())
+                logger.warning(f"Health check failed: blocked indicator '{marker}'")
                 return False
 
             logger.info("Health check passed - connection OK")
@@ -232,17 +234,13 @@ class Scraper:
             response = self.session.request(method, url, timeout=timeout, **kwargs)
             response.raise_for_status()
 
-            content = response.text.lower()
-
-            # Basic block detection
-            if (
-                response.status_code != 200
-                or "access denied" in content
-                or "forbidden" in content
-                or "captcha" in content
-                or len(response.text) < 1000
-            ):
-                raise Exception("Blocked response")
+            # Detect block/WAF pages often served with a 200 status.
+            # raise_for_status() above already turns 4xx/5xx into HTTPError;
+            # here we distinguish a genuine block (recoverable as
+            # "source unavailable") from a parser bug (CODE_REVIEW.md M9).
+            if _is_blocked(response.text):
+                marker = next(m for m in BLOCKED_MARKERS if m in response.text.lower())
+                raise BlockedError(f"Blocked response from source (marker: '{marker}')")
 
             self.rate_limiter.record_result(True)
             return response

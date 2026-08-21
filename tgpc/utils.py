@@ -24,6 +24,13 @@ class TGPCError(Exception):
         self.original_error = original_error
 
 
+class BlockedError(TGPCError):
+    """Raised when the source responds with a block/waf page (200 with WAF
+    content, or an unexpected redirect) rather than transport or HTTP errors.
+    Distinguishable from parser failures so callers can treat a genuine block
+    as a recoverable 'source unavailable' (CODE_REVIEW.md M9)."""
+
+
 # --- Configuration ---
 
 

@@ -15,7 +15,7 @@ from collections import Counter
 
 from supabase import create_client
 
-from tgpc.utils import Config, setup_logging, load_credentials
+from tgpc.utils import Config, BlockedError, setup_logging, load_credentials
 from tgpc.scraper import Scraper, PharmacistRecord
 from tgpc.progress import ProgressBar, Phase, heartbeat, step
 
@@ -229,6 +229,9 @@ class Manager:
                 status_code = getattr(getattr(current, "response", None), "status_code", None)
                 if status_code == 429 or (status_code is not None and status_code >= 500):
                     return True
+
+            if isinstance(current, BlockedError):
+                return True
 
         return False
 
