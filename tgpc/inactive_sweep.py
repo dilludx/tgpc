@@ -114,49 +114,53 @@ def _sweep_regs(regs, records, offset=0, global_total=None, min_delay=3.0, worke
     counts = {"active": 0, "inactive": 0, "other": 0, "not_found": 0, "error": 0}
     start = time.time()
 
-    def process_reg(sc, reg):
-        d = sc.extract_detailed_info(reg, None)
-        if d is None:
-            with counts_lock:
-                counts["not_found"] += 1
-            step(f"{reg}: NOT FOUND")
-        elif d.status == "Active":
-            with counts_lock:
-                counts["active"] += 1
-                if reg not in active_set:
-                    _write_active(out_fh, reg, by_reg.get(reg, {}), d)
-                    active_set.add(reg)
-            step(f"{reg}: ACTIVE")
-        elif d.status == "Inactive":
-            with counts_lock:
-                counts["inactive"] += 1
-            step(f"{reg}: inactive")
-        else:
-            with counts_lock:
-                counts["other"] += 1
-            step(f"{reg}: {d.status}")
-
-    def worker(chunk):
-        sc = Scraper()
-        sc.rate_limiter.min_delay = min_delay
-        sc.rate_limiter.current_delay = min_delay
-        for reg in chunk:
-            try:
-                process_reg(sc, reg)
-            except Exception as e:
-                with counts_lock:
-                    counts["error"] += 1
-                step(f"{reg}: ERROR {e}")
-                print(f"ERROR {reg}: {e}", file=sys.stderr)
-            finally:
-                bar.update(1, detail=reg)
-
+    # Inner functions are defined inside the `with` block so they close over
+    # `bar` and `out_fh` once those are bound, not at definition time
+    # (CODE_REVIEW.md M6 — previously a latent reordering footgun).
     with (
         ProgressBar(
             total=global_total if global_total is not None else len(regs), label="Sweeping inactive", cadence=1
         ) as bar,
         open(ACTIVE_FILE, "a", encoding="utf-8") as out_fh,
     ):
+
+        def process_reg(sc, reg):
+            d = sc.extract_detailed_info(reg, None)
+            if d is None:
+                with counts_lock:
+                    counts["not_found"] += 1
+                step(f"{reg}: NOT FOUND")
+            elif d.status == "Active":
+                with counts_lock:
+                    counts["active"] += 1
+                    if reg not in active_set:
+                        _write_active(out_fh, reg, by_reg.get(reg, {}), d)
+                        active_set.add(reg)
+                step(f"{reg}: ACTIVE")
+            elif d.status == "Inactive":
+                with counts_lock:
+                    counts["inactive"] += 1
+                step(f"{reg}: inactive")
+            else:
+                with counts_lock:
+                    counts["other"] += 1
+                step(f"{reg}: {d.status}")
+
+        def worker(chunk):
+            sc = Scraper()
+            sc.rate_limiter.min_delay = min_delay
+            sc.rate_limiter.current_delay = min_delay
+            for reg in chunk:
+                try:
+                    process_reg(sc, reg)
+                except Exception as e:
+                    with counts_lock:
+                        counts["error"] += 1
+                    step(f"{reg}: ERROR {e}")
+                    print(f"ERROR {reg}: {e}", file=sys.stderr)
+                finally:
+                    bar.update(1, detail=reg)
+
         bar.n = offset
         if workers <= 1:
             worker(regs)

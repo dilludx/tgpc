@@ -258,19 +258,28 @@
     doc.save(`TGPC-RPH-SEARCH-${kw}-${fileDateStr(now)}.pdf`);
   }
 
+  const FORMULA_CHARS = ['=', '+', '-', '@', '\t', '\r'];
+
+  function csvCell(value: unknown): string {
+    const str = String(value ?? '');
+    const escaped = str.replace(/"/g, '""');
+    const prefix = FORMULA_CHARS.includes(str.trimStart().charAt(0)) ? "'" : '';
+    return `"${prefix}${escaped}"`;
+  }
+
   function exportCSV() {
     if (filtered.length === 0) return;
     const now = new Date();
     const kw = query.trim() || '(all)';
     const header = ['RPC NUMBER', 'NAME', 'FATHER NAME', 'GENDER', 'CATEGORY', 'VALID TILL', 'STATUS'];
     const rows = filtered.map(r => [
-      `"${r.registration_number}"`,
-      `"${(r.name || '').replace(/"/g, '""')}"`,
-      `"${(r.father_name || '').replace(/"/g, '""')}"`,
-      `"${r.gender || ''}"`,
-      `"${r.category}"`,
-      `"${r.validity_date || ''}"`,
-      `"${r.status || ''}"`
+      csvCell(r.registration_number),
+      csvCell(r.name),
+      csvCell(r.father_name),
+      csvCell(r.gender),
+      csvCell(r.category),
+      csvCell(r.validity_date),
+      csvCell(r.status)
     ]);
     const csv = [`# TGPC RPh Registry - Search: ${kw} - ${fmtDate(now)}`, header.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

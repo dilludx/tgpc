@@ -349,13 +349,13 @@ def show_quotas():
 
     # --- Resend ---
     print("── Resend (Email) ────────────────────────────────────────")
-    re = check_resend()
-    if "error" in re:
-        print(f"  ⚠  {re['error']}")
+    resend_usage = check_resend()
+    if "error" in resend_usage:
+        print(f"  ⚠  {resend_usage['error']}")
     else:
         ft = FREE_TIER["resend"]
-        dq = re.get("daily_quota")
-        mq = re.get("monthly_quota")
+        dq = resend_usage.get("daily_quota")
+        mq = resend_usage.get("monthly_quota")
         print(f"  Daily:         {_fmt_usage(dq, ft['emails_per_day'], '')}    {_pct(dq, ft['emails_per_day'])}")
         print(f"  Monthly:       {_fmt_usage(mq, ft['emails_per_month'], '')}    {_pct(mq, ft['emails_per_month'])}")
 
