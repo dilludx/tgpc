@@ -129,9 +129,7 @@ class BackupManager:
         if result.returncode != 0:
             return
 
-        import json as _json
-
-        data = _json.loads(result.stdout)
+        data = json.loads(result.stdout)
         objects = sorted(data.get("Contents", []), key=lambda o: o["Key"], reverse=True)
         for obj in objects[5:]:
             subprocess.run(
@@ -857,9 +855,7 @@ class Manager:
                 env=self._get_r2_env(),
             )
             if result.returncode == 0:
-                import json as _json
-
-                head = _json.loads(result.stdout)
+                head = json.loads(result.stdout)
                 actual_size = head.get("ContentLength", -1)
                 if actual_size == expected_size:
                     return True

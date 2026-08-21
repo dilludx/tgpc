@@ -75,19 +75,18 @@
     const panelOpen = advMode;
     const hasSearched = searched;
     if (resultsBox && (panelOpen || hasSearched)) {
-      measureResultsBox();
       if (!panelOpen && hasSearched) {
+        // Panel is closing (120ms fly transition) — re-measure once it's
+        // gone rather than polling the DOM for the placeholder input.
         clearTimeout(measureTimer);
-        const waitForPanelGone = () => {
-          if (!document.querySelector('input[placeholder="RPC NUMBER"]')) {
-            measureResultsBox();
-          } else {
-            measureTimer = setTimeout(waitForPanelGone, 50);
-          }
-        };
-        measureTimer = setTimeout(waitForPanelGone, 160);
+        measureTimer = setTimeout(measureResultsBox, 160);
+      } else {
+        measureResultsBox();
       }
     }
+    // Clear any pending timer on unmount or when the effect re-runs, so a
+    // stale timer can never fire after the component is destroyed.
+    return () => clearTimeout(measureTimer);
   });
 
   $effect(() => {
