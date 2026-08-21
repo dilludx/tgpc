@@ -3,24 +3,12 @@
   import { fetchDispatchFiles } from '$lib/api';
   import { browser } from '$app/environment';
 
+  import { cachedOrNull, setCache } from '$lib/cache';
+  import { R2_DISPATCH } from '$lib/r2';
+
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const BASE = 'https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/dispatch';
 
   let { data } = $props();
-
-  function cachedOrNull<T>(key: string): T | null {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return null;
-      const { data, expiry } = JSON.parse(raw);
-      if (Date.now() > expiry) { localStorage.removeItem(key); return null; }
-      return data as T;
-    } catch { return null; }
-  }
-
-  function setCache<T>(key: string, data: T, ttl = 300_000) {
-    try { localStorage.setItem(key, JSON.stringify({ data, expiry: Date.now() + ttl })); } catch {}
-  }
 
   let files = $state<DispatchFile[]>([]);
   let years = $state<string[]>([]);
@@ -114,7 +102,7 @@
           {#if fy.length > 0}
             <div class="col-span-full text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider py-2">{y} — {fy.length}</div>
             {#each fy as f}
-              <a href={`${BASE}/${f.name}`} target="_blank" rel="noopener"
+              <a href={`${R2_DISPATCH}/${f.name}`} target="_blank" rel="noopener"
                 class="flex items-center gap-2 p-2.5 border border-[#e5e7eb] rounded-lg no-underline text-[#111] hover:bg-[#f9fafb] transition-colors">
                 <img src="/pdf.svg" alt="" width="24" height="24" class="block flex-shrink-0" />
                 <div class="min-w-0">
@@ -127,7 +115,7 @@
         {/each}
       {:else}
         {#each filtered as f}
-          <a href={`${BASE}/${f.name}`} target="_blank" rel="noopener"
+          <a href={`${R2_DISPATCH}/${f.name}`} target="_blank" rel="noopener"
             class="flex items-center gap-2 p-2.5 border border-[#e5e7eb] rounded-lg no-underline text-[#111] hover:bg-[#f9fafb] transition-colors">
             <img src="/pdf.svg" alt="" width="24" height="24" class="block flex-shrink-0" />
             <div class="min-w-0">

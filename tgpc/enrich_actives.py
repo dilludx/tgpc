@@ -102,7 +102,7 @@ def main():
                         failed_photos.append(reg_no)
                     step(f"{reg_no}: PHOTO FAILED (kept locally)")
                 if account_id:
-                    details.photo_url = f"https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/{r2_key}"
+                    details.photo_url = f"{mgr.config.r2_public_base}/{r2_key}"
             else:
                 with lock:
                     stats["no_photo"] += 1

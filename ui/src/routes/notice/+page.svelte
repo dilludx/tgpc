@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { cachedOrNull, setCache } from '$lib/cache';
+  import { R2_NOTICES } from '$lib/r2';
   import type { Notice } from '$lib/types';
   import { fetchNotices } from '$lib/api';
   import { browser } from '$app/environment';
@@ -6,20 +8,6 @@
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   let { data } = $props();
-
-  function cachedOrNull<T>(key: string): T | null {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return null;
-      const { data, expiry } = JSON.parse(raw);
-      if (Date.now() > expiry) { localStorage.removeItem(key); return null; }
-      return data as T;
-    } catch { return null; }
-  }
-
-  function setCache<T>(key: string, data: T, ttl = 300_000) {
-    try { localStorage.setItem(key, JSON.stringify({ data, expiry: Date.now() + ttl })); } catch {}
-  }
 
   let notices = $state<Notice[]>([]);
   let years = $state<string[]>([]);
@@ -42,7 +30,7 @@
   }
 
   function resolve(url: string) {
-    return url.startsWith('http') ? url : `https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev/notice${url}`;
+    return url.startsWith('http') ? url : `${R2_NOTICES}${url}`;
   }
 
   let filtered = $derived.by(() => notices.filter(n => {

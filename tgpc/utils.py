@@ -47,6 +47,7 @@ class Config:
     # Storage
     data_directory: str = "data"
     enrichment_directory: str = "data"
+    r2_public_base: str = "https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev"
 
     # User Agent
     user_agent: str = (
@@ -62,7 +63,11 @@ class Config:
         )
         enrichment_dir = os.environ.get("TGPC_ENRICHMENT_DIR", "data")
 
-        return cls(proxy_url=proxy_url, enrichment_directory=enrichment_dir)
+        return cls(
+            proxy_url=proxy_url,
+            enrichment_directory=enrichment_dir,
+            r2_public_base=os.environ.get("TGPC_R2_PUBLIC_BASE", Config.r2_public_base),
+        )
 
 
 # --- Logging ---
