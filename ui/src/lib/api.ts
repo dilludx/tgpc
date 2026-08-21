@@ -1,20 +1,36 @@
 import type { PharmacistRecord, Notice, DispatchFile, Stats, Category } from './types';
 import { supabase } from './supabase';
 
+// Server-side result cap: keeps payloads and DOM light (CODE_REVIEW.md H5).
+export const SEARCH_CAP = 500;
+
+// Strip PostgREST filter syntax (,()) and LIKE wildcards (%_*) so raw input can
+// never alter the fallback .or() expression (CODE_REVIEW.md H4).
+function sanitizeQuery(s: string): string {
+  return s.replace(/[,()%_*]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// ilike values are escaped by supabase-js, but % and _ would still act as
+// wildcards — strip them so user input matches literally.
+function stripWildcards(s: string): string {
+  return s.replace(/[%_*]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 export async function searchRecords(query: string): Promise<PharmacistRecord[]> {
   const q = query.trim();
   if (q.length < 3) return [];
   try {
-    const { data, error } = await supabase.rpc('search_pharmacists', { q, lim: 100000 });
+    const { data, error } = await supabase.rpc('search_pharmacists', { q, lim: SEARCH_CAP });
     if (error) throw error;
     return sortRecords((data as PharmacistRecord[]) || []);
   } catch {
     try {
+      const safe = sanitizeQuery(q);
       const { data } = await supabase
         .from('rph')
         .select('registration_number, name, father_name, category, gender, validity_date, status, photo_url')
-        .or(`registration_number.ilike.%${q}%,name.ilike.%${q}%`)
-        .limit(100000);
+        .or(`registration_number.ilike.%${safe}%,name.ilike.%${safe}%`)
+        .limit(SEARCH_CAP);
       return sortRecords(data || []);
     } catch {
       return [];
@@ -51,13 +67,13 @@ export async function advancedSearch(f: AdvancedFilters): Promise<PharmacistReco
     let query = supabase
       .from('rph')
       .select('registration_number, name, father_name, category, gender, validity_date, status, photo_url');
-    if (f.name && f.name.trim()) query = query.ilike('name', `%${f.name.trim()}%`);
-    if (f.father_name && f.father_name.trim()) query = query.ilike('father_name', `%${f.father_name.trim()}%`);
-    if (f.registration_number && f.registration_number.trim()) query = query.ilike('registration_number', `${f.registration_number.trim()}%`);
+    if (f.name && f.name.trim()) query = query.ilike('name', `%${stripWildcards(f.name)}%`);
+    if (f.father_name && f.father_name.trim()) query = query.ilike('father_name', `%${stripWildcards(f.father_name)}%`);
+    if (f.registration_number && f.registration_number.trim()) query = query.ilike('registration_number', `${stripWildcards(f.registration_number)}%`);
     if (f.category && f.category.length > 0) query = query.in('category', f.category);
     if (f.gender && f.gender !== 'Any') query = query.eq('gender', f.gender);
     if (f.status && f.status !== 'Any') query = query.eq('status', f.status);
-    const { data, error } = await query.limit(100000);
+    const { data, error } = await query.limit(SEARCH_CAP);
     if (error) throw error;
     const rows = (data as PharmacistRecord[]) || [];
     if (!f.valid_till) return sortRecords(rows);

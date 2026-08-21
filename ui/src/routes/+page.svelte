@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PharmacistRecord, Category, CategoryFilter } from '$lib/types';
-  import { searchRecords, advancedSearch, type AdvancedFilters } from '$lib/api';
+  import { searchRecords, advancedSearch, SEARCH_CAP, type AdvancedFilters } from '$lib/api';
   import DatePicker from '$lib/DatePicker.svelte';
   import { CATEGORY_COLORS, CATEGORIES as CAT_NAMES } from '$lib/colors';
   import { PUBLIC_R2_PHOTO_BASE } from '$env/static/public';
@@ -26,6 +26,31 @@
   let advCats = $state<Category[]>([]);
 
   let filtered = $derived(category === 'all' ? results : results.filter(r => r.category === category));
+
+  // Client-side pagination over the capped result set (CODE_REVIEW.md H5).
+  let page = $state(1);
+  let isMobile = $state(false);
+
+  $effect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const update = () => (isMobile = mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  });
+
+  const pageSize = $derived(isMobile ? 25 : 50);
+  const totalPages = $derived(Math.max(1, Math.ceil(filtered.length / pageSize)));
+  const paged = $derived(filtered.slice((page - 1) * pageSize, page * pageSize));
+
+  $effect(() => {
+    if (page > totalPages) page = totalPages;
+  });
+
+  function gotoPage(p: number) {
+    page = Math.min(Math.max(1, p), totalPages);
+    resultsBox?.scrollTo({ top: 0 });
+  }
 
   let resultsBox = $state<HTMLDivElement | undefined>();
   let resultsMaxH = $state('calc(100vh - 240px)');
@@ -92,6 +117,7 @@
     advActive = false;
     try {
       results = await searchRecords(query);
+      page = 1;
     } finally {
       loading = false;
     }
@@ -118,6 +144,7 @@
     };
     try {
       results = await advancedSearch(payload);
+      page = 1;
     } finally {
       loading = false;
       advMode = false;
@@ -313,7 +340,7 @@
         {/if}
         <span class="ml-auto flex flex-wrap items-center gap-1.5">
           {#each CATEGORY_FILTERS as cat}
-            <button onclick={() => category = cat}
+            <button onclick={() => { category = cat; page = 1; }}
               class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none"
               style={chipStyle(cat)}>
               {cat === 'all' ? 'All' : cat}
@@ -430,6 +457,11 @@
     {:else if filtered.length === 0}
       <p class="text-[0.85rem] text-[#9ca3af] py-8 text-center">No results</p>
     {:else}
+      {#if results.length >= SEARCH_CAP}
+        <div class="text-[0.7rem] text-[#6b7280] bg-[#f4f4f5] border border-[#e5e7eb] rounded px-3 py-2 mb-2">
+          Showing first {SEARCH_CAP.toLocaleString()} results — refine your search to see more.
+        </div>
+      {/if}
       <div class="hidden md:block">
         <div style="max-height:{resultsMaxH};min-height:{resultsMinH};overflow-y:auto;overflow-x:auto" bind:this={resultsBox}>
         <table class="w-full" style="table-layout:auto">
@@ -446,7 +478,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each filtered as r}
+            {#each paged as r}
               <tr class="text-[0.875rem] text-[#374151] border-b border-[#f3f4f6]" style="content-visibility:auto;contain-intrinsic-size:48px">
                 <td class="py-1.5">
                   <img src={photoUrl(r)} alt="" loading="lazy" class="w-9 h-11 rounded object-cover bg-[#f3f4f6]" />
@@ -471,7 +503,7 @@
         </div>
       </div>
       <div class="md:hidden space-y-0.5">
-          {#each filtered as r}
+          {#each paged as r}
             <div class="flex gap-3 py-2 border-b border-[#f3f4f6] text-[0.875rem]" style="content-visibility:auto;contain-intrinsic-size:110px">
               <img src={photoUrl(r)} alt="" loading="lazy" class="w-10 h-12 rounded object-cover bg-[#f3f4f6] flex-shrink-0" />
               <div class="min-w-0">
@@ -490,6 +522,15 @@
             </div>
           {/each}
         </div>
+      {#if totalPages > 1}
+        <div class="flex items-center justify-center gap-2 py-3">
+          <button onclick={() => gotoPage(page - 1)} disabled={page === 1}
+            class="px-3 py-1 rounded text-[0.7rem] font-semibold border border-[#e5e7eb] text-[#374151] hover:bg-[#f4f4f5] disabled:opacity-40 cursor-pointer disabled:cursor-default transition-colors">Prev</button>
+          <span class="text-[0.7rem] text-[#9ca3af] tabular-nums">Page {page} of {totalPages}</span>
+          <button onclick={() => gotoPage(page + 1)} disabled={page === totalPages}
+            class="px-3 py-1 rounded text-[0.7rem] font-semibold border border-[#e5e7eb] text-[#374151] hover:bg-[#f4f4f5] disabled:opacity-40 cursor-pointer disabled:cursor-default transition-colors">Next</button>
+        </div>
+      {/if}
     {/if}
     </div>
   {/if}
