@@ -62,8 +62,8 @@ tgpc/
 ├── docs/                           # v1 (legacy, retained as reference)
 ├── tests/
 │   ├── test_scraper.py             # 7 tests: timeouts, record parsing, empty tables, no-records, detailed info, legacy headers, missing tables
-│   ├── test_manager_update.py      # 4 tests: safety guard, dedup/sorting, deterministic order, source-unavailable
-│   ├── test_manager_enrichment.py  # 2 tests: enrichment save, registration mismatch
+│   ├── test_manager_update.py      # 7 tests: safety guard, dedup/sorting, deterministic order, source-unavailable, +3 sync return-value regressions
+│   ├── test_manager_enrichment.py  # 3 tests: enrichment save, registration mismatch, null serial_number regression
 │   └── sanity.py                   # Quick sanity check (not a unittest)
 └── (credentials stored in macOS Keychain, not files)
 ```
@@ -362,6 +362,8 @@ Built with SvelteKit 5 + Tailwind CSS v4 + TypeScript. Full design spec in `V2.m
 | `RESEND_API_KEY` | Resend email API key |
 | `NOTIFICATION_EMAIL` | Email recipient |
 
+**UI checks:** `.github/workflows/ui.yml` runs on push/PR touching `ui/` — installs deps, runs ESLint + svelte-check + the 18 unit tests, and a build with placeholder PUBLIC env vars (real values live in the Cloudflare Pages dashboard). Auto-deploys from `main` build `ui/`.
+
 ---
 
 ## Testing
@@ -375,20 +377,26 @@ python3 -m pytest tests/ -v
 | File | Tests | What's tested |
 |---|---|---|
 | `test_scraper.py` | 7 | `_request` timeouts, `extract_basic_records` (no table, bad rows, fallback table), `extract_detailed_info` (no records, full parse with photo/education/work, legacy headers, missing tables) |
-| `test_manager_update.py` | 4 | Safety guard (90% threshold), dedup/sort/GITHUB_OUTPUT, deterministic detail ordering, source-unavailable skip |
-| `test_manager_enrichment.py` | 2 | Enrichment saves first pending record, raises DataIntegrityError on registration mismatch |
+| `test_manager_update.py` | 7 | Safety guard (90% threshold), dedup/sort/GITHUB_OUTPUT, deterministic detail ordering, source-unavailable skip, +3 regressions covering `sync_to_*` return values (missing-creds failure, success, R2 missing-creds failure) |
+| `test_manager_enrichment.py` | 3 | Enrichment saves first pending record, raises DataIntegrityError on registration mismatch, resolves records with `serial_number = None` (M2 regression) |
 
-All tests use mocking (no real HTTP or Supabase calls). The `supabase` module is mocked globally before imports.
+All tests use mocking (no real HTTP or Supabase calls). The `supabase` and `requests` modules are mocked globally before imports. `sanity.py` — standalone script (not a test), parses sample HTML and verifies one record extraction. Run manually.
 
-`sanity.py` — standalone script (not a test), parses sample HTML and verifies one record extraction. Run manually.
+### Frontend
+
+**Unit tests:** `ui/test:unit` runs `node --experimental-strip-types --test 'src/**/*.test.ts'` — 18 tests covering signed-cookie session creation/verification, constant-time comparison, and the `isAuthed` fail-closed path (no secret). No test framework beyond Node's built-in runner.
 
 ---
 
 ## Pre-commit
 
-Only `ruff` (lint + fix) and `ruff-format` via `astral-sh/ruff-pre-commit` v0.11.5. No Black, no trailing-whitespace, no end-of-file-fixer hooks.
+`.pre-commit-config.yaml` runs on commit for staged files:
 
----
+**Python** (root, via `astral-sh/ruff-pre-commit` v0.11.5): `ruff check --fix` + `ruff-format` on changed Python files.
+
+**UI** (local hooks, run from `ui/`): `ui-eslint` (ESLint flat config, 0 errors) and `ui-svelte-check` (svelte-check) on changed Svelte/TS/JS files. `requirements`: a `node`/`npm` install is expected on the dev machine.
+
+No Black, no trailing-whitespace, or end-of-file-fixer hooks.
 
 ---
 
@@ -399,14 +407,6 @@ Only `ruff` (lint + fix) and `ruff-format` via `astral-sh/ruff-pre-commit` v0.11
 | Frontend | Cloudflare Pages (auto-deploy from `main`, builds `ui/`) | `https://tgpc.pages.dev` |
 | CI/CD | GitHub Actions (manual trigger) | `github.com/dilludx/tgpc/actions` |
 | Data download | GitHub Release | Tag `rphjson`, file `rph.json` |
-
----
-
-## Change Log
-
-| Date | Change |
-|---|---|
-| _(Add when repo changes)_ | Description of architectural change |
 
 ---
 
