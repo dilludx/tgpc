@@ -413,12 +413,14 @@ Credential handling via macOS Keychain with an env-var override and a file fallb
 
 1. ~~**C1 + C2**~~ — done.
 2. ~~**C3**~~ — done.
-3. **M2** — re-key `rph_lookup` to `registration_number`. Filed as Medium because it needs a `None` serial to trigger, but the failure mode is silent cross-attribution of pharmacist identities, so treat it as urgent.
-4. **H1 + H2** — make sync failures propagate, then add `contents: write`. Do these together; the second is currently masked by the first.
-5. **H4 + H5** — sanitise the search input and cap the result size. Same file, ~20 lines.
-6. **T2** — add `svelte-check` and ESLint. This prevents the next round of M-class findings rather than fixing the current one.
-7. **H6, H7, C4** — headers, rate limiting, scoped TLS verification.
-8. **L7** — trim `ARCHITECTURE.md` to what you will maintain.
+3. ~~**M2**~~ — done (re-key `rph_lookup` to `registration_number`).
+4. ~~**H1 + H2**~~ — done (sync failures propagate via `SystemExit(1)`; `contents: write` in CI).
+5. ~~**H4 + H5**~~ — done (input sanitised; results capped at 500 + client-side pagination).
+6. ~~**T2**~~ — done (svelte-check + ESLint in pre-commit and CI).
+7. ~~**H6, H7, C4**~~ — done (security headers, login rate limiting + 429, scoped TLS).
+8. ~~**L7**~~ — done (trimmed stale sections of `ARCHITECTURE.md`).
+
+> Remaining: rotate the exposed admin-link tokens (manual step above) and replace the short `QUOTA_SECRET` with a long `ADMIN_SECRET` in the Cloudflare Pages dashboard. The in-code hardening is complete; these are secret-management actions.
 
 ---
 
@@ -433,7 +435,7 @@ Credential handling via macOS Keychain with an env-var override and a file fallb
 
 Once rotated, set `ADMIN_LINK_PHARMACIST_URL` and `ADMIN_LINK_EMAIL_VERIFY_URL` as Cloudflare Pages environment variables and delete the inline fallbacks in `ui/src/lib/server/adminLinks.ts`, so no token remains in version control.
 
-**Replace `QUOTA_SECRET`.** Still a short human-memorable password, and `/api/admin` still has no rate limiting (H7, open). Set a long random `ADMIN_SECRET` in Cloudflare Pages; it takes precedence. Rotating it also invalidates all outstanding sessions by design.
+**Replace `QUOTA_SECRET`.** It is a short human-memorable password. Set a long random `ADMIN_SECRET` in the Cloudflare Pages dashboard; it takes precedence and rotating it invalidates outstanding sessions by design. (Rate limiting, which was the H7 concern, is now implemented; `/api/admin` returns HTTP 429 after 5 failed attempts per minute, IP-wise.)
 
 ### Files changed
 
