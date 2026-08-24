@@ -936,13 +936,16 @@ class Manager:
 
         with heartbeat("Publishing encrypted GitHub Release"):
             try:
-                subprocess.run(
-                    ["zip", "-e", "-j", "-P", password, archive_path, file_path],
-                    capture_output=True,
-                    text=True,
-                    timeout=120,
-                    check=True,
-                )
+                # AES-encrypted zip built in-process (CODE_REVIEW.md H3) so the
+                # password never appears in a process argument list, unlike the
+                # previous `zip -P` invocation.
+                import pyzipper
+
+                with pyzipper.AESZipFile(
+                    archive_path, "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES
+                ) as zf:
+                    zf.setpassword(password.encode("utf-8"))
+                    zf.write(file_path, arcname="rph.json")
                 logger.info(f"Encrypted release archive created ({count:,} records)")
 
                 result = subprocess.run(
@@ -974,10 +977,13 @@ class Manager:
                 )
                 logger.info(f"Release sync complete ({count:,} records)")
                 return True
-            except FileNotFoundError:
-                logger.error("zip or gh CLI not installed")
+            except ImportError:
+                logger.error("pyzipper not installed. Run: pip install pyzipper")
                 return False
-            except subprocess.CalledProcessError as e:
+            except FileNotFoundError:
+                logger.error("gh CLI not installed")
+                return False
+            except Exception as e:
                 logger.error(f"Release sync error: {e}")
                 return False
             finally:
@@ -1085,48 +1091,27 @@ class Manager:
         change_str = f"({' '.join(change_parts)})" if change_parts else ""
         subject = f"{total_fmt} {change_str}-RPh Data Sync-{subj_time}"
 
-        import tempfile
-
-        payload = json.dumps(
-            {
-                "from": "RPh Data Sync <onboarding@resend.dev>",
-                "to": [recipient],
-                "subject": subject,
-                "text": text,
-                "html": html,
-            }
-        )
         with heartbeat("Sending email report via Resend"):
             try:
-                with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-                    f.write(payload)
-                    f.flush()
-                    tmp = f.name
-                result = subprocess.run(
-                    [
-                        "curl",
-                        "-s",
-                        "-X",
-                        "POST",
-                        "https://api.resend.com/emails",
-                        "-H",
-                        f"Authorization: Bearer {api_key}",
-                        "-H",
-                        "Content-Type: application/json",
-                        "-d",
-                        f"@{tmp}",
-                    ],
-                    capture_output=True,
-                    text=True,
+                # requests instead of a curl argv so the API key never appears
+                # in the process argument list (CODE_REVIEW.md H3).
+                resp = requests.post(
+                    "https://api.resend.com/emails",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json={
+                        "from": "RPh Data Sync <onboarding@resend.dev>",
+                        "to": [recipient],
+                        "subject": subject,
+                        "text": text,
+                        "html": html,
+                    },
                     timeout=30,
                 )
-                os.unlink(tmp)
-                if result.returncode == 0 and "error" not in result.stdout:
-                    logger.info(f"Email sent: {result.stdout.strip()}")
+                if resp.ok:
+                    logger.info(f"Email sent: {resp.text.strip()}")
                     return True
-                else:
-                    logger.warning(f"Resend API error: {result.stdout.strip()}")
-                    return False
+                logger.warning(f"Resend API error: {resp.status_code} {resp.text.strip()}")
+                return False
             except Exception as e:
                 logger.warning(f"Email send error: {e}")
                 return False
