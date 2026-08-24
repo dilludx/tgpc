@@ -728,7 +728,7 @@ class Manager:
                 reg_no = photo_file.stem
                 r2_key = f"photos/{reg_no}.webp"
 
-                if self._upload_and_verify_photo(photo_file, r2_key):
+                if self.upload_and_verify_photo(photo_file, r2_key):
                     photo_file.unlink()
                     succeeded += 1
                     logger.info(f"Retry OK + local deleted: {reg_no}")
@@ -757,7 +757,7 @@ class Manager:
         account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
         return f"https://{account_id}.r2.cloudflarestorage.com" if account_id else None
 
-    def _upload_and_verify_photo(self, local_path, r2_key, max_retries=5):
+    def upload_and_verify_photo(self, local_path, r2_key, max_retries=5):
         """Upload a photo to R2 with aggressive immediate retries. Returns True on success."""
         import time
 
@@ -1328,7 +1328,7 @@ class Manager:
                         account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
                         r2_key = f"photos/{reg_no}.webp"
 
-                        if self._upload_and_verify_photo(photo_file, r2_key):
+                        if self.upload_and_verify_photo(photo_file, r2_key):
                             photo_file.unlink()
                             logger.info(f"Photo uploaded + verified + local deleted: {reg_no}")
                         else:
