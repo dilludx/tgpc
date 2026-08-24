@@ -21,3 +21,9 @@ repos:
         language: system
         pass_filenames: false
         files: ^ui/src/.*\.(svelte|ts|js)$
+      - id: ui-check-colors
+        name: ui brand-color gate
+        entry: bash -c 'cd ui && node scripts/check-colors.mjs'
+        language: system
+        pass_filenames: false
+        files: ^ui/src/.*\.(svelte|ts|js|css|html)$

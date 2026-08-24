@@ -103,7 +103,7 @@
             <div class="col-span-full text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider py-2">{y} — {fy.length}</div>
             {#each fy as f}
               <a href={`${R2_DISPATCH}/${f.name}`} target="_blank" rel="noopener"
-                class="flex items-center gap-2 p-2.5 border border-[#e5e7eb] rounded-lg no-underline text-[#111] hover:bg-[#f9fafb] transition-colors">
+                class="flex items-center gap-2 p-2.5 border border-[#e5e7eb] rounded-lg no-underline text-[#111827] hover:bg-[#f9fafb] transition-colors">
                 <img src="/pdf.svg" alt="" width="24" height="24" class="block flex-shrink-0" />
                 <div class="min-w-0">
                   <div class="text-[0.8rem] font-medium truncate">{fmt(f.parsed!)}</div>
@@ -116,7 +116,7 @@
       {:else}
         {#each filtered as f}
           <a href={`${R2_DISPATCH}/${f.name}`} target="_blank" rel="noopener"
-            class="flex items-center gap-2 p-2.5 border border-[#e5e7eb] rounded-lg no-underline text-[#111] hover:bg-[#f9fafb] transition-colors">
+            class="flex items-center gap-2 p-2.5 border border-[#e5e7eb] rounded-lg no-underline text-[#111827] hover:bg-[#f9fafb] transition-colors">
             <img src="/pdf.svg" alt="" width="24" height="24" class="block flex-shrink-0" />
             <div class="min-w-0">
               <div class="text-[0.8rem] font-medium truncate">{fmt(f.parsed!)}</div>

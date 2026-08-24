@@ -197,7 +197,7 @@
           </div>
 
           {#if report?.missing_vars?.length}
-            <div class="text-xs bg-[#fff3cd] border border-[#ffc107] text-[#856404] rounded px-3 py-2 mb-4">
+            <div class="text-xs bg-[rgba(239,68,68,0.06)] border border-[rgba(239,68,68,0.35)] text-[#ef4444] rounded px-3 py-2 mb-4">
               <strong>Note:</strong> Some credentials are not configured as Cloudflare Pages environment variables:
               {report.missing_vars.join(', ')}. Set them in the Cloudflare dashboard for live data.
             </div>

@@ -62,9 +62,9 @@
   });
 
   let statusConfig = $derived.by(() => ({
-    Live: { bg: 'rgba(34,197,94,0.05)', border: '#86efac', text: '#166534', dot: '#22c55e' },
-    Busy: { bg: 'rgba(239,68,68,0.05)', border: '#fca5a5', text: '#991b1b', dot: '#ef4444' },
-    Offline: { bg: 'rgba(239,68,68,0.05)', border: '#fca5a5', text: '#991b1b', dot: '#ef4444' }
+    Live: { bg: 'rgba(0,204,102,0.05)', border: 'rgba(0,204,102,0.35)', text: '#00b359', dot: '#00cc66' },
+    Busy: { bg: 'rgba(239,68,68,0.05)', border: 'rgba(239,68,68,0.35)', text: '#ef4444', dot: '#ef4444' },
+    Offline: { bg: 'rgba(239,68,68,0.05)', border: 'rgba(239,68,68,0.35)', text: '#ef4444', dot: '#ef4444' }
   })[status]);
 
   function val(key: keyof Stats): string {
@@ -103,7 +103,7 @@
       <div class="flex flex-col">
           <div style="display:table;width:0">
             <a href="/" class="no-underline" style="display:table-row;white-space:nowrap;width:1px">
-              <span class="text-[1.4rem] font-bold tracking-tight inline-flex items-center gap-1" style="color:#111;white-space:nowrap">
+              <span class="text-[1.4rem] font-bold tracking-tight inline-flex items-center gap-1" style="color:#111827;white-space:nowrap">
                 <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">RPh</span><span class="text-[#9ca3af]">Registry</span>
               </span>
             </a>

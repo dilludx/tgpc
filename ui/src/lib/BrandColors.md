@@ -21,14 +21,27 @@ Every screen, component, export, and new code must use ONLY these in-house color
 | row        | `#f4f4f5` | Table/row background           |
 | bg         | `#ffffff` | Page background                |
 | greenDark  | `#00b359` | Hover/dark variant of green    |
+| surface    | `#f3f4f6` | Chips, hover fills             |
+| surfaceAlt | `#f8f9fa` | Panel headers, hover fills     |
+| inkSoft    | `#374151` | Body text on white             |
+| borderSoft | `#d1d5db` | Subtle dividers                |
+| surfaceHi  | `#f9fafb` | Hover backgrounds              |
+
+Soft tints of brand red/green are allowed as alpha variants:
+`rgba(239,68,68,α)` and `rgba(0,204,102,α)` (e.g. tinted button/badge
+backgrounds and soft borders).
 
 ## Rules (MANDATORY)
 
-1. Never invent new hex values. All colors come from the table above.
+1. Never invent new hex values. All colors come from the tables above.
 2. Prefer the `TGPC` export in `colors.ts`: `import { TGPC } from '$lib/colors'`.
    - `TGPC.green`, `TGPC.red`, `TGPC.grey`, `TGPC.blue`
-3. Do NOT use off-brand reds like `#dc2626`, off-brand greens like `#16a34a`, or
-   ad-hoc greys. If you find one, replace it with the brand value.
+3. Do NOT use off-brand reds like `#dc2626`, off-brand greens like `#16a34a`,
+   ad-hoc greys, or third-party palettes (Bootstrap amber, Tailwind green/purple
+   accents). If you find one, replace it with the brand value.
 4. Category colors (`CATEGORY_COLORS`) use brand-derived values (blue, green,
    text, red, greenDark, grey) for data visualization — still on-palette.
 5. New files: reference these constants; no hardcoded hex in markup.
+6. The palette is machine-enforced: `npm run check:colors`
+   (`ui/scripts/check-colors.mjs`) fails CI/pre-commit on any off-palette
+   literal. Add new approved values to both that script and this file.

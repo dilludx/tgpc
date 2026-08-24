@@ -25,7 +25,7 @@
   function linkType(url: string): string {
     const e = url.match(/\.([a-z0-9]+)(?:\?.*)?$/i)?.[1]?.toLowerCase() || '';
     if (e === 'pdf') return '#ef4444';
-    if (['jpg','jpeg','png','gif','webp'].includes(e)) return '#7c3aed';
+    if (['jpg','jpeg','png','gif','webp'].includes(e)) return '#2563eb';
     return '#2563eb';
   }
 

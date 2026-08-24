@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "prepare": "svelte-kit sync",
     "check": "svelte-check --threshold error",
+    "check:colors": "node scripts/check-colors.mjs",
     "lint": "eslint src",
     "test:unit": "node --experimental-strip-types --test 'src/**/*.test.ts'"
   },
