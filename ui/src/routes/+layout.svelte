@@ -7,9 +7,6 @@
   import type { ConnectionStatus, Stats } from '$lib/types';
   import { getStats } from '$lib/api';
   import { supabase } from '$lib/supabase';
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { beforeNavigate } from '$app/navigation';
   import { page } from '$app/stores';
   import { CATEGORY_COLORS, CATEGORIES, CATEGORY_KEYS } from '$lib/colors';
 
@@ -21,20 +18,6 @@
   let status = $state<ConnectionStatus>(ssrStats ? 'Live' : 'Busy');
   let stats = $state<Stats | null>(ssrStats);
   let lastSync = $state<string>(ssrSync);
-
-  let navigated = $state(false);
-
-  beforeNavigate(() => {
-    navigated = true;
-  });
-
-  const publicRoutes = ['/', '/admin'];
-
-  onMount(() => {
-    if (!navigated && !publicRoutes.includes($page.url.pathname)) {
-      goto('/');
-    }
-  });
 
   function setCache<T>(key: string, data: T, ttl = 300_000) {
     try { localStorage.setItem(key, JSON.stringify({ data, expiry: Date.now() + ttl })); } catch {}
