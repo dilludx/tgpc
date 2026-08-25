@@ -1325,18 +1325,19 @@ class Manager:
                     # Upload photo to R2, verify, delete local
                     photo_file = img_dir / f"{reg_no}.webp"
                     if photo_file.is_file():
-                        account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
                         r2_key = f"photos/{reg_no}.webp"
 
+                        # photo_url is only recorded when the upload actually
+                        # succeeded — a failed upload must not leave Supabase
+                        # pointing at an object that does not exist.
                         if self.upload_and_verify_photo(photo_file, r2_key):
                             photo_file.unlink()
                             logger.info(f"Photo uploaded + verified + local deleted: {reg_no}")
+                            if os.environ.get("CLOUDFLARE_ACCOUNT_ID"):
+                                details.photo_url = f"{self.config.r2_public_base}/{r2_key}"
                         else:
                             failed_photos.append(reg_no)
                             logger.error(f"FAILED after 5 attempts: {reg_no} — local file kept at {photo_file}")
-
-                        if account_id:
-                            details.photo_url = f"{self.config.r2_public_base}/{r2_key}"
 
                     # Get basic info from rph.json lookup for validation
                     basic_info = rph_lookup.get(reg_no)
