@@ -94,17 +94,18 @@ def main():
 
             photo_file = img_dir / f"{reg_no}.webp"
             if photo_file.is_file():
-                account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
                 r2_key = f"photos/{reg_no}.webp"
+                # Same contract as manager._process_records_sequential: record
+                # photo_url only after a verified upload, never on failure.
                 if mgr.upload_and_verify_photo(photo_file, r2_key):
                     photo_file.unlink()
                     step(f"{reg_no}: photo uploaded + verified + local deleted")
+                    if os.environ.get("CLOUDFLARE_ACCOUNT_ID"):
+                        details.photo_url = f"{mgr.config.r2_public_base}/{r2_key}"
                 else:
                     with lock:
                         failed_photos.append(reg_no)
                     step(f"{reg_no}: PHOTO FAILED (kept locally)")
-                if account_id:
-                    details.photo_url = f"{mgr.config.r2_public_base}/{r2_key}"
             else:
                 with lock:
                     stats["no_photo"] += 1
