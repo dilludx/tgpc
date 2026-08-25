@@ -316,14 +316,14 @@
           <div class="absolute right-0.5 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1">
             <button onclick={doSearch} disabled={query.trim().length < 3}
               class="rounded cursor-pointer border-none transition-colors disabled:opacity-30 disabled:cursor-not-allowed {searched ? 'px-2.5 py-1 text-[0.65rem] font-medium' : 'px-3 py-1 text-[0.7rem] font-semibold'}"
-              style="background:{query.trim().length >= 3 ? (searched ? '#f0fdf4' : '#00cc66') : '#f3f4f6'};color:{query.trim().length >= 3 ? (searched ? '#00cc66' : '#fff') : '#9ca3af'}"
+              style="background:{query.trim().length >= 3 ? (searched ? 'rgba(0,204,102,0.08)' : '#00cc66') : '#f3f4f6'};color:{query.trim().length >= 3 ? (searched ? '#00cc66' : '#fff') : '#9ca3af'}"
               transition:fly={{ y: 4, duration: 120, opacity: 0 }}>
               SEARCH
             </button>
             {#if searched}
               <button onclick={reset}
                 class="px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer border-none transition-colors uppercase"
-                style="background:#fef2f2;color:#ef4444"
+                style="background:rgba(239,68,68,0.06);color:#ef4444"
                 transition:fly={{ y: 4, duration: 120, opacity: 0 }}>
                 Clear
               </button>
@@ -335,7 +335,7 @@
 
     <button onclick={toggleAdvanced}
       class="flex-shrink-0 rounded px-3 py-1.5 text-[0.7rem] font-semibold uppercase cursor-pointer border transition-colors"
-      style="border-color:{advMode ? '#00cc66' : '#e5e7eb'};background:{advMode ? '#f0fdf4' : '#fff'};color:{advMode ? '#00cc66' : '#374151'}"
+      style="border-color:{advMode ? '#00cc66' : '#e5e7eb'};background:{advMode ? 'rgba(0,204,102,0.08)' : '#fff'};color:{advMode ? '#00cc66' : '#374151'}"
       transition:fly={{ y: 4, duration: 120, opacity: 0 }}>
       Advanced
     </button>
@@ -344,7 +344,7 @@
       <div class="flex flex-wrap items-center gap-1 min-w-0 flex-1" transition:fly={{ y: 6, duration: 200, opacity: 0 }}>
         <span class="text-[0.75rem] text-[#9ca3af] tabular-nums flex-shrink-0">{filtered.length.toLocaleString()} results</span>
         {#if advActive}
-          <span class="text-[0.65rem] font-semibold uppercase rounded px-1.5 py-0.5 flex-shrink-0" style="background:#f0fdf4;color:#00cc66">Advanced</span>
+          <span class="text-[0.65rem] font-semibold uppercase rounded px-1.5 py-0.5 flex-shrink-0" style="background:rgba(0,204,102,0.08);color:#00cc66">Advanced</span>
         {/if}
         <span class="ml-auto flex flex-wrap items-center gap-1.5">
           {#each CATEGORY_FILTERS as cat}
@@ -354,8 +354,8 @@
               {cat === 'all' ? 'All' : cat}
             </button>
           {/each}
-          <button onclick={exportCSV} class="flex items-center gap-1 px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer border-none transition-colors" style="background:#f0fdf4;color:#00cc66">EXPORT CSV</button>
-          <button onclick={exportPDF} class="flex items-center gap-1 px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer border-none transition-colors" style="background:#fef2f2;color:#ef4444">EXPORT PDF</button>
+          <button onclick={exportCSV} class="flex items-center gap-1 px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer border-none transition-colors" style="background:rgba(0,204,102,0.08);color:#00cc66">EXPORT CSV</button>
+          <button onclick={exportPDF} class="flex items-center gap-1 px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer border-none transition-colors" style="background:rgba(239,68,68,0.06);color:#ef4444">EXPORT PDF</button>
         </span>
       </div>
     {/if}
@@ -437,7 +437,7 @@
               <div class="flex items-center gap-2">
                 <button onclick={clearAdvanced}
                   class="h-8 px-3.5 rounded-md text-[0.7rem] font-semibold uppercase cursor-pointer border-none transition-colors"
-                  style="background:#fff;color:#ef4444;border:1px solid #fecaca">
+                  style="background:#fff;color:#ef4444;border:1px solid rgba(239,68,68,0.35)">
                   Reset
                 </button>
                 <button onclick={applyAdvanced}
@@ -499,7 +499,7 @@
                 <td class="py-2.5 hidden xl:table-cell">{r.validity_date || '—'}</td>
                 <td class="py-2.5 text-right pr-10">
                   {#if r.status}
-                    <span style="color:{r.status === 'Active' ? '#000000' : '#ef4444'}">{r.status}</span>
+                    <span style="color:{r.status === 'Active' ? '#111827' : '#ef4444'}">{r.status}</span>
                   {:else}
                     <span class="text-[#374151]">—</span>
                   {/if}
@@ -523,7 +523,7 @@
                   <span style="color:{CATEGORY_COLORS[r.category]}">{r.category}</span>
                   {#if r.validity_date}<span>Valid till: {r.validity_date}</span>{/if}
                   {#if r.status}
-                    <span style="color:{r.status === 'Active' ? '#000000' : '#ef4444'}">{r.status}</span>
+                    <span style="color:{r.status === 'Active' ? '#111827' : '#ef4444'}">{r.status}</span>
                   {/if}
                 </div>
               </div>

@@ -728,7 +728,7 @@ class Manager:
                 reg_no = photo_file.stem
                 r2_key = f"photos/{reg_no}.webp"
 
-                if self._upload_and_verify_photo(photo_file, r2_key):
+                if self.upload_and_verify_photo(photo_file, r2_key):
                     photo_file.unlink()
                     succeeded += 1
                     logger.info(f"Retry OK + local deleted: {reg_no}")
@@ -757,7 +757,7 @@ class Manager:
         account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
         return f"https://{account_id}.r2.cloudflarestorage.com" if account_id else None
 
-    def _upload_and_verify_photo(self, local_path, r2_key, max_retries=5):
+    def upload_and_verify_photo(self, local_path, r2_key, max_retries=5):
         """Upload a photo to R2 with aggressive immediate retries. Returns True on success."""
         import time
 
@@ -936,13 +936,16 @@ class Manager:
 
         with heartbeat("Publishing encrypted GitHub Release"):
             try:
-                subprocess.run(
-                    ["zip", "-e", "-j", "-P", password, archive_path, file_path],
-                    capture_output=True,
-                    text=True,
-                    timeout=120,
-                    check=True,
-                )
+                # AES-encrypted zip built in-process (CODE_REVIEW.md H3) so the
+                # password never appears in a process argument list, unlike the
+                # previous `zip -P` invocation.
+                import pyzipper
+
+                with pyzipper.AESZipFile(
+                    archive_path, "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES
+                ) as zf:
+                    zf.setpassword(password.encode("utf-8"))
+                    zf.write(file_path, arcname="rph.json")
                 logger.info(f"Encrypted release archive created ({count:,} records)")
 
                 result = subprocess.run(
@@ -974,10 +977,13 @@ class Manager:
                 )
                 logger.info(f"Release sync complete ({count:,} records)")
                 return True
-            except FileNotFoundError:
-                logger.error("zip or gh CLI not installed")
+            except ImportError:
+                logger.error("pyzipper not installed. Run: pip install pyzipper")
                 return False
-            except subprocess.CalledProcessError as e:
+            except FileNotFoundError:
+                logger.error("gh CLI not installed")
+                return False
+            except Exception as e:
                 logger.error(f"Release sync error: {e}")
                 return False
             finally:
@@ -1085,48 +1091,27 @@ class Manager:
         change_str = f"({' '.join(change_parts)})" if change_parts else ""
         subject = f"{total_fmt} {change_str}-RPh Data Sync-{subj_time}"
 
-        import tempfile
-
-        payload = json.dumps(
-            {
-                "from": "RPh Data Sync <onboarding@resend.dev>",
-                "to": [recipient],
-                "subject": subject,
-                "text": text,
-                "html": html,
-            }
-        )
         with heartbeat("Sending email report via Resend"):
             try:
-                with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-                    f.write(payload)
-                    f.flush()
-                    tmp = f.name
-                result = subprocess.run(
-                    [
-                        "curl",
-                        "-s",
-                        "-X",
-                        "POST",
-                        "https://api.resend.com/emails",
-                        "-H",
-                        f"Authorization: Bearer {api_key}",
-                        "-H",
-                        "Content-Type: application/json",
-                        "-d",
-                        f"@{tmp}",
-                    ],
-                    capture_output=True,
-                    text=True,
+                # requests instead of a curl argv so the API key never appears
+                # in the process argument list (CODE_REVIEW.md H3).
+                resp = requests.post(
+                    "https://api.resend.com/emails",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json={
+                        "from": "RPh Data Sync <onboarding@resend.dev>",
+                        "to": [recipient],
+                        "subject": subject,
+                        "text": text,
+                        "html": html,
+                    },
                     timeout=30,
                 )
-                os.unlink(tmp)
-                if result.returncode == 0 and "error" not in result.stdout:
-                    logger.info(f"Email sent: {result.stdout.strip()}")
+                if resp.ok:
+                    logger.info(f"Email sent: {resp.text.strip()}")
                     return True
-                else:
-                    logger.warning(f"Resend API error: {result.stdout.strip()}")
-                    return False
+                logger.warning(f"Resend API error: {resp.status_code} {resp.text.strip()}")
+                return False
             except Exception as e:
                 logger.warning(f"Email send error: {e}")
                 return False
@@ -1340,18 +1325,19 @@ class Manager:
                     # Upload photo to R2, verify, delete local
                     photo_file = img_dir / f"{reg_no}.webp"
                     if photo_file.is_file():
-                        account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
                         r2_key = f"photos/{reg_no}.webp"
 
-                        if self._upload_and_verify_photo(photo_file, r2_key):
+                        # photo_url is only recorded when the upload actually
+                        # succeeded — a failed upload must not leave Supabase
+                        # pointing at an object that does not exist.
+                        if self.upload_and_verify_photo(photo_file, r2_key):
                             photo_file.unlink()
                             logger.info(f"Photo uploaded + verified + local deleted: {reg_no}")
+                            if os.environ.get("CLOUDFLARE_ACCOUNT_ID"):
+                                details.photo_url = f"{self.config.r2_public_base}/{r2_key}"
                         else:
                             failed_photos.append(reg_no)
                             logger.error(f"FAILED after 5 attempts: {reg_no} — local file kept at {photo_file}")
-
-                        if account_id:
-                            details.photo_url = f"{self.config.r2_public_base}/{r2_key}"
 
                     # Get basic info from rph.json lookup for validation
                     basic_info = rph_lookup.get(reg_no)

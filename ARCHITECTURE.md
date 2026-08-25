@@ -1,6 +1,6 @@
 # TGPC — Architecture & Developer Context
 
-> **IMPORTANT:** Before making ANY code change, read this document fully and update it when done. This file and `V2.md` are the single sources of truth for context across sessions.
+> **IMPORTANT:** Before making ANY code change, read this document fully and update it when done. This file is the single source of truth for context across sessions.
 
 ---
 
@@ -11,7 +11,7 @@ Code-only repository for the **Telangana Pharmacy Council (TGPC)** pharmacist re
 The project consists of:
 - **Python pipeline** (`tgpc/`) — scrapes data from the Telangana Pharmacy Council website, syncs to Supabase, Cloudflare R2, Google Drive, GitHub Release, and sends email notification
 - **Frontend** (`ui/`) — production website served via Cloudflare Pages (SvelteKit)
-- **Documentation** (`ARCHITECTURE.md`, `V2.md`, `README.md`)
+- **Documentation** (`ARCHITECTURE.md`, `CODE_REVIEW.md`, `README.md`)
 
 ---
 
@@ -26,7 +26,6 @@ tgpc/
 ├── LICENSE                         # (present but not referenced)
 ├── .gitignore
 ├── ARCHITECTURE.md
-├── V2.md
 ├── README.md
 ├── data/
 │   ├── rph.json                     # ~87K pharmacist records (JSON array) — gitignored but tracked historically
@@ -192,14 +191,15 @@ Config is loaded via `Config.load()` classmethod (reads env vars for proxy and e
 - Cleans up temp config
 
 **`Manager.sync_to_release()`**:
-- Uses `gh release` CLI to upload `rph.json` to GitHub Release tag `rphjson`
+- Builds an AES-256 encrypted zip of `rph.json` in-process via `pyzipper` (password from `RELEASE_PASSWORD`, never on a process argv) and uploads it to GitHub Release tag `rphjson` via `gh`
 - Creates release if it doesn't exist, updates title with record count
+- Skips (returns True) when `RELEASE_PASSWORD` is unset
 
 **`Manager.sync_to_email()`**:
 - Reads `RESEND_API_KEY`, `NOTIFICATION_EMAIL` from env
 - Reads `_last_update_details` (set by `run_daily_update()`)
 - Builds HTML + plain text email with categorized change details (new/changed/removed by category)
-- Sends via Resend API (POST to `https://api.resend.com/emails`)
+- Sends via Resend API using `requests` (POST to `https://api.resend.com/emails`)
 - Capped at 200 items per section in email
 
 **`Manager.run_enrichment(start, stop, force)`**:
@@ -227,6 +227,7 @@ dependencies = [
     "tenacity==8.2.3",        # @retry decorator in scraper._request
     "supabase==2.28.0",       # create_client for sync_to_supabase
     "Pillow==12.2.0",         # Image.open() in validate_batch_files
+    "pyzipper==0.3.6",        # AES-256 release archive in sync_to_release
 ]
 ```
 
@@ -293,7 +294,7 @@ RLS allows anonymous `SELECT` on `rph` and `metadata` tables. The Publishable Ke
 
 ## Frontend (SvelteKit — Production)
 
-Built with SvelteKit 5 + Tailwind CSS v4 + TypeScript. Full design spec in `V2.md`.
+Built with SvelteKit 5 + Tailwind CSS v4 + TypeScript.
 
 ### Stack
 
@@ -303,7 +304,7 @@ Built with SvelteKit 5 + Tailwind CSS v4 + TypeScript. Full design spec in `V2.m
 | Styling | Tailwind CSS v4 |
 | Database | Supabase (anon key with RLS — `SELECT` only) |
 | Hosting | Cloudflare Pages (build: `ui/.svelte-kit/cloudflare`) |
-| Env vars | `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY` |
+| Env vars | Public: `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `PUBLIC_R2_PHOTO_BASE`. Server-side (Pages dashboard): `ADMIN_SECRET` (preferred) or `QUOTA_SECRET` for the admin session; `ADMIN_LINK_PHARMACIST_URL` / `ADMIN_LINK_EMAIL_VERIFY_URL` for the two credential-bearing admin links (no token fallbacks exist in code) |
 
 ### Routes
 
@@ -312,18 +313,24 @@ Built with SvelteKit 5 + Tailwind CSS v4 + TypeScript. Full design spec in `V2.m
 | `/` | Search: table (desktop) / cards (mobile), filter chips, pagination, PDF/CSV export |
 | `/notice` | Notices table with year tabs, search, link badges |
 | `/dispatch` | Dispatch PDF grid with year tabs, search |
-| `/api/dispatch` | JSON — lists PDFs from R2 bucket (`dispatch/` prefix) |
+| `/admin` | Operator console (usage report + internal TGPC links); payload served server-side only to a valid session |
+| `/api/admin` | POST login (rate-limited, constant-time compare) issues an HttpOnly signed-cookie session; DELETE logs out |
+| `/api/usage` | Service quota report; fails closed without `ADMIN_SECRET`/`QUOTA_SECRET`; accepts session cookie or `x-quota-secret` header |
+| `/api/dispatch` | JSON — lists PDFs from R2 bucket (`dispatch/` prefix); stale-flagged fallback list when the binding is unavailable |
 | `/api/notice` | JSON — notice data from `static/notice.json` |
+
+Server-only modules under `ui/src/lib/server/` (`auth.ts`, `adminLinks.ts`, `rateLimit.ts`) are compiler-enforced: SvelteKit fails the build if client code imports them.
 
 ### Key Features
 
 - **Stats bar** — 7 category cards with live counts from Supabase RPC, cached in localStorage
 - **Realtime** — Supabase Realtime subscription on `metadata` table for live stats/timestamp updates
-- **Search** — client-side Supabase query (min 3 chars), sorted by prefix priority then numeric, paginated 50/page (25 mobile)
-- **Export** — PDF via jsPDF + jspdf-autotable, CSV via Blob download with UTF-8 BOM
+- **Search** — client-side Supabase query (min 3 chars), sorted by prefix priority then numeric, paginated 50/page (25 mobile), results capped at 500
+- **Export** — PDF via jsPDF + jspdf-autotable; CSV via Blob download with formula-injection guard
+- **Security headers** — CSP/HSTS/nosniff/frame-deny applied globally in `hooks.server.ts` (+ `ui/static/_headers`)
 - **Responsive** — single component, CSS toggles between table and cards at 768px
 - **Connection status** — status pill (Busy/Live/Offline) with live clock
-- **Design** — exact colors, fonts, badges, spacing as documented in V2.md
+- **Design** — TGPC brand palette only, machine-enforced by `npm run check:colors`
 
 ---
 
@@ -336,19 +343,16 @@ Built with SvelteKit 5 + Tailwind CSS v4 + TypeScript. Full design spec in `V2.m
 **Single job `rphsync`** with these steps:
 
 1. **Checkout** repository
-2. **Install Python deps** (`pip install -e .` + `pip install supabase`)
-3. **Create data directory** (`mkdir -p data/backups`)
-4. **Restore artifact** — `gh run download` artifact `rph-data` if `data/rph.json` doesn't exist locally
-5. **Run data update** — `python3 -m tgpc update` (or force-skip if `force_sync` is true, sets GITHUB_OUTPUT directly)
-6. **Sync to Supabase DB** (condition: `update.success == True`) — `python3 -m tgpc sync` (but only Supabase sync is done inline, not the full CLI sync)
-7. **Upload to Supabase Storage** — curl POST to storage bucket `tgpc`
-8. **Upload to Cloudflare R2** — `aws s3api put-object`
-9. **Upload to Google Drive** — `rclone copyto` (also uploads `jsn-{max_serial}.zip` and `img-{max_serial}.zip` if they exist, cleans old versions)
-10. **Clean old artifact** — deletes previous `rph-data` artifacts
-11. **Upload new artifact** — `rph-data` with 90-day retention
-12. **Create update summary** — Python script reads `update_details.json`, writes formatted markdown to `GITHUB_STEP_SUMMARY`
-13. **Send email notification** — inline Python script builds HTML email and sends via Resend API
-14. **Notify on failure** — prints failure message
+2. **Install Python deps** (`pip install -e .` + `supabase` + `awscli`)
+3. **Setup Cloudflare WARP** — install, register, connect (outbound routing for scraping/sync)
+4. **Create data directory** (`mkdir -p data/backups`)
+5. **Restore artifact** — `gh run download` artifact `rph-data` if `data/rph.json` doesn't exist locally
+6. **Run data update** — `python3 -m tgpc update`; when `force_sync` is true and local data exists, runs `python3 -m tgpc sync` instead. All cloud syncs happen inside the CLI (delta to Supabase; Storage/R2/GDrive/Release/email only when there are changes); any destination failure exits non-zero and fails the job
+7. **Upload data artifact** — `rph-data` with 90-day retention (`if: always()`)
+8. **Clean up update details** — `rm -f data/update_details.json`
+9. **Notify on failure** — prints failure message
+
+Job permissions: `actions: write`, `contents: write` (release upload).
 
 **Secrets:**
 | Secret | Purpose |
@@ -361,8 +365,11 @@ Built with SvelteKit 5 + Tailwind CSS v4 + TypeScript. Full design spec in `V2.m
 | `RCLONE_GDRIVE_CONFIG` | Base64-encoded rclone GDrive config |
 | `RESEND_API_KEY` | Resend email API key |
 | `NOTIFICATION_EMAIL` | Email recipient |
+| `RELEASE_PASSWORD` | Password for the encrypted release zip |
 
-**UI checks:** `.github/workflows/ui.yml` runs on push/PR touching `ui/` — installs deps, runs ESLint + svelte-check + the 18 unit tests, and a build with placeholder PUBLIC env vars (real values live in the Cloudflare Pages dashboard). Auto-deploys from `main` build `ui/`.
+**Quality gates:**
+- `.github/workflows/ui.yml` runs on push/PR touching `ui/` — ESLint + brand-color gate (`check:colors`) + svelte-check + the 18 unit tests + a build with placeholder PUBLIC env vars (real values live in the Cloudflare Pages dashboard). Auto-deploys from `main` build `ui/`.
+- `.github/workflows/python.yml` runs on push/PR touching `tgpc/`, `tests/`, or `pyproject.toml` — `ruff check`, `ruff format --check` (pinned 0.11.5, matching pre-commit), and the full pytest suite.
 
 ---
 
@@ -372,13 +379,14 @@ Built with SvelteKit 5 + Tailwind CSS v4 + TypeScript. Full design spec in `V2.m
 python3 -m pytest tests/ -v
 ```
 
-13 test methods across 3 files:
+37 tests across 4 files:
 
 | File | Tests | What's tested |
 |---|---|---|
 | `test_scraper.py` | 7 | `_request` timeouts, `extract_basic_records` (no table, bad rows, fallback table), `extract_detailed_info` (no records, full parse with photo/education/work, legacy headers, missing tables) |
 | `test_manager_update.py` | 7 | Safety guard (90% threshold), dedup/sort/GITHUB_OUTPUT, deterministic detail ordering, source-unavailable skip, +3 regressions covering `sync_to_*` return values (missing-creds failure, success, R2 missing-creds failure) |
 | `test_manager_enrichment.py` | 3 | Enrichment saves first pending record, raises DataIntegrityError on registration mismatch, resolves records with `serial_number = None` (M2 regression) |
+| `test_manager_sync.py` | 17 | Every `sync_to_*` destination's contract: fail-closed on missing credentials, True on success, False on transport/API failure. Release test uses real pyzipper and verifies encryption at upload time; email test asserts the Resend request shape |
 
 All tests use mocking (no real HTTP or Supabase calls). The `supabase` and `requests` modules are mocked globally before imports. `sanity.py` — standalone script (not a test), parses sample HTML and verifies one record extraction. Run manually.
 
@@ -394,7 +402,7 @@ All tests use mocking (no real HTTP or Supabase calls). The `supabase` and `requ
 
 **Python** (root, via `astral-sh/ruff-pre-commit` v0.11.5): `ruff check --fix` + `ruff-format` on changed Python files.
 
-**UI** (local hooks, run from `ui/`): `ui-eslint` (ESLint flat config, 0 errors) and `ui-svelte-check` (svelte-check) on changed Svelte/TS/JS files. `requirements`: a `node`/`npm` install is expected on the dev machine.
+**UI** (local hooks, run from `ui/`): `ui-eslint` (ESLint flat config, 0 errors), `ui-svelte-check` (svelte-check), and `ui-check-colors` (brand-color gate, `npm run check:colors`) on changed Svelte/TS/JS files. `requirements`: a `node`/`npm` install is expected on the dev machine.
 
 No Black, no trailing-whitespace, or end-of-file-fixer hooks.
 
@@ -412,5 +420,5 @@ No Black, no trailing-whitespace, or end-of-file-fixer hooks.
 
 ## See Also
 
-- `UI.md` — frontend architecture, component specs, design system
+- `ui/src/lib/BrandColors.md` — mandatory palette and enforcement notes
 - `README.md` — Project overview and quick-start

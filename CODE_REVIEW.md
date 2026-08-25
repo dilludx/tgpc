@@ -118,7 +118,7 @@ The job declares `permissions: actions: write, contents: read`. `sync_to_release
 
 **Fix:** Add `contents: write` to the job's `permissions` block. Note this is also the one destination that would surface the H1 bug immediately once failures propagate.
 
-### H3. Release zip password passed on the command line
+### H3. Release zip password passed on the command line *(Fixed 2026-08-24)*
 
 `tgpc/manager.py:915`
 
@@ -130,7 +130,7 @@ The job declares `permissions: actions: write, contents: read`. `sync_to_release
 
 Related: `tgpc/manager.py:1082` passes `Authorization: Bearer {api_key}` as a `curl` argv for the Resend call, with the same visibility problem.
 
-**Fix:** For the zip, use `pyzipper` (AES) or feed the password via stdin. For Resend, use `requests` instead of shelling out to `curl` — you already depend on it.
+**Fix:** For the zip, use `pyzipper` (AES) or feed the password via stdin. For Resend, use `requests` instead of shelling out to `curl` — you already depend on it. *(Fixed — `sync_to_release` builds an AES-256 zip in-process via `pyzipper` (added dependency); `sync_to_email` posts JSON with `requests`, dropping both the curl argv and its temp file.)*
 
 ### H4. PostgREST filter injection in search
 
@@ -178,7 +178,7 @@ To be clear on the positive: `ui/.env` is correctly gitignored (`ui/.gitignore:1
 
 ## Medium
 
-### M1. Deep links to `/notice` and `/dispatch` redirect to home
+### M1. Deep links to `/notice` and `/dispatch` redirect to home *(Fixed 2026-08-24)*
 
 `ui/src/routes/+layout.svelte:26-37`
 
@@ -191,7 +191,7 @@ onMount(() => {
 
 `navigated` is only set by client-side navigation. On a hard load — bookmark, refresh, shared link, or a crawler — it is `false`, so any route outside the allowlist bounces to `/`. `/notice` and `/dispatch` are therefore unreachable except by clicking through from the homepage.
 
-**Fix:** Either add both routes to `publicRoutes`, or delete this block. If the intent was to gate `/admin`, this is the wrong mechanism (see C2) — and `/admin` is in the *allowed* list, so it gates nothing.
+**Fix:** Either add both routes to `publicRoutes`, or delete this block. If the intent was to gate `/admin`, this is the wrong mechanism (see C2) — and `/admin` is in the *allowed* list, so it gates nothing. *(Fixed — the block was deleted outright along with its `goto`/`beforeNavigate`/`onMount` imports: it gated nothing since `/admin` was allowlisted and real auth is server-side post-C2. Verified: `/`, `/notice`, `/dispatch` all serve 200 in a production preview.)*
 
 ### M2. `rph_lookup` is keyed by a nullable, non-unique field — the integrity guard can corrupt data
 
@@ -269,7 +269,7 @@ Separately, `out_fh` is written to from `ThreadPoolExecutor` workers. Python fil
 
 **Fix:** Populate `missing` in `checkSupabase` / `checkR2` where the `Missing …` errors are already detected, or delete both the field and the UI block. *(Fixed — `missing_vars` is now populated from the four required env vars.)*
 
-### M8. Brand color rule violated in ~60 places
+### M8. Brand color rule violated in ~60 places *(Fixed 2026-08-24)*
 
 `AGENTS.md` permits only `#00cc66`, `#ef4444`, `#9ca3af`, `#2563eb` plus neutrals `#111827`, `#6b7280`, `#e5e7eb`, `#f4f4f5`, `#ffffff`, `#00b359`, and explicitly forbids off-brand colors. Violations found:
 
@@ -283,7 +283,7 @@ Separately, `out_fh` is written to from `ThreadPoolExecutor` workers. Python fil
 
 The most striking part: `AGENTS.md` says to "Prefer the `TGPC` export" from `ui/src/lib/colors.ts`, and **nothing in the codebase imports it**. Every component hardcodes hex. The rule has no enforcement mechanism, so it is decaying.
 
-**Fix:** Decide whether the neutral greys (`#f3f4f6`, `#f8f9fa`, `#374151`, `#d1d5db`, `#f9fafb`) are actually approved — they are used consistently enough that the rule, not the code, may be what is wrong. Then fix the genuine outliers (`#22c55e`, `#166534`, `#ffc107`, `#7c3aed`, `#000000`) and add a lint rule or a Tailwind theme so the constraint is machine-checked.
+**Fix:** Decide whether the neutral greys (`#f3f4f6`, `#f8f9fa`, `#374151`, `#d1d5db`, `#f9fafb`) are actually approved — they are used consistently enough that the rule, not the code, may be what is wrong. Then fix the genuine outliers (`#22c55e`, `#166534`, `#ffc107`, `#7c3aed`, `#000000`) and add a lint rule or a Tailwind theme so the constraint is machine-checked. *(Fixed — the five greys were approved as official neutrals (owner decision) and added to AGENTS.md/BrandColors.md. Genuine outliers remapped: status pill greens/reds → `#00cc66`/`#00b359`/`#ef4444` + brand alpha tints; `#000000` → `#111827`; Bootstrap amber warning → tgpc-red tint; notice purple → `#2563eb`; `text-[#111]` → `#111827`. Machine-enforced by `ui/scripts/check-colors.mjs` via `npm run check:colors`, wired into pre-commit and CI.)*
 
 ### M9. Weak crawl-block heuristic
 
@@ -334,11 +334,11 @@ The loop does terminate — that placeholder is unique to the panel input at lin
 
 **Fix:** Use `bind:this` on the panel element instead of `querySelector`, drive the remeasure off the `transition:fade` `outroend` event rather than polling, and return `() => clearTimeout(measureTimer)` from the effect. The `ResizeObserver` pattern in `admin/+page.svelte:120-139` is the right model.
 
-### L4. `enrich_actives.py` reaches into private manager internals
+### L4. `enrich_actives.py` reaches into private manager internals *(Fixed 2026-08-24)*
 
 `tgpc/enrich_actives.py` calls `mgr._upload_and_verify_photo(...)`. It also constructs a fresh `Scraper()` per record inside `enrich()` (line ~90), discarding session reuse, connection pooling, and the adaptive rate limiter's learned state — which partly defeats the point of the `RateLimiter`.
 
-**Fix:** Promote the photo helper to a public method. Create one `Scraper` outside the loop.
+**Fix:** Promote the photo helper to a public method. Create one `Scraper` outside the loop. *(Fixed — the method is now `Manager.upload_and_verify_photo` with all call sites updated; `enrich()` takes a scraper and each worker builds exactly one via `make_scraper()`, mirroring `inactive_sweep.py`.)*
 
 ### L5. Local `import json as _json` inside methods
 
@@ -391,9 +391,11 @@ This is the gap that let M1, M7, and the brand-color decay through. `platform?.e
 
 **Fix:** Add `svelte-check` and `typescript` to devDependencies with a `check` script; add `eslint` + `eslint-plugin-svelte` with a `lint` script; wire both into pre-commit and CI.
 
-### T3. Coverage gaps in the Python tests
+### T3. Coverage gaps in the Python tests *(Sync layer covered 2026-08-24)*
 
 Untested paths that carry real risk: the entire sync layer (`sync_to_supabase`, `sync_to_r2`, `sync_to_release`, `sync_to_email`, `sync_to_gdrive`), `retry_photos`, `_process_records_sequential`, `inactive_sweep.py`, `quota.py`, `enrich_actives.py`, and the photo upload/verify path. M2 sits in `_process_records_sequential`, which has no direct test at all.
+
+*(2026-08-24: the sync layer is now covered — `tests/test_manager_sync.py`, 17 tests across all five `sync_to_*` destinations plus Supabase Storage, asserting fail-closed on missing credentials, True on success, False on transport/API failure. The release test uses real pyzipper and verifies encryption at upload time; the email test asserts the Resend request shape after the H3 requests migration. Still open: `retry_photos`, `_process_records_sequential` direct tests, sweeps, quota.)*
 
 ---
 
@@ -433,7 +435,7 @@ Credential handling via macOS Keychain with an env-var override and a file fallb
 - the `referenceid` / `random_no1` pair in the `viewpharmacist` URL
 - the `rid1` / `rid2` / `rid3` verification tokens in the `getemailverify` URL
 
-Once rotated, set `ADMIN_LINK_PHARMACIST_URL` and `ADMIN_LINK_EMAIL_VERIFY_URL` as Cloudflare Pages environment variables and delete the inline fallbacks in `ui/src/lib/server/adminLinks.ts`, so no token remains in version control.
+*(2026-08-24: the inline fallbacks have been deleted from `ui/src/lib/server/adminLinks.ts` — no token remains in version control or in the built output. The two links now render only when `ADMIN_LINK_PHARMACIST_URL` / `ADMIN_LINK_EMAIL_VERIFY_URL` are set in Cloudflare Pages. Rotation on the TGPC side and setting those env vars remain manual.)*
 
 **Replace `QUOTA_SECRET`.** It is a short human-memorable password. Set a long random `ADMIN_SECRET` in the Cloudflare Pages dashboard; it takes precedence and rotating it invalidates outstanding sessions by design. (Rate limiting, which was the H7 concern, is now implemented; `/api/admin` returns HTTP 429 after 5 failed attempts per minute, IP-wise.)
 
@@ -473,3 +475,18 @@ Once rotated, set `ADMIN_LINK_PHARMACIST_URL` and `ADMIN_LINK_EMAIL_VERIFY_URL` 
 ---
 
 *Nothing was committed or pushed. Source changes are limited to the files listed under "Fixes applied"; no other file in the repository was modified.*
+
+---
+
+## Fixes applied — 2026-08-24
+
+| Finding | Change |
+|---|---|
+| M1 | Deleted the broken deep-link redirect (`publicRoutes`/`navigated`/`onMount` block) from `ui/src/routes/+layout.svelte`; `/notice` and `/dispatch` now load on hard navigation (verified 200 in a production preview). |
+| H3 | `sync_to_release` builds an AES-256 zip via `pyzipper` (new pinned dependency) — no password in argv. `sync_to_email` uses `requests` instead of curl — no API key in argv, no temp file. |
+| C1 follow-up | Inline token fallbacks removed from `ui/src/lib/server/adminLinks.ts`; credential-bearing links appear only from `ADMIN_LINK_PHARMACIST_URL` / `ADMIN_LINK_EMAIL_VERIFY_URL` env vars. Repo-wide grep confirms no token values remain. |
+| M8 | Off-palette colors remapped to the TGPC palette (soft tints via brand rgba); five Tailwind-grey neutrals approved and documented in AGENTS.md/BrandColors.md; new machine gate `npm run check:colors` (`ui/scripts/check-colors.mjs`) wired into pre-commit and CI. |
+| L4 | `Manager.upload_and_verify_photo` is now public; `enrich_actives.py` builds one Scraper per worker instead of per record. |
+| T3 (partial) | New `tests/test_manager_sync.py`: 17 tests covering all sync destinations' fail-closed/success/failure contracts, including a real-pyzipper encryption check on the release archive. Suite now 37 tests. |
+
+**Verification:** Python suite 20/20 pass; UI eslint 0 errors, svelte-check 0 errors, 18/18 unit tests, production build OK; pyzipper round-trip (encrypted write + password read + no-password rejection) smoke-tested.

@@ -2,16 +2,16 @@
  * Internal TGPC endpoint reference, for the admin console.
  *
  * Server-only: this list is a reconnaissance map of a government system's
- * internal endpoints and two of the URLs carry live credentials, so it must
- * never reach the browser bundle. It is served only to an authenticated
- * session, via `routes/admin/+page.server.ts`.
+ * internal endpoints, so it must never reach the browser bundle. It is served
+ * only to an authenticated session, via `routes/admin/+page.server.ts`.
  *
- * SECURITY — the `viewpharmacist` and `getemailverify` URLs below embed live
- * TGPC reference IDs and verification tokens. They were previously public (see
- * CODE_REVIEW.md, finding C1), so they should be treated as compromised and
- * rotated. Once rotated, set ADMIN_LINK_PHARMACIST_URL and
- * ADMIN_LINK_EMAIL_VERIFY_URL as Cloudflare Pages environment variables and
- * delete the inline fallbacks, so no token lives in version control.
+ * SECURITY (CODE_REVIEW.md C1): the two credential-bearing URLs read their
+ * real values from Cloudflare Pages environment variables ONLY —
+ *   ADMIN_LINK_PHARMACIST_URL / ADMIN_LINK_EMAIL_VERIFY_URL
+ * The fallbacks below are PLACEHOLDERS (same shape as the real thing) so the
+ * URL structure stays documented here without any live token in version
+ * control. Personal reference copy of the real values:
+ * ~/.config/tgpc/admin-links.txt
  */
 
 import type { LinkGroup } from '$lib/types';
@@ -23,17 +23,19 @@ export function adminLinkGroups(platform: App.Platform | undefined): LinkGroup[]
 
   const pharmacistUrl =
     env?.['ADMIN_LINK_PHARMACIST_URL'] ||
-    `${base}/pharmacy/viewpharmacist?referenceid=5428UN062011&random_no1=MMD6XSDJ8LL9`;
+    `${base}/pharmacy/viewpharmacist?referenceid=REFERENCEID-HERE&random_no1=RANDOMNO1-HERE`;
 
   const emailVerifyUrl =
     env?.['ADMIN_LINK_EMAIL_VERIFY_URL'] ||
-    `${base}/pharmacy/getemailverify?rid1=661JCM272512&rid2=ACPYI0K3KLQJ&rid3=f7b3fdc6-e2f0-4983-a281-d89a26569e02`;
+    `${base}/pharmacy/getemailverify?rid1=RID1-HERE&rid2=RID2-HERE&rid3=RID3-UUID-HERE`;
 
-  return [
+  const all: LinkGroup[] = [
     {
       name: 'Search & Profile',
       items: [
-        { heading: 'Pharmacist Detail View', url: pharmacistUrl, desc: 'View individual pharmacist profile with full details' },
+        ...(pharmacistUrl
+          ? [{ heading: 'Pharmacist Detail View', url: pharmacistUrl, desc: 'View individual pharmacist profile with full details' }]
+          : []),
         { heading: 'Pharmacist Search (POST)', url: `${base}/pharmacy/getsearchpharmacist`, desc: 'Search endpoint — POST registration_no to get results' },
         { heading: 'Admin Dashboard', url: `${base}/pharmacy/dashboard`, desc: 'TGPC admin dashboard' },
       ],
@@ -57,7 +59,9 @@ export function adminLinkGroups(platform: App.Platform | undefined): LinkGroup[]
       name: 'Payments & Verification',
       items: [
         { heading: 'Payment Status Check', url: `${base}/pharmacy/getpmentstatusmeseva`, desc: 'Check payment status via Meseva' },
-        { heading: 'Email Verify', url: emailVerifyUrl, desc: 'Verify pharmacist email with verification tokens' },
+        ...(emailVerifyUrl
+          ? [{ heading: 'Email Verify', url: emailVerifyUrl, desc: 'Verify pharmacist email with verification tokens' }]
+          : []),
       ],
     },
     {
@@ -68,4 +72,6 @@ export function adminLinkGroups(platform: App.Platform | undefined): LinkGroup[]
       ],
     },
   ];
+
+  return all.filter((g) => g.items.length > 0);
 }

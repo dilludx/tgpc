@@ -76,12 +76,14 @@ def main():
     failed_photos = []
     start = time.time()
 
-    def enrich(reg_no, serial):
-        try:
-            sc = Scraper()
-            sc.rate_limiter.min_delay = args.min_delay
-            sc.rate_limiter.current_delay = args.min_delay
+    def make_scraper():
+        sc = Scraper()
+        sc.rate_limiter.min_delay = args.min_delay
+        sc.rate_limiter.current_delay = args.min_delay
+        return sc
 
+    def enrich(sc, reg_no, serial):
+        try:
             step(f"fetching details for {reg_no}")
             details = sc.extract_detailed_info(reg_no, img_dir)
             if not details:
@@ -94,7 +96,7 @@ def main():
             if photo_file.is_file():
                 account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
                 r2_key = f"photos/{reg_no}.webp"
-                if mgr._upload_and_verify_photo(photo_file, r2_key):
+                if mgr.upload_and_verify_photo(photo_file, r2_key):
                     photo_file.unlink()
                     step(f"{reg_no}: photo uploaded + verified + local deleted")
                 else:
@@ -158,16 +160,21 @@ def main():
 
     with ProgressBar(total=total, label="Enriching actives", cadence=1) as bar:
         if args.workers <= 1:
+            sc = make_scraper()
             for r in records:
                 bar.set_detail(r.registration_number)
-                enrich(r.registration_number, r.serial_number)
+                enrich(sc, r.registration_number, r.serial_number)
                 bar.update(1, detail=r.registration_number)
         else:
 
             def worker(chunk):
+                # One Scraper per worker: session reuse, connection pooling and
+                # the rate limiter's learned state persist across the chunk
+                # (CODE_REVIEW.md L4).
+                sc = make_scraper()
                 for r in chunk:
                     bar.set_detail(r.registration_number)
-                    enrich(r.registration_number, r.serial_number)
+                    enrich(sc, r.registration_number, r.serial_number)
                     bar.update(1, detail=r.registration_number)
 
             chunks = [records[i :: args.workers] for i in range(args.workers)]

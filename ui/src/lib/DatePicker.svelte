@@ -116,7 +116,7 @@
         {#each cells() as d}
           {#if d}
             <button type="button" onclick={() => select(d)}
-              class="h-6 text-[0.7rem] rounded transition-colors hover:bg-[#f0fdf4] cursor-pointer border-none"
+              class="h-6 text-[0.7rem] rounded transition-colors hover:bg-[rgba(0,204,102,0.08)] cursor-pointer border-none"
               style={cellStyle(d)}>
               {d.getDate()}
             </button>

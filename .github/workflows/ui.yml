@@ -30,6 +30,7 @@ jobs:
           cache-dependency-path: ui/package-lock.json
       - run: npm ci
       - run: npm run lint
+      - run: npm run check:colors
       - run: npm run check
       - run: npm run test:unit
       - run: npm run build

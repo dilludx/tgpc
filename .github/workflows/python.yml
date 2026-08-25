@@ -1,0 +1,23 @@
+name: Python Checks
+
+on:
+  push:
+    branches: [main, dev]
+    paths: ['tgpc/**', 'tests/**', 'pyproject.toml', '.github/workflows/python.yml']
+  pull_request:
+    paths: ['tgpc/**', 'tests/**', 'pyproject.toml', '.github/workflows/python.yml']
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      # Pinned to match .pre-commit-config.yaml (astral-sh/ruff-pre-commit v0.11.5)
+      - run: pip install -e . pytest ruff==0.11.5
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: python3 -m pytest tests/ -q
