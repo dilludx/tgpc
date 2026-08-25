@@ -395,7 +395,9 @@ This is the gap that let M1, M7, and the brand-color decay through. `platform?.e
 
 Untested paths that carry real risk: the entire sync layer (`sync_to_supabase`, `sync_to_r2`, `sync_to_release`, `sync_to_email`, `sync_to_gdrive`), `retry_photos`, `_process_records_sequential`, `inactive_sweep.py`, `quota.py`, `enrich_actives.py`, and the photo upload/verify path. M2 sits in `_process_records_sequential`, which has no direct test at all.
 
-*(2026-08-24: the sync layer is now covered — `tests/test_manager_sync.py`, 17 tests across all five `sync_to_*` destinations plus Supabase Storage, asserting fail-closed on missing credentials, True on success, False on transport/API failure. The release test uses real pyzipper and verifies encryption at upload time; the email test asserts the Resend request shape after the H3 requests migration. Still open: `retry_photos`, `_process_records_sequential` direct tests, sweeps, quota.)*
+*(2026-08-24: the sync layer is now covered — `tests/test_manager_sync.py`, 17 tests across all five `sync_to_*` destinations plus Supabase Storage, asserting fail-closed on missing credentials, True on success, False on transport/API failure. The release test uses real pyzipper and verifies encryption at upload time; the email test asserts the Resend request shape after the H3 requests migration.)*
+
+*(2026-08-25: remaining gaps closed — `tests/test_manager_photos.py` (11 tests) covers the photo upload/verify/retry pipeline and batch error isolation; `tests/test_quota.py` and `tests/test_inactive_sweep.py` cover the quota reporter's fail-closed paths and the sweep's JSONL/checkpoint/resume plumbing. Suite at 62 tests. Still untested: live network behavior itself, by design.)*
 
 ---
 
