@@ -5,12 +5,13 @@
  * internal endpoints, so it must never reach the browser bundle. It is served
  * only to an authenticated session, via `routes/admin/+page.server.ts`.
  *
- * SECURITY (CODE_REVIEW.md C1): the two credential-bearing URLs are read from
- * Cloudflare Pages environment variables ONLY — no token fallback lives in
- * version control. The previously inlined values were publicly exposed and
- * must be treated as compromised; set ADMIN_LINK_PHARMACIST_URL and
- * ADMIN_LINK_EMAIL_VERIFY_URL in the dashboard (after rotating them on the
- * TGPC side). Until configured, those items are simply omitted.
+ * SECURITY (CODE_REVIEW.md C1): the two credential-bearing URLs read their
+ * real values from Cloudflare Pages environment variables ONLY —
+ *   ADMIN_LINK_PHARMACIST_URL / ADMIN_LINK_EMAIL_VERIFY_URL
+ * The fallbacks below are PLACEHOLDERS (same shape as the real thing) so the
+ * URL structure stays documented here without any live token in version
+ * control. Personal reference copy of the real values:
+ * ~/.config/tgpc/admin-links.txt
  */
 
 import type { LinkGroup } from '$lib/types';
@@ -20,8 +21,13 @@ const base = 'https://www.pharmacycouncil.telangana.gov.in';
 export function adminLinkGroups(platform: App.Platform | undefined): LinkGroup[] {
   const env = platform?.env;
 
-  const pharmacistUrl = env?.['ADMIN_LINK_PHARMACIST_URL'];
-  const emailVerifyUrl = env?.['ADMIN_LINK_EMAIL_VERIFY_URL'];
+  const pharmacistUrl =
+    env?.['ADMIN_LINK_PHARMACIST_URL'] ||
+    `${base}/pharmacy/viewpharmacist?referenceid=REFERENCEID-HERE&random_no1=RANDOMNO1-HERE`;
+
+  const emailVerifyUrl =
+    env?.['ADMIN_LINK_EMAIL_VERIFY_URL'] ||
+    `${base}/pharmacy/getemailverify?rid1=RID1-HERE&rid2=RID2-HERE&rid3=RID3-UUID-HERE`;
 
   const all: LinkGroup[] = [
     {
