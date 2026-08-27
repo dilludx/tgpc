@@ -1,0 +1,32 @@
+import type { PageServerLoad } from './$types';
+import { error } from '@sveltejs/kit';
+import { getRecord } from '$lib/api';
+import { PUBLIC_R2_PHOTO_BASE } from '$env/static/public';
+
+export const load: PageServerLoad = async ({ params }: { params: { registration_number: string } }) => {
+  const regNo = params.registration_number?.toUpperCase().trim();
+  if (!regNo) {
+    error(404, 'Registration number required');
+  }
+
+  const record = await getRecord(regNo);
+  if (!record) {
+    error(404, `No record found for ${regNo}`);
+  }
+
+  const photo = record.photo_url || `${PUBLIC_R2_PHOTO_BASE}/${regNo}.webp`;
+
+  const title = `${record.name} — RPC ${record.registration_number} | TGPC RPh Registry`;
+  const description = `Registered Pharmacist: ${record.name} (${record.registration_number}), ${record.category}, ${record.status || 'Status unknown'}, Valid till ${record.validity_date || 'unknown'}. Telangana State Pharmacy Council Registry.`;
+
+  return {
+    record,
+    photo,
+    seo: {
+      title,
+      description,
+      ogImage: photo,
+      canonical: `https://tgpc.pages.dev/rph/${regNo}`
+    }
+  };
+};

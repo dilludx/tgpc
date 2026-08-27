@@ -9,6 +9,25 @@ export interface PharmacistRecord {
   status?: string | null;
   photo_url?: string | null;
   score?: number;
+  education?: EducationEntry[];
+  work_experience?: WorkExperience;
+}
+
+export interface EducationEntry {
+  Category?: string;
+  'Board/University'?: string;
+  'College Name'?: string;
+  'College Address'?: string;
+  From?: string;
+  To?: string;
+  'HT No'?: string;
+}
+
+export interface WorkExperience {
+  Address?: string;
+  State?: string;
+  District?: string;
+  'Pin code'?: string;
 }
 
 export type Category = 'BPharm' | 'DPharm' | 'MPharm' | 'PharmD' | 'QC' | 'QP';

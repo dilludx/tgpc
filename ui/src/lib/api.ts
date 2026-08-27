@@ -89,6 +89,22 @@ export async function advancedSearch(f: AdvancedFilters): Promise<PharmacistReco
   }
 }
 
+export async function getRecord(regNo: string): Promise<PharmacistRecord | null> {
+  const clean = regNo.trim().toUpperCase();
+  if (!clean) return null;
+  try {
+    const { data, error } = await supabase
+      .from('rph')
+      .select('registration_number, name, father_name, category, gender, validity_date, status, photo_url, serial_number, education, work_experience')
+      .eq('registration_number', clean)
+      .single();
+    if (error || !data) return null;
+    return data as PharmacistRecord;
+  } catch {
+    return null;
+  }
+}
+
 export async function getStats(): Promise<Stats | null> {
   try {
     const { data, error } = await supabase.rpc('get_rph_stats');

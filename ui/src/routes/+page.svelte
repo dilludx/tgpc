@@ -491,7 +491,11 @@
                 <td class="py-1.5">
                   <img src={photoUrl(r)} alt="" loading="lazy" class="w-9 h-11 rounded object-cover bg-[#f3f4f6]" />
                 </td>
-                <td class="py-2.5 text-[#2563eb]" style="font-weight:600">{r.registration_number}</td>
+                <td class="py-2.5 text-[#2563eb]" style="font-weight:600">
+                  <a href="/rph/{r.registration_number}" class="hover:underline no-underline" aria-label="View profile for {r.registration_number}">
+                    {r.registration_number}
+                  </a>
+                </td>
                 <td class="py-2.5 truncate hidden lg:table-cell" title={r.name}>{r.name}</td>
                 <td class="py-2.5 truncate hidden lg:table-cell" title={r.father_name || ''}>{r.father_name || '—'}</td>
                 <td class="py-2.5 hidden xl:table-cell">{r.gender || '—'}</td>
@@ -515,7 +519,7 @@
             <div class="flex gap-3 py-2 border-b border-[#f3f4f6] text-[0.875rem]" style="content-visibility:auto;contain-intrinsic-size:110px">
               <img src={photoUrl(r)} alt="" loading="lazy" class="w-10 h-12 rounded object-cover bg-[#f3f4f6] flex-shrink-0" />
               <div class="min-w-0">
-                <span class="text-[#2563eb]" style="font-weight:600">{r.registration_number}</span>
+                <a href="/rph/{r.registration_number}" class="text-[#2563eb] hover:underline no-underline" style="font-weight:600" aria-label="View profile for {r.registration_number}">{r.registration_number}</a>
                 <div class="mt-0.5 text-[#374151] truncate">{r.name}</div>
                 <div class="mt-0.5 text-[#374151] truncate">{r.father_name || '—'}</div>
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[#374151]">
