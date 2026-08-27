@@ -54,7 +54,16 @@ class _TGPCTLSAdapter(HTTPAdapter):
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_REQUIRED
         kwargs["ssl_context"] = ctx
+        kwargs["assert_hostname"] = False
         return super().init_poolmanager(*args, **kwargs)
+
+    def proxy_manager_for(self, *args, **kwargs):
+        ctx = create_urllib3_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_REQUIRED
+        kwargs["ssl_context"] = ctx
+        kwargs["assert_hostname"] = False
+        return super().proxy_manager_for(*args, **kwargs)
 
 
 # --- Models ---
