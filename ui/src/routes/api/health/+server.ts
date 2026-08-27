@@ -1,10 +1,9 @@
 import { json } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
 
-export async function GET({ platform }) {
-  const env = (platform?.env || {}) as Record<string, string>;
-  const supabaseUrl = env['SUPABASE_URL'] || import.meta.env.PUBLIC_SUPABASE_URL;
-  const supabaseKey = env['SUPABASE_PUBLISHABLE_KEY'] || import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+export async function GET() {
+  const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+  const supabaseKey = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   interface CheckResult {
     status: 'ok' | 'down' | 'stale';
