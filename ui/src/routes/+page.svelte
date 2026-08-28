@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PharmacistRecord, Category, CategoryFilter } from '$lib/types';
-  import { searchRecords, advancedSearch, type AdvancedFilters } from '$lib/api';
+  import { searchWithRefiners, type AdvancedFilters } from '$lib/api';
   import DatePicker from '$lib/DatePicker.svelte';
   import { CATEGORY_COLORS, CATEGORIES as CAT_NAMES } from '$lib/colors';
   import { PUBLIC_R2_PHOTO_BASE } from '$env/static/public';
@@ -18,7 +18,6 @@
   let results = $state<PharmacistRecord[]>([]);
   let searched = $state(false);
   let advMode = $state(false);
-  let advActive = $state(false);
 
   const CATEGORY_FILTERS: CategoryFilter[] = ['all', ...CAT_NAMES];
 
@@ -34,21 +33,28 @@
   });
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
-  // Debounced typeahead — 300ms after typing, q>=3
+  // Debounced typeahead — 300ms after typing, q>=3 (refiners atop live)
   $effect(() => {
     const q = query.trim();
-    if (advActive) return;
+    // track refiners so debounced search re-runs when they change
+    const _ref = JSON.stringify(advFilters) + advCats.join(',');
     clearTimeout(debounceTimer);
-    if (q.length < 3) {
-      if (q.length === 0 && searched && !advActive) {
+    if (q.length < 3 && !hasAnyRefiner()) {
+      if (q.length === 0 && searched) {
         // handled by clear effect below
       }
       return;
     }
-    // Don't debounce if already searched same query
     debounceTimer = setTimeout(() => { doSearch(); }, 300);
     return () => clearTimeout(debounceTimer);
   });
+
+  function hasAnyRefiner(): boolean {
+    return (advFilters.name ?? '').trim() !== '' || (advFilters.father_name ?? '').trim() !== '' || (advFilters.registration_number ?? '').trim() !== ''
+      || advCats.length > 0 || (advFilters.gender ?? '') !== '' || (advFilters.status ?? '') !== '' || (advFilters.valid_till ?? '') !== '';
+  }
+
+  let refinersActive = $derived(hasAnyRefiner());
 
   // Single scrollable list — no cap, show all results.
   let resultsBox = $state<HTMLDivElement | undefined>();
@@ -99,7 +105,7 @@
   });
 
   $effect(() => {
-    if (query.trim() === '' && searched && !advActive) {
+    if (query.trim() === '' && !hasAnyRefiner() && searched) {
       searched = false;
       results = [];
       category = 'all';
@@ -108,39 +114,36 @@
 
   async function doSearch() {
     const q = query.trim();
-    if (q.length < 3 || loading) return;
+    const hasRef = hasAnyRefiner();
+    if (q.length < 3 && !hasRef) return;
+    if (loading) return;
     loading = true;
     searched = true;
-    advMode = false;
-    advActive = false;
     try {
-      results = await searchRecords(query);
+      const payload: AdvancedFilters & { category?: Category[] } = {
+        ...advFilters,
+        category: advCats.length > 0 ? advCats : undefined
+      };
+      results = await searchWithRefiners(query, payload);
+      category = 'all';
     } finally {
       loading = false;
     }
   }
 
   async function applyAdvanced() {
-    const hasAny =
-      (advFilters.name ?? '').trim() ||
-      (advFilters.father_name ?? '').trim() ||
-      (advFilters.registration_number ?? '').trim() ||
-      advCats.length > 0 ||
-      (advFilters.gender ?? '') ||
-      (advFilters.status ?? '') ||
-      (advFilters.valid_till ?? '');
+    // Refiners atop live — don't clear query, just search with current refiners
+    const hasAny = hasAnyRefiner() || query.trim().length >= 3;
     if (!hasAny || loading) return;
     loading = true;
     searched = true;
-    advActive = true;
-    query = '';
-    category = 'all';
-    const payload: AdvancedFilters = {
-      ...advFilters,
-      category: advCats.length > 0 ? advCats : undefined
-    };
     try {
-      results = await advancedSearch(payload);
+      const payload: AdvancedFilters & { category?: Category[] } = {
+        ...advFilters,
+        category: advCats.length > 0 ? advCats : undefined
+      };
+      results = await searchWithRefiners(query, payload);
+      category = 'all';
     } finally {
       loading = false;
       advMode = false;
@@ -150,11 +153,13 @@
   function clearAdvanced() {
     advFilters = { valid_till: '' };
     advCats = [];
-    if (searched && advActive) {
+    // keep live results but re-run without refiners if a query is active
+    if (searched && query.trim().length >= 3) {
+      doSearch();
+    } else if (searched && !query.trim()) {
       results = [];
       searched = false;
       category = 'all';
-      advActive = false;
     }
   }
 
@@ -187,7 +192,6 @@
     results = [];
     searched = false;
     advMode = false;
-    advActive = false;
     advFilters = { valid_till: '' };
     advCats = [];
   }
@@ -340,8 +344,8 @@
     {#if searched}
       <div class="flex flex-wrap items-center gap-1 min-w-0 flex-1" transition:fly={{ y: 6, duration: 200, opacity: 0 }}>
         <span class="text-[0.75rem] text-[#9ca3af] tabular-nums flex-shrink-0">{filtered.length.toLocaleString()} results</span>
-        {#if advActive}
-          <span class="text-[0.65rem] font-semibold uppercase rounded px-1.5 py-0.5 flex-shrink-0" style="background:rgba(0,204,102,0.08);color:#00cc66">Advanced</span>
+        {#if refinersActive}
+          <span class="text-[0.65rem] font-semibold uppercase rounded px-1.5 py-0.5 flex-shrink-0" style="background:rgba(0,204,102,0.08);color:#00cc66">Refined</span>
         {/if}
         <span class="ml-auto flex flex-wrap items-center gap-1.5">
           {#each CATEGORY_FILTERS as cat}

@@ -80,6 +80,48 @@ function parseValidityDate(v: string): Date | null {
   return new Date(parseInt(m[3], 10), month, parseInt(m[1], 10));
 }
 
+const REV_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function formatValidTillForDB(iso: string): string | null {
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d.getTime())) return null;
+  return `${String(d.getDate()).padStart(2,'0')}-${REV_MONTHS[d.getMonth()]}-${d.getFullYear()}`;
+}
+
+// Unified search: live query + advanced refiners as AND (Phase 1 refiners atop live)
+export async function searchWithRefiners(query: string, f: AdvancedFilters & { category?: Category[] }): Promise<PharmacistRecord[]> {
+  const q = query.trim();
+  const hasQ = q.length >= 3;
+  const hasFilters = (f.name && f.name.trim()) || (f.father_name && f.father_name.trim()) || (f.registration_number && f.registration_number.trim())
+    || (f.category && f.category.length > 0) || (f.gender && f.gender !== 'Any' && f.gender.trim()) || (f.status && f.status !== 'Any' && f.status.trim()) || (f.valid_till && f.valid_till.trim());
+  if (!hasQ && !hasFilters) return [];
+  // If only live query and no refiners, keep RPC path for ranked results
+  if (hasQ && !hasFilters) return searchRecords(query);
+  // Otherwise build filtered query (server-side, no cap)
+  try {
+    let qb = supabase.from('rph').select('registration_number, name, father_name, category, gender, validity_date, status, photo_url');
+    if (hasQ) {
+      const safe = sanitizeQuery(q);
+      qb = qb.or(`registration_number.ilike.%${safe}%,name.ilike.%${safe}%,father_name.ilike.%${safe}%`);
+    }
+    if (f.name && f.name.trim()) qb = qb.ilike('name', `%${stripWildcards(f.name)}%`);
+    if (f.father_name && f.father_name.trim()) qb = qb.ilike('father_name', `%${stripWildcards(f.father_name)}%`);
+    if (f.registration_number && f.registration_number.trim()) qb = qb.ilike('registration_number', `${stripWildcards(f.registration_number)}%`);
+    if (f.category && f.category.length > 0) qb = qb.in('category', f.category);
+    if (f.gender && f.gender !== 'Any' && f.gender.trim()) qb = qb.eq('gender', f.gender);
+    if (f.status && f.status !== 'Any' && f.status.trim()) qb = qb.eq('status', f.status);
+    if (f.valid_till && f.valid_till.trim()) {
+      const dbDate = formatValidTillForDB(f.valid_till);
+      if (dbDate) qb = qb.eq('validity_date', dbDate);
+    }
+    const { data, error } = await qb;
+    if (error) throw error;
+    const rows = (data as PharmacistRecord[]) || [];
+    return hasQ ? rankRecords(rows, q) : sortRecords(rows);
+  } catch {
+    return [];
+  }
+}
+
 export async function advancedSearch(f: AdvancedFilters): Promise<PharmacistRecord[]> {
   try {
     let query = supabase
