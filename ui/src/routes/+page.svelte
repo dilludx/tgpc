@@ -26,6 +26,12 @@
   let advCats = $state<Category[]>([]);
 
   let filtered = $derived(category === 'all' ? results : results.filter(r => r.category === category));
+  let categoryCounts = $derived.by(() => {
+    const m: Record<string, number> = { all: results.length };
+    for (const c of CAT_NAMES) m[c] = 0;
+    for (const r of results) m[r.category] = (m[r.category] || 0) + 1;
+    return m;
+  });
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
   // Debounced typeahead — 300ms after typing, q>=3
@@ -342,7 +348,7 @@
             <button onclick={() => { category = cat; }}
               class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none"
               style={chipStyle(cat)}>
-              {cat === 'all' ? 'All' : cat}
+              {cat === 'all' ? 'All' : cat} <span class="opacity-60">({(categoryCounts[cat] || 0).toLocaleString()})</span>
             </button>
           {/each}
           <button onclick={exportCSV} class="flex items-center gap-1 px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer border-none transition-colors" style="background:rgba(0,204,102,0.08);color:#00cc66">EXPORT CSV</button>
