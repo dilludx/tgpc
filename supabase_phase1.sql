@@ -14,7 +14,8 @@ CREATE INDEX IF NOT EXISTS rph_reg_trgm ON rph USING GIN(registration_number gin
 CREATE INDEX IF NOT EXISTS rph_validity_idx ON rph(validity_date);
 
 -- Rewrite RPC to hybrid rank + typo + prefix
-CREATE OR REPLACE FUNCTION search_pharmacists(q text, lim int)
+DROP FUNCTION IF EXISTS search_pharmacists(text, integer);
+CREATE FUNCTION search_pharmacists(q text, lim int)
 RETURNS SETOF rph AS $$
   SELECT rph.* FROM rph
   WHERE tsv @@ plainto_tsquery('english', q)
