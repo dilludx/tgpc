@@ -334,11 +334,11 @@
       </div>
     </div>
 
-    <button onclick={toggleAdvanced}
-      class="flex-shrink-0 rounded px-3 py-1.5 text-[0.7rem] font-semibold uppercase cursor-pointer border transition-colors"
-      style="border-color:{advMode ? '#00cc66' : '#e5e7eb'};background:{advMode ? 'rgba(0,204,102,0.08)' : '#fff'};color:{advMode ? '#00cc66' : '#374151'}"
+    <button onclick={toggleAdvanced} aria-label="Filters"
+      class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md cursor-pointer border transition-colors"
+      style="border-color:{advMode ? '#00cc66' : '#e5e7eb'};background:{advMode ? 'rgba(0,204,102,0.08)' : '#fff'};color:{advMode ? '#00cc66' : '#9ca3af'}"
       transition:fly={{ y: 4, duration: 120, opacity: 0 }}>
-      Advanced
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M7 12h10M10 18h4"/></svg>
     </button>
 
     {#if searched}
@@ -363,13 +363,7 @@
   </div>
 
   {#if advMode}
-    <div class="relative rounded-lg border border-[#e5e7eb] bg-white shadow-sm" transition:fade={{ duration: 150 }}>
-      <button onclick={toggleAdvanced} aria-label="Close advanced search"
-        class="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded text-[#9ca3af] hover:text-[#374151] hover:bg-[#f3f4f6] cursor-pointer border-none transition-colors">
-        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-
-      <div class="px-3.5 py-3.5">
+    <div class="border-t border-[#e5e7eb] bg-[#f9fafb] -mx-4 sm:-mx-6 px-4 sm:px-6 py-3" transition:fade={{ duration: 150 }}>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-2.5">
           <label class="block">
             <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">RPC Number</span>
@@ -451,7 +445,6 @@
           </div>
         </div>
       </div>
-    </div>
   {/if}
 
   <!-- Results -->
