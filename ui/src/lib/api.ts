@@ -38,6 +38,24 @@ export async function searchRecords(query: string): Promise<PharmacistRecord[]> 
   }
 }
 
+export async function searchCount(query: string): Promise<number | null> {
+  const q = query.trim();
+  if (q.length < 3) return null;
+  try {
+    // Use count with head:true so we don't fetch rows — accurate total beyond SEARCH_CAP
+    // Do this for both RPC and fallback paths via the same fallback filter
+    const safe = sanitizeQuery(q);
+    const { count, error } = await supabase
+      .from('rph')
+      .select('registration_number', { count: 'exact', head: true })
+      .or(`registration_number.ilike.%${safe}%,name.ilike.%${safe}%`);
+    if (error) return null;
+    return count;
+  } catch {
+    return null;
+  }
+}
+
 export interface AdvancedFilters {
   name?: string;
   father_name?: string;
@@ -86,6 +104,25 @@ export async function advancedSearch(f: AdvancedFilters): Promise<PharmacistReco
     return sortRecords(filtered);
   } catch {
     return [];
+  }
+}
+
+export async function advancedCount(f: AdvancedFilters): Promise<number | null> {
+  try {
+    // valid_till is client-side filtered — count would be inaccurate if we hit cap, so don't report accurate total in that case
+    if (f.valid_till) return null;
+    let query = supabase.from('rph').select('registration_number', { count: 'exact', head: true });
+    if (f.name && f.name.trim()) query = query.ilike('name', `%${stripWildcards(f.name)}%`);
+    if (f.father_name && f.father_name.trim()) query = query.ilike('father_name', `%${stripWildcards(f.father_name)}%`);
+    if (f.registration_number && f.registration_number.trim()) query = query.ilike('registration_number', `${stripWildcards(f.registration_number)}%`);
+    if (f.category && f.category.length > 0) query = query.in('category', f.category);
+    if (f.gender && f.gender !== 'Any') query = query.eq('gender', f.gender);
+    if (f.status && f.status !== 'Any') query = query.eq('status', f.status);
+    const { count, error } = await query;
+    if (error) return null;
+    return count;
+  } catch {
+    return null;
   }
 }
 
