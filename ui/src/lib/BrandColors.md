@@ -8,7 +8,7 @@ Every screen, component, export, and new code must use ONLY these in-house color
 |------------|----------|----------------------------------------------|
 | tgpc green | `#00cc66`| Primary actions, active states, sync, "TGPC" |
 | tgpc red   | `#ef4444`| Destructive, inactive, "RPh", disclaimer     |
-| tgpc grey  | `#9ca3af`| Secondary text, "Registry", meta, placeholders |
+| tgpc grey  | `#9ca3af`| Secondary text, "Index", meta, placeholders |
 | tgpc blue  | `#2563eb`| Links, RPC numbers, monospace values         |
 
 ## Supporting Neutrals (allowed)

@@ -1,4 +1,4 @@
-# TGPC RPh Registry
+# TGPC RPh Index
 
 Public-facing search portal for the Telangana State Pharmacy Council pharmacist registry. Scrapes [pharmacycouncil.telangana.gov.in](https://www.pharmacycouncil.telangana.gov.in), enriches records (photo, gender, status, validity), and serves a fast search UI.
 

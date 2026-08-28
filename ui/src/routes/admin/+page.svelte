@@ -126,7 +126,7 @@
 </script>
 
 <svelte:head>
-  <title>Admin — TGPC RPh Registry</title>
+  <title>Admin — TGPC RPh Index</title>
 </svelte:head>
 
 <div bind:this={panel} style="height:{panelHeight}px;overflow:hidden;display:flex;flex-direction:column">

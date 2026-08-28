@@ -1058,16 +1058,16 @@ class Manager:
 
         new_t, mod_t, rem_t = new, mod, rem
 
-        text = f"TGPC RPh Registry Sync Report\n{sync_time}\n\n"
+        text = f"TGPC RPh Index Sync Report\n{sync_time}\n\n"
         html = (
             '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>'
             '<body style="font-family:-apple-system,sans-serif;background:#fff;padding:15px 20px;color:#333;line-height:1.3;margin:0;">'  # noqa: E501
             '<div style="max-width:600px;">'
-            f'<h2 style="margin:0;font-size:17px;line-height:1.2;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">RPh</span> <span style="color:#808080;">Registry</span> Sync Report</h2>'  # noqa: E501
+            f'<h2 style="margin:0;font-size:17px;line-height:1.2;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">RPh</span> <span style="color:#808080;">Index</span> Sync Report</h2>'  # noqa: E501
             f'<div style="color:#666;font-size:12px;margin-bottom:30px;font-weight:500;">{sync_time}</div>'
             f"{fmt_html('🌱 NEW', new_t, '#00cc66')}{fmt_html('🌀 CHANGES', mod_t, '#3b82f6')}{fmt_html('❌ REMOVALS', rem_t, '#ef4444')}"  # noqa: E501
             '<div style="margin-top:15px;font-size:11px;color:#888;padding-top:10px;">'
-            '<div style="font-weight:700;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">RPh</span> <span style="color:#808080;">Registry</span></div>'  # noqa: E501
+            '<div style="font-weight:700;"><span style="color:#00cc66;">TGPC</span> <span style="color:#ef4444;">RPh</span> <span style="color:#808080;">Index</span></div>'  # noqa: E501
             "<div>Open-Source TGPC Pharmacist Data</div></div></div></body></html>"
         )
         for label, items, total in [("NEW", new_t, new), ("CHANGES", mod_t, mod), ("REMOVALS", rem_t, rem)]:
@@ -1075,7 +1075,7 @@ class Manager:
                 text += (
                     f"{label} ({len(total)}):\n" + "\n".join(sorted(items, key=lambda x: (cat(x), reg_no(x)))) + "\n\n"
                 )
-        text += "---\nTGPC RPh Registry\nOpen-Source TGPC Pharmacist Data"
+        text += "---\nTGPC RPh Index\nOpen-Source TGPC Pharmacist Data"
 
         total = data.get("total_records", 0)
         total_fmt = f"{total:,}"

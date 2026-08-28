@@ -128,7 +128,7 @@ def _cmd_creds_delete(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="TGPC RPh Registry Manager")
+    parser = argparse.ArgumentParser(description="TGPC RPh Index Manager")
     subparsers = parser.add_subparsers(dest="command")
 
     # Update command

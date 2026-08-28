@@ -211,7 +211,7 @@
     const doc = new jsPDF({ format: 'a4', unit: 'mm' });
     const now = new Date();
     const kw = query.trim() || '(all)';
-    const title = `TGPC RPh Registry - Search: ${kw} - ${fmtDate(now)}`;
+    const title = `TGPC RPh Index - Search: ${kw} - ${fmtDate(now)}`;
     const body = filtered.map(r => [r.registration_number, r.name, r.father_name || '—', r.gender || '—', r.category, r.validity_date || '—', r.status || '—']);
 
     const TEXTS = Object.fromEntries(
@@ -250,7 +250,7 @@
       doc.setFontSize(8);
       doc.setTextColor(150, 150, 150);
       const ph = doc.internal.pageSize.height;
-      doc.text('TGPC RPh Registry - Open-Source Pharmacist Data', 10, ph - 10);
+      doc.text('TGPC RPh Index - Open-Source Pharmacist Data', 10, ph - 10);
       doc.text('tgpc.pages.dev', doc.internal.pageSize.width / 2, ph - 10, { align: 'center' });
       doc.text(`Page ${i} / ${total}`, doc.internal.pageSize.width - 10, ph - 10, { align: 'right' });
     }
@@ -280,7 +280,7 @@
       csvCell(r.validity_date),
       csvCell(r.status)
     ]);
-    const csv = [`# TGPC RPh Registry - Search: ${kw} - ${fmtDate(now)}`, header.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const csv = [`# TGPC RPh Index - Search: ${kw} - ${fmtDate(now)}`, header.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);

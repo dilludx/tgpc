@@ -1,4 +1,4 @@
-# Code Review — TGPC RPh Registry
+# Code Review — TGPC RPh Index
 
 **Date:** 2026-08-20
 **Scope:** Full repo — Python pipeline (`tgpc/`, `scripts/`), SvelteKit frontend (`ui/`), CI (`.github/workflows/`), tests (`tests/`), docs

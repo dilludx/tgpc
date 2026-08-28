@@ -15,9 +15,9 @@ export const load: PageServerLoad = async ({ params }: { params: { registration_
   }
 
   const photo = record.photo_url || `${PUBLIC_R2_PHOTO_BASE}/${regNo}.webp`;
+  const title = `${record.name} — RPC ${record.registration_number} | TGPC RPh Index`;
 
-  const title = `${record.name} — RPC ${record.registration_number} | TGPC RPh Registry`;
-  const description = `Registered Pharmacist: ${record.name} (${record.registration_number}), ${record.category}, ${record.status || 'Status unknown'}, Valid till ${record.validity_date || 'unknown'}. Telangana State Pharmacy Council Registry.`;
+  const description = `Registered Pharmacist: ${record.name} (${record.registration_number}), ${record.category}, ${record.status || 'Status unknown'}, Valid till ${record.validity_date || 'unknown'}. Telangana State Pharmacy Council Index.`;
 
   return {
     record,

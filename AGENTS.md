@@ -4,7 +4,7 @@ These instructions apply to any human or AI agent working in this repository.
 
 ## Project
 
-TGPC RPh Registry — public search portal for the Telangana State Pharmacy Council
+TGPC RPh Index — public search portal for the Telangana State Pharmacy Council
 pharmacist registry. SvelteKit 5 + Tailwind v4 + Supabase frontend (`ui/`),
 Python scraping/enrichment pipeline (`tgpc/`). Pushes to `main` auto-deploy to
 Cloudflare Pages (`tgpc.pages.dev`).
@@ -18,7 +18,7 @@ colors. Do not invent or hardcode any new hex values.
 |---|---|---|
 | tgpc green | `#00cc66` | Primary, active states |
 | tgpc red | `#ef4444` | Destructive, inactive |
-| tgpc grey | `#9ca3af` | Secondary text ("Registry") |
+| tgpc grey | `#9ca3af` | Secondary text ("Index") |
 | tgpc blue | `#2563eb` | Links, RPC numbers |
 
 Supporting neutrals: `#111827` text, `#6b7280` muted, `#e5e7eb` border,

@@ -1,5 +1,5 @@
 <svelte:head>
-  <title>TGPC RPh Registry</title>
+  <title>TGPC RPh Index</title>
 </svelte:head>
 
 <script lang="ts">
@@ -104,7 +104,7 @@
           <div style="display:table;width:0">
             <a href="/" class="no-underline" style="display:table-row;white-space:nowrap;width:1px">
               <span class="text-[1.4rem] font-bold tracking-tight inline-flex items-center gap-1" style="color:#111827;white-space:nowrap">
-                <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">RPh</span><span class="text-[#9ca3af]">Registry</span>
+                <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">RPh</span><span class="text-[#9ca3af]">Index</span>
               </span>
             </a>
             <span class="text-[0.65rem] text-[#9ca3af] font-medium truncate mb-0.5" style="display:table-row;overflow:hidden">Open-Source TGPC Pharmacist Data</span>
@@ -174,7 +174,7 @@
           style="padding-bottom:calc(0.25rem + env(safe-area-inset-bottom, 0px))">
     <div class="w-full px-4 sm:px-6 flex items-center justify-between gap-4">
       <span class="text-left flex-1 pr-4" style="text-wrap:balance"><span style="color:#ef4444">DISCLAIMER:</span> This is an unofficial, third-party tool not affiliated with TGPC or any government body. Data is for reference only — verify all information from official sources before use. Users assume all risk.<br>No warranty as to accuracy, completeness, or timeliness. No liability for errors, omissions, or actions taken based on this content. Operated under fair dealing (Indian Copyright Act, 1957, Section 52).</span>
-      <span class="text-right whitespace-nowrap font-semibold flex-shrink-0 text-[0.7rem]">TGPC RPh Registry &copy; {new Date().getFullYear()}</span>
+      <span class="text-right whitespace-nowrap font-semibold flex-shrink-0 text-[0.7rem]">TGPC RPh Index &copy; {new Date().getFullYear()}</span>
     </div>
   </footer>
 </div>
