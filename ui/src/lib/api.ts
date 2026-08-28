@@ -20,10 +20,10 @@ export async function searchRecords(query: string): Promise<PharmacistRecord[]> 
   const q = query.trim();
   if (q.length < 3) return [];
   try {
-    // No cap — fetch all matches via RPC with high limit
+    // No cap — fetch all matches via RPC with high limit (Phase 1: RPC now ranked via ts_rank + similarity)
     const { data, error } = await supabase.rpc('search_pharmacists', { q, lim: 100000 });
     if (error) throw error;
-    return sortRecords((data as PharmacistRecord[]) || []);
+    return rankRecords((data as PharmacistRecord[]) || [], q);
   } catch {
     try {
       const safe = sanitizeQuery(q);
@@ -31,7 +31,7 @@ export async function searchRecords(query: string): Promise<PharmacistRecord[]> 
         .from('rph')
         .select('registration_number, name, father_name, category, gender, validity_date, status, photo_url')
         .or(`registration_number.ilike.%${safe}%,name.ilike.%${safe}%`);
-      return sortRecords(data || []);
+      return rankRecords((data as PharmacistRecord[]) || [], q);
     } catch {
       return [];
     }
@@ -195,6 +195,31 @@ function parseReg(reg: string): { prefix: string; num: number } {
 
 function sortRecords(data: PharmacistRecord[]): PharmacistRecord[] {
   return [...data].sort((a, b) => {
+    const ra = parseReg(a.registration_number);
+    const rb = parseReg(b.registration_number);
+    if (ra.prefix !== rb.prefix) return ra.prefix.localeCompare(rb.prefix);
+    return ra.num - rb.num;
+  });
+}
+
+function rankRecords(data: PharmacistRecord[], q: string): PharmacistRecord[] {
+  const qq = q.toLowerCase();
+  function score(r: PharmacistRecord): number {
+    const reg = r.registration_number.toLowerCase();
+    const name = r.name.toLowerCase();
+    const father = (r.father_name || '').toLowerCase();
+    if (reg === qq) return 100;
+    if (reg.startsWith(qq)) return 90;
+    if (name === qq) return 80;
+    if (name.startsWith(qq)) return 70;
+    if (name.includes(qq)) return 60;
+    if (father.includes(qq)) return 40;
+    if (reg.includes(qq)) return 30;
+    return 0;
+  }
+  return [...data].sort((a, b) => {
+    const sa = score(a), sb = score(b);
+    if (sa !== sb) return sb - sa;
     const ra = parseReg(a.registration_number);
     const rb = parseReg(b.registration_number);
     if (ra.prefix !== rb.prefix) return ra.prefix.localeCompare(rb.prefix);

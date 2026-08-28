@@ -26,6 +26,23 @@
   let advCats = $state<Category[]>([]);
 
   let filtered = $derived(category === 'all' ? results : results.filter(r => r.category === category));
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+  // Debounced typeahead — 300ms after typing, q>=3
+  $effect(() => {
+    const q = query.trim();
+    if (advActive) return;
+    clearTimeout(debounceTimer);
+    if (q.length < 3) {
+      if (q.length === 0 && searched && !advActive) {
+        // handled by clear effect below
+      }
+      return;
+    }
+    // Don't debounce if already searched same query
+    debounceTimer = setTimeout(() => { doSearch(); }, 300);
+    return () => clearTimeout(debounceTimer);
+  });
 
   // Single scrollable list — no cap, show all results.
   let resultsBox = $state<HTMLDivElement | undefined>();
