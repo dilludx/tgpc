@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PharmacistRecord, Category, CategoryFilter } from '$lib/types';
-  import { searchRecords, searchCount, advancedSearch, advancedCount, SEARCH_CAP, type AdvancedFilters } from '$lib/api';
+  import { searchRecords, advancedSearch, type AdvancedFilters } from '$lib/api';
   import DatePicker from '$lib/DatePicker.svelte';
   import { CATEGORY_COLORS, CATEGORIES as CAT_NAMES } from '$lib/colors';
   import { PUBLIC_R2_PHOTO_BASE } from '$env/static/public';
@@ -26,9 +26,8 @@
   let advCats = $state<Category[]>([]);
 
   let filtered = $derived(category === 'all' ? results : results.filter(r => r.category === category));
-  let totalCount = $state<number | null>(null);
 
-  // Single scrollable list over the capped result set (CODE_REVIEW.md H5) — no pagination.
+  // Single scrollable list — no cap, show all results.
   let resultsBox = $state<HTMLDivElement | undefined>();
   let resultsMaxH = $state('calc(100vh - 240px)');
   let resultsMinH = $state('0px');
@@ -91,11 +90,8 @@
     searched = true;
     advMode = false;
     advActive = false;
-    totalCount = null;
     try {
-      const [recs, cnt] = await Promise.all([searchRecords(query), searchCount(query)]);
-      results = recs;
-      totalCount = cnt;
+      results = await searchRecords(query);
     } finally {
       loading = false;
     }
@@ -121,9 +117,7 @@
       category: advCats.length > 0 ? advCats : undefined
     };
     try {
-      const [recs, cnt] = await Promise.all([advancedSearch(payload), advancedCount(payload)]);
-      results = recs;
-      totalCount = cnt;
+      results = await advancedSearch(payload);
     } finally {
       loading = false;
       advMode = false;
@@ -138,7 +132,6 @@
       searched = false;
       category = 'all';
       advActive = false;
-      totalCount = null;
     }
   }
 
@@ -174,7 +167,6 @@
     advActive = false;
     advFilters = { valid_till: '' };
     advCats = [];
-    totalCount = null;
   }
 
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -324,7 +316,7 @@
 
     {#if searched}
       <div class="flex flex-wrap items-center gap-1 min-w-0 flex-1" transition:fly={{ y: 6, duration: 200, opacity: 0 }}>
-        <span class="text-[0.75rem] text-[#9ca3af] tabular-nums flex-shrink-0">{(category === 'all' && totalCount !== null ? totalCount : filtered.length).toLocaleString()} results</span>
+        <span class="text-[0.75rem] text-[#9ca3af] tabular-nums flex-shrink-0">{filtered.length.toLocaleString()} results</span>
         {#if advActive}
           <span class="text-[0.65rem] font-semibold uppercase rounded px-1.5 py-0.5 flex-shrink-0" style="background:rgba(0,204,102,0.08);color:#00cc66">Advanced</span>
         {/if}
@@ -447,15 +439,6 @@
     {:else if filtered.length === 0}
       <p class="text-[0.85rem] text-[#9ca3af] py-8 text-center">No results</p>
     {:else}
-      {#if totalCount !== null && totalCount > SEARCH_CAP && category === 'all'}
-        <div class="text-[0.7rem] text-[#6b7280] bg-[#f4f4f5] border border-[#e5e7eb] rounded px-3 py-2 mb-2">
-          Showing first {SEARCH_CAP.toLocaleString()} of {totalCount.toLocaleString()} results — refine your search to see more.
-        </div>
-      {:else if results.length >= SEARCH_CAP}
-        <div class="text-[0.7rem] text-[#6b7280] bg-[#f4f4f5] border border-[#e5e7eb] rounded px-3 py-2 mb-2">
-          Showing first {SEARCH_CAP.toLocaleString()} results — refine your search to see more.
-        </div>
-      {/if}
       <div class="hidden md:block">
         <div style="max-height:{resultsMaxH};min-height:{resultsMinH};overflow-y:auto;overflow-x:auto" bind:this={resultsBox}>
         <table class="w-full" style="table-layout:auto">

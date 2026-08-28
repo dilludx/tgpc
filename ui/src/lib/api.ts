@@ -1,7 +1,7 @@
 import type { PharmacistRecord, Notice, DispatchFile, Stats, Category } from './types';
 import { supabase } from './supabase';
 
-// Server-side result cap: keeps payloads and DOM light (CODE_REVIEW.md H5).
+// No cap — show all matching results (user requested). Keep constant for backwards compat but not used.
 export const SEARCH_CAP = 500;
 
 // Strip PostgREST filter syntax (,()) and LIKE wildcards (%_*) so raw input can
@@ -20,7 +20,8 @@ export async function searchRecords(query: string): Promise<PharmacistRecord[]> 
   const q = query.trim();
   if (q.length < 3) return [];
   try {
-    const { data, error } = await supabase.rpc('search_pharmacists', { q, lim: SEARCH_CAP });
+    // No cap — fetch all matches via RPC with high limit
+    const { data, error } = await supabase.rpc('search_pharmacists', { q, lim: 100000 });
     if (error) throw error;
     return sortRecords((data as PharmacistRecord[]) || []);
   } catch {
@@ -29,8 +30,7 @@ export async function searchRecords(query: string): Promise<PharmacistRecord[]> 
       const { data } = await supabase
         .from('rph')
         .select('registration_number, name, father_name, category, gender, validity_date, status, photo_url')
-        .or(`registration_number.ilike.%${safe}%,name.ilike.%${safe}%`)
-        .limit(SEARCH_CAP);
+        .or(`registration_number.ilike.%${safe}%,name.ilike.%${safe}%`);
       return sortRecords(data || []);
     } catch {
       return [];
@@ -91,7 +91,7 @@ export async function advancedSearch(f: AdvancedFilters): Promise<PharmacistReco
     if (f.category && f.category.length > 0) query = query.in('category', f.category);
     if (f.gender && f.gender !== 'Any') query = query.eq('gender', f.gender);
     if (f.status && f.status !== 'Any') query = query.eq('status', f.status);
-    const { data, error } = await query.limit(SEARCH_CAP);
+    const { data, error } = await query;
     if (error) throw error;
     const rows = (data as PharmacistRecord[]) || [];
     if (!f.valid_till) return sortRecords(rows);
