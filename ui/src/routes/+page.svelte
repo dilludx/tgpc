@@ -355,19 +355,19 @@
         </label>
         <label class="flex flex-col gap-1">
           <span class="text-[0.6rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Gender</span>
-          <select bind:value={advFilters.gender} class="h-7 px-2 text-xs rounded border border-[#e5e7eb] bg-white outline-none focus:border-[#00cc66]">
-            <option value="">All</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
+          <div class="flex h-7 rounded border border-[#e5e7eb] overflow-hidden bg-white">
+            <button onclick={() => advFilters.gender = ''} class="flex-1 px-2 text-xs font-medium border-none" style="{!advFilters.gender ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">All</button>
+            <button onclick={() => advFilters.gender = 'Male'} class="flex-1 px-2 text-xs font-medium border-l border-[#e5e7eb] border-none" style="{advFilters.gender === 'Male' ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">Male</button>
+            <button onclick={() => advFilters.gender = 'Female'} class="flex-1 px-2 text-xs font-medium border-l border-[#e5e7eb] border-none" style="{advFilters.gender === 'Female' ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">Female</button>
+          </div>
         </label>
         <label class="flex flex-col gap-1">
           <span class="text-[0.6rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Status</span>
-          <select bind:value={advFilters.status} class="h-7 px-2 text-xs rounded border border-[#e5e7eb] bg-white outline-none focus:border-[#00cc66]">
-            <option value="">All</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
+          <div class="flex h-7 rounded border border-[#e5e7eb] overflow-hidden bg-white">
+            <button onclick={() => advFilters.status = ''} class="flex-1 px-2 text-xs font-medium border-none" style="{!advFilters.status ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">All</button>
+            <button onclick={() => advFilters.status = 'Active'} class="flex-1 px-2 text-xs font-medium border-l border-[#e5e7eb] border-none" style="{advFilters.status === 'Active' ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">Active</button>
+            <button onclick={() => advFilters.status = 'Inactive'} class="flex-1 px-2 text-xs font-medium border-l border-[#e5e7eb] border-none" style="{advFilters.status === 'Inactive' ? 'background:#ef4444;color:#fff' : 'background:#fff;color:#6b7280'}">Inactive</button>
+          </div>
         </label>
         <label class="flex flex-col gap-1">
           <span class="text-[0.6rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Valid Till</span>
