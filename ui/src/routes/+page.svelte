@@ -1,12 +1,12 @@
 <script lang="ts">
   import type { PharmacistRecord, Category, CategoryFilter } from '$lib/types';
-  import { searchWithRefiners, type AdvancedFilters } from '$lib/api';
+  import { searchRecords, type AdvancedFilters } from '$lib/api';
   import DatePicker from '$lib/DatePicker.svelte';
   import { CATEGORY_COLORS, CATEGORIES as CAT_NAMES } from '$lib/colors';
   import { PUBLIC_R2_PHOTO_BASE } from '$env/static/public';
   import jsPDF from 'jspdf';
   import autoTable from 'jspdf-autotable';
-  import { fade, fly } from 'svelte/transition';
+  import { fly } from 'svelte/transition';
 
   function photoUrl(r: PharmacistRecord): string {
     return r.photo_url || `${PUBLIC_R2_PHOTO_BASE}/${r.registration_number}.webp`;
@@ -17,14 +17,50 @@
   let loading = $state(false);
   let results = $state<PharmacistRecord[]>([]);
   let searched = $state(false);
-  let advMode = $state(false);
-
   const CATEGORY_FILTERS: CategoryFilter[] = ['all', ...CAT_NAMES];
 
   let advFilters = $state<AdvancedFilters>({ valid_till: '' });
   let advCats = $state<Category[]>([]);
 
-  let filtered = $derived(category === 'all' ? results : results.filter(r => r.category === category));
+  function hasAnyRefiner(): boolean {
+    return (advFilters.name ?? '').trim() !== '' || (advFilters.father_name ?? '').trim() !== '' || (advFilters.registration_number ?? '').trim() !== ''
+      || advCats.length > 0 || (advFilters.gender ?? '') !== '' || (advFilters.status ?? '') !== '' || (advFilters.valid_till ?? '') !== '';
+  }
+
+  let refinersActive = $derived(hasAnyRefiner());
+
+  const REV_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function formatValidTillForDisplay(iso: string): string | null {
+    const d = new Date(iso + 'T00:00:00');
+    if (isNaN(d.getTime())) return null;
+    return `${String(d.getDate()).padStart(2,'0')}-${REV_MONTHS[d.getMonth()]}-${d.getFullYear()}`;
+  }
+
+  // Result-bound filters — client-side over fetched results (no extra server fetch)
+  let filtered = $derived.by(() => {
+    let base = category === 'all' ? results : results.filter(r => r.category === category);
+    if (advFilters.name?.trim()) {
+      const q = advFilters.name.trim().toLowerCase();
+      base = base.filter(r => r.name.toLowerCase().includes(q));
+    }
+    if (advFilters.father_name?.trim()) {
+      const q = advFilters.father_name.trim().toLowerCase();
+      base = base.filter(r => (r.father_name || '').toLowerCase().includes(q));
+    }
+    if (advFilters.registration_number?.trim()) {
+      const q = advFilters.registration_number.trim().toLowerCase();
+      base = base.filter(r => r.registration_number.toLowerCase().startsWith(q));
+    }
+    if (advCats.length > 0) base = base.filter(r => advCats.includes(r.category as Category));
+    if (advFilters.gender && advFilters.gender !== '') base = base.filter(r => r.gender === advFilters.gender);
+    if (advFilters.status && advFilters.status !== '') base = base.filter(r => r.status === advFilters.status);
+    if (advFilters.valid_till?.trim()) {
+      const dbDate = formatValidTillForDisplay(advFilters.valid_till);
+      if (dbDate) base = base.filter(r => r.validity_date === dbDate);
+    }
+    return base;
+  });
+
   let categoryCounts = $derived.by(() => {
     const m: Record<string, number> = { all: results.length };
     for (const c of CAT_NAMES) m[c] = 0;
@@ -33,13 +69,11 @@
   });
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
-  // Debounced typeahead — 300ms after typing, q>=3 (refiners atop live)
+  // Debounced typeahead — 300ms after typing, q>=3
   $effect(() => {
     const q = query.trim();
-    // track refiners so debounced search re-runs when they change
-    const _ref = JSON.stringify(advFilters) + advCats.join(',');
     clearTimeout(debounceTimer);
-    if (q.length < 3 && !hasAnyRefiner()) {
+    if (q.length < 3) {
       if (q.length === 0 && searched) {
         // handled by clear effect below
       }
@@ -48,13 +82,6 @@
     debounceTimer = setTimeout(() => { doSearch(); }, 300);
     return () => clearTimeout(debounceTimer);
   });
-
-  function hasAnyRefiner(): boolean {
-    return (advFilters.name ?? '').trim() !== '' || (advFilters.father_name ?? '').trim() !== '' || (advFilters.registration_number ?? '').trim() !== ''
-      || advCats.length > 0 || (advFilters.gender ?? '') !== '' || (advFilters.status ?? '') !== '' || (advFilters.valid_till ?? '') !== '';
-  }
-
-  let refinersActive = $derived(hasAnyRefiner());
 
   // Single scrollable list — no cap, show all results.
   let resultsBox = $state<HTMLDivElement | undefined>();
@@ -74,25 +101,6 @@
   }
 
   let resizeObserver: ResizeObserver | undefined;
-  let measureTimer: ReturnType<typeof setTimeout> | undefined;
-
-  $effect(() => {
-    const panelOpen = advMode;
-    const hasSearched = searched;
-    if (resultsBox && (panelOpen || hasSearched)) {
-      if (!panelOpen && hasSearched) {
-        // Panel is closing (120ms fly transition) — re-measure once it's
-        // gone rather than polling the DOM for the placeholder input.
-        clearTimeout(measureTimer);
-        measureTimer = setTimeout(measureResultsBox, 160);
-      } else {
-        measureResultsBox();
-      }
-    }
-    // Clear any pending timer on unmount or when the effect re-runs, so a
-    // stale timer can never fire after the component is destroyed.
-    return () => clearTimeout(measureTimer);
-  });
 
   $effect(() => {
     if (resultsBox) {
@@ -105,7 +113,7 @@
   });
 
   $effect(() => {
-    if (query.trim() === '' && !hasAnyRefiner() && searched) {
+    if (query.trim() === '' && searched && !hasAnyRefiner()) {
       searched = false;
       results = [];
       category = 'all';
@@ -114,58 +122,23 @@
 
   async function doSearch() {
     const q = query.trim();
-    const hasRef = hasAnyRefiner();
-    if (q.length < 3 && !hasRef) return;
-    if (loading) return;
+    if (q.length < 3 || loading) return;
     loading = true;
     searched = true;
     try {
-      const payload: AdvancedFilters & { category?: Category[] } = {
-        ...advFilters,
-        category: advCats.length > 0 ? advCats : undefined
-      };
-      results = await searchWithRefiners(query, payload);
+      results = await searchRecords(query);
       category = 'all';
     } finally {
       loading = false;
-    }
-  }
-
-  async function applyAdvanced() {
-    // Refiners atop live — don't clear query, just search with current refiners
-    const hasAny = hasAnyRefiner() || query.trim().length >= 3;
-    if (!hasAny || loading) return;
-    loading = true;
-    searched = true;
-    try {
-      const payload: AdvancedFilters & { category?: Category[] } = {
-        ...advFilters,
-        category: advCats.length > 0 ? advCats : undefined
-      };
-      results = await searchWithRefiners(query, payload);
-      category = 'all';
-    } finally {
-      loading = false;
-      advMode = false;
     }
   }
 
   function clearAdvanced() {
     advFilters = { valid_till: '' };
     advCats = [];
-    // keep live results but re-run without refiners if a query is active
-    if (searched && query.trim().length >= 3) {
-      doSearch();
-    } else if (searched && !query.trim()) {
-      results = [];
-      searched = false;
-      category = 'all';
-    }
   }
 
-  function toggleAdvanced() {
-    advMode = !advMode;
-  }
+
 
   function onSearchKeydown(e: KeyboardEvent) {
     if (e.key === 'Enter') doSearch();
@@ -191,7 +164,6 @@
     category = 'all';
     results = [];
     searched = false;
-    advMode = false;
     advFilters = { valid_till: '' };
     advCats = [];
   }
@@ -334,18 +306,11 @@
       </div>
     </div>
 
-    <button onclick={toggleAdvanced} aria-label="Filters"
-      class="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md cursor-pointer border transition-colors"
-      style="border-color:{advMode ? '#00cc66' : '#e5e7eb'};background:{advMode ? 'rgba(0,204,102,0.08)' : '#fff'};color:{advMode ? '#00cc66' : '#9ca3af'}"
-      transition:fly={{ y: 4, duration: 120, opacity: 0 }}>
-      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M7 12h10M10 18h4"/></svg>
-    </button>
-
     {#if searched}
       <div class="flex flex-wrap items-center gap-1 min-w-0 flex-1" transition:fly={{ y: 6, duration: 200, opacity: 0 }}>
         <span class="text-[0.75rem] text-[#9ca3af] tabular-nums flex-shrink-0">{filtered.length.toLocaleString()} results</span>
         {#if refinersActive}
-          <span class="text-[0.65rem] font-semibold uppercase rounded px-1.5 py-0.5 flex-shrink-0" style="background:rgba(0,204,102,0.08);color:#00cc66">Refined</span>
+          <span class="text-[0.65rem] font-semibold uppercase rounded px-1.5 py-0.5 flex-shrink-0" style="background:rgba(0,204,102,0.08);color:#00cc66">Filtered</span>
         {/if}
         <span class="ml-auto flex flex-wrap items-center gap-1.5">
           {#each CATEGORY_FILTERS as cat}
@@ -362,91 +327,6 @@
     {/if}
   </div>
 
-  {#if advMode}
-    <div class="border-t border-[#e5e7eb] bg-[#f9fafb] -mx-4 sm:-mx-6 px-4 sm:px-6 py-3" transition:fade={{ duration: 150 }}>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-2.5">
-          <label class="block">
-            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">RPC Number</span>
-            <input type="text" bind:value={advFilters.registration_number}
-              placeholder="RPC NUMBER"
-              class="w-full h-8 px-2.5 text-[0.8rem] rounded-md border border-[#e5e7eb] bg-white outline-none transition-colors focus:border-[#00cc66]" />
-          </label>
-          <label class="block">
-            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">Name</span>
-            <input type="text" bind:value={advFilters.name}
-              placeholder="NAME"
-              class="w-full h-8 px-2.5 text-[0.8rem] rounded-md border border-[#e5e7eb] bg-white outline-none transition-colors focus:border-[#00cc66]" />
-          </label>
-          <label class="block">
-            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">Father</span>
-            <input type="text" bind:value={advFilters.father_name}
-              placeholder="FATHER NAME"
-              class="w-full h-8 px-2.5 text-[0.8rem] rounded-md border border-[#e5e7eb] bg-white outline-none transition-colors focus:border-[#00cc66]" />
-          </label>
-
-          <div>
-            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">Gender</span>
-            <div class="flex h-8 rounded-md border border-[#e5e7eb] overflow-hidden bg-white">
-              <button onclick={() => advFilters.gender = ''}
-                class="flex-1 px-2 text-[0.75rem] font-medium cursor-pointer border-none transition-colors"
-                style="{!advFilters.gender ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">All</button>
-              <button onclick={() => advFilters.gender = 'Male'}
-                class="flex-1 px-2 text-[0.75rem] font-medium cursor-pointer border-r border-[#e5e7eb] transition-colors"
-                style="{advFilters.gender === 'Male' ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">Male</button>
-              <button onclick={() => advFilters.gender = 'Female'}
-                class="flex-1 px-2 text-[0.75rem] font-medium cursor-pointer border-r border-[#e5e7eb] transition-colors"
-                style="{advFilters.gender === 'Female' ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">Female</button>
-            </div>
-          </div>
-          <div>
-            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">Status</span>
-            <div class="flex h-8 rounded-md border border-[#e5e7eb] overflow-hidden bg-white">
-              <button onclick={() => advFilters.status = ''}
-                class="flex-1 px-2 text-[0.75rem] font-medium cursor-pointer border-none transition-colors"
-                style="{!advFilters.status ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">All</button>
-              <button onclick={() => advFilters.status = 'Active'}
-                class="flex-1 px-2 text-[0.75rem] font-medium cursor-pointer border-r border-[#e5e7eb] transition-colors"
-                style="{advFilters.status === 'Active' ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">Active</button>
-              <button onclick={() => advFilters.status = 'Inactive'}
-                class="flex-1 px-2 text-[0.75rem] font-medium cursor-pointer border-r border-[#e5e7eb] transition-colors"
-                style="{advFilters.status === 'Inactive' ? 'background:#ef4444;color:#fff' : 'background:#fff;color:#6b7280'}">Inactive</button>
-            </div>
-          </div>
-          <div>
-            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">Valid Till</span>
-            <DatePicker bind:value={advFilters.valid_till} />
-          </div>
-
-          <div class="sm:col-span-2 lg:col-span-2">
-            <span class="block text-[0.65rem] font-semibold text-[#6b7280] uppercase tracking-wider mb-1">Category</span>
-            <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-              <div class="flex flex-wrap items-center gap-1.5">
-                {#each CAT_NAMES as cat}
-                  <button onclick={() => toggleAdvCat(cat)}
-                    class="px-3 h-8 rounded-md text-[0.75rem] font-medium cursor-pointer border-none transition-colors"
-                    style={advCatStyle(cat)}>
-                    {cat}
-                  </button>
-                {/each}
-              </div>
-              <div class="flex items-center gap-2">
-                <button onclick={clearAdvanced}
-                  class="h-8 px-3.5 rounded-md text-[0.7rem] font-semibold uppercase cursor-pointer border-none transition-colors"
-                  style="background:#fff;color:#ef4444;border:1px solid rgba(239,68,68,0.35)">
-                  Reset
-                </button>
-                <button onclick={applyAdvanced}
-                  class="h-8 px-4 rounded-md text-[0.7rem] font-semibold uppercase cursor-pointer border-none transition-colors"
-                  style="background:#00cc66;color:#fff">
-                  Apply
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-  {/if}
-
   <!-- Results -->
   {#if searched}
     <div transition:fly={{ y: 10, duration: 250, opacity: 0 }}>
@@ -459,6 +339,52 @@
     {:else if filtered.length === 0}
       <p class="text-[0.85rem] text-[#9ca3af] py-8 text-center">No results</p>
     {:else}
+      <!-- Result filters — client-side over fetched results -->
+      <div class="flex flex-wrap items-end gap-2 mb-3 p-2.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-lg">
+        <label class="flex flex-col gap-1">
+          <span class="text-[0.6rem] font-semibold text-[#9ca3af] uppercase tracking-wider">RPC</span>
+          <input type="text" bind:value={advFilters.registration_number} placeholder="TG..." class="h-7 w-24 px-2 text-xs rounded border border-[#e5e7eb] bg-white outline-none focus:border-[#00cc66]" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-[0.6rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Name</span>
+          <input type="text" bind:value={advFilters.name} placeholder="Name" class="h-7 w-28 px-2 text-xs rounded border border-[#e5e7eb] bg-white outline-none focus:border-[#00cc66]" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-[0.6rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Father</span>
+          <input type="text" bind:value={advFilters.father_name} placeholder="Father" class="h-7 w-28 px-2 text-xs rounded border border-[#e5e7eb] bg-white outline-none focus:border-[#00cc66]" />
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-[0.6rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Gender</span>
+          <select bind:value={advFilters.gender} class="h-7 px-2 text-xs rounded border border-[#e5e7eb] bg-white outline-none focus:border-[#00cc66]">
+            <option value="">All</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-[0.6rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Status</span>
+          <select bind:value={advFilters.status} class="h-7 px-2 text-xs rounded border border-[#e5e7eb] bg-white outline-none focus:border-[#00cc66]">
+            <option value="">All</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-[0.6rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Valid Till</span>
+          <DatePicker bind:value={advFilters.valid_till} />
+        </label>
+        <div class="flex flex-col gap-1">
+          <span class="text-[0.6rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Category</span>
+          <div class="flex gap-1">
+            {#each CAT_NAMES as cat}
+              <button onclick={() => toggleAdvCat(cat)} class="px-2 h-7 rounded text-xs font-medium border-none" style={advCatStyle(cat)}>{cat}</button>
+            {/each}
+          </div>
+        </div>
+        {#if refinersActive}
+          <button onclick={clearAdvanced} class="ml-auto h-7 px-3 rounded text-xs font-semibold border border-[rgba(239,68,68,0.35)] text-[#ef4444] bg-white hover:bg-[#fff5f5]">Clear filters</button>
+        {/if}
+      </div>
       <div class="hidden md:block">
         <div style="max-height:{resultsMaxH};min-height:{resultsMinH};overflow-y:auto;overflow-x:auto" bind:this={resultsBox}>
         <table class="w-full" style="table-layout:auto">
