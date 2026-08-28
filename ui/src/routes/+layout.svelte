@@ -103,13 +103,13 @@
       <div class="flex flex-col">
           <div style="display:table;width:0">
             <a href="/" class="no-underline" style="display:table-row;white-space:nowrap;width:1px">
-              <span class="text-[1.4rem] font-bold tracking-tight inline-flex items-center gap-1" style="color:#111827;white-space:nowrap">
+              <span class="text-[1.65rem] font-bold tracking-tight inline-flex items-center gap-1" style="color:#111827;white-space:nowrap">
                 <span style="color:#00cc66">TGPC</span><span style="color:#ef4444">RPh</span><span class="text-[#9ca3af]">Index</span>
               </span>
             </a>
-            <span class="text-[0.65rem] text-[#9ca3af] font-medium truncate mb-0.5" style="display:table-row;overflow:hidden">Open-Source TGPC Pharmacist Data</span>
-            <div style="display:table-row;overflow:hidden">
-              <div class="flex items-center gap-2 text-[0.7rem]">
+            <span class="text-[0.65rem] text-[#9ca3af] font-medium truncate mb-0.5" style="display:table-row;width:100%;white-space:nowrap;overflow:hidden">Open-Source TGPC Pharmacist Data</span>
+            <div style="display:table-row;width:100%;white-space:nowrap;overflow:hidden">
+              <div class="flex items-center gap-2 text-[0.7rem] w-full">
                 <span class="flex w-full items-center justify-center gap-px h-5 px-1.5 rounded-full text-[0.75rem] font-medium box-border overflow-hidden"
                       style="background:{statusConfig.bg};border:1px solid {statusConfig.border};color:{statusConfig.text}">
                   <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:{statusConfig.dot}"></span>
