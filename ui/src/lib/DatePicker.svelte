@@ -87,52 +87,52 @@
       }
     }}
     onkeydown={onKeydown}
-    class="w-full h-8 px-2.5 text-xs rounded border border-[#e5e7eb] bg-white outline-none transition-colors focus:border-[#00cc66] cursor-pointer"
+    class="w-full h-7 px-2.5 text-xs rounded border border-[#e5e7eb] bg-white outline-none transition-colors focus:border-[#00cc66] focus:ring-1 focus:ring-[#00cc66] cursor-pointer"
   />
   {#if isOpen()}
-    <div
-      class="absolute left-0 top-full mt-1 z-30 w-full bg-white border border-[#e5e7eb] rounded-lg shadow-lg p-1.5"
+<div
+      class="absolute left-0 top-full mt-1 z-30 w-full bg-white border border-[#e5e7eb] rounded-lg shadow-lg p-0.5"
       role="dialog"
       aria-label="Date picker"
       tabindex="-1"
       transition:fade={{ duration: 100 }}
       onkeydown={onKeydown}
     >
-      <div class="flex items-center justify-between mb-0.5">
+<div class="flex items-center justify-between mb-0.25">
         <button type="button" onclick={prevMonth} aria-label="Previous month"
-          class="w-5 h-5 flex items-center justify-center rounded text-[#6b7280] hover:bg-[#f3f4f6] cursor-pointer border-none">
-          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+          class="w-4 h-4 flex items-center justify-center rounded text-[#6b7280] hover:bg-[#f3f4f6] cursor-pointer border-none transition-colors">
+          <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
         </button>
-        <span class="text-[0.75rem] font-semibold text-[#111827]">{MONTHS[view.getMonth()]} {view.getFullYear()}</span>
+        <span class="text-[0.6rem] font-semibold text-[#111827]">{MONTHS[view.getMonth()]} {view.getFullYear()}</span>
         <button type="button" onclick={nextMonth} aria-label="Next month"
-          class="w-5 h-5 flex items-center justify-center rounded text-[#6b7280] hover:bg-[#f3f4f6] cursor-pointer border-none">
-          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+          class="w-4 h-4 flex items-center justify-center rounded text-[#6b7280] hover:bg-[#f3f4f6] cursor-pointer border-none transition-colors">
+          <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
         </button>
       </div>
-      <div class="grid grid-cols-7 text-center">
+      <div class="grid grid-cols-7 text-center mb-0.25">
         {#each WEEKDAYS as w}
-          <span class="text-[0.55rem] font-semibold text-[#9ca3af] py-0.5">{w}</span>
+          <span class="text-[0.5rem] font-semibold text-[#9ca3af] py-0.25">{w}</span>
         {/each}
         {#each cells() as d}
           {#if d}
             <button type="button" onclick={() => select(d)}
-              class="h-5 text-[0.65rem] rounded transition-colors hover:bg-[rgba(0,204,102,0.08)] cursor-pointer border-none"
+              class="h-4 text-[0.6rem] rounded transition-colors hover:bg-[rgba(0,204,102,0.08)] cursor-pointer border-none"
               style={cellStyle(d)}>
               {d.getDate()}
             </button>
           {:else}
-            <span class="h-5"></span>
+            <span class="h-4"></span>
           {/if}
         {/each}
       </div>
-      <div class="mt-1 flex items-center justify-between border-t border-[#f3f4f6] pt-1">
+<div class="mt-0.5 flex items-center justify-between border-t border-[#f3f4f6] pt-0.5">
         <button type="button" onclick={() => { value = today(); open = false; }}
-          class="text-[0.55rem] font-semibold text-[#00cc66] uppercase hover:underline cursor-pointer border-none bg-transparent">
+          class="text-[0.5rem] font-semibold text-[#00cc66] uppercase hover:underline cursor-pointer border-none bg-transparent">
           Today
         </button>
         {#if value}
           <button type="button" onclick={() => { value = ''; open = false; }}
-            class="text-[0.55rem] font-semibold text-[#ef4444] uppercase hover:underline cursor-pointer border-none bg-transparent">
+            class="text-[0.5rem] font-semibold text-[#ef4444] uppercase hover:underline cursor-pointer border-none bg-transparent">
             Clear
           </button>
         {/if}
