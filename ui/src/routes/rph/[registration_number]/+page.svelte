@@ -22,7 +22,7 @@
   }
 
   function statusColor(status: string | null | undefined): string {
-    return status === 'Active' ? '#111827' : '#ef4444';
+    return status === 'Active' ? '#00cc66' : '#ef4444';
   }
 
   function categoryColor(cat: string): string {

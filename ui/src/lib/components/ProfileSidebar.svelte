@@ -20,7 +20,7 @@
 
   function handlePhotoError() { photoError = true; }
   function formatDate(v: string | null | undefined) { return v || '—'; }
-  function statusColor(s: string | null | undefined) { return s === 'Active' ? '#111827' : '#ef4444'; }
+  function statusColor(s: string | null | undefined) { return s === 'Active' ? '#00cc66' : '#ef4444'; }
   function categoryColor(cat: string) { return CATEGORY_COLORS[cat as keyof typeof CATEGORY_COLORS] || '#6b7280'; }
   function printPage() { window.print(); }
   function displayWork(v: string | null | undefined): string {
