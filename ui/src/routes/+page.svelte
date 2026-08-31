@@ -193,14 +193,14 @@
     );
 
     autoTable(doc, {
-      startY: 22,
+      startY: 18,
       head: [['RPC NUMBER', 'NAME', 'FATHER NAME', 'GENDER', 'CATEGORY', 'VALID TILL', 'STATUS']],
       body,
       theme: 'striped',
       headStyles: { fillColor: [0, 204, 102], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
       bodyStyles: { fontSize: 8, cellPadding: 2 },
       alternateRowStyles: { fillColor: [247, 247, 247] },
-      margin: { top: 20, left: 10, right: 10, bottom: 12 },
+      margin: { top: 16, left: 10, right: 10, bottom: 12 },
       tableWidth: 'auto',
       didParseCell: (data) => {
         if (data.section === 'body' && data.column.index === 4) {
@@ -215,8 +215,7 @@
         doc.text(title, 10, 10);
         doc.setFontSize(7);
         doc.setTextColor(100, 100, 100);
-        doc.text(countLine, 10, 14);
-        doc.text(filterLine, 10, 17);
+        doc.text(`${countLine} | ${filterLine}`, 10, 14);
       }
     });
     const total = doc.getNumberOfPages();
@@ -265,7 +264,8 @@
       csvCell(r.validity_date),
       csvCell(r.status)
     ]);
-    const csv = [`# TGPC RPh Index - Search: ${kw} - ${fmtDate(now)}`, countLineCsv, filterLineCsv, header.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const combinedCsv = `${countLineCsv} | ${filterLineCsv.replace('# Filters:', 'Filters:')}`;
+    const csv = [`# TGPC RPh Index - Search: ${kw} - ${fmtDate(now)}`, combinedCsv, header.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
