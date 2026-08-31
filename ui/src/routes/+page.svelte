@@ -265,7 +265,7 @@
   }
 </script>
 
-<div class="space-y-4">
+<div class="space-y-2">
   <!-- Search + Chips row -->
   <div class="flex items-center gap-3">
     <div class="flex items-center min-w-0 border-b-2 border-[#e5e7eb] transition-colors focus-within:border-[#00cc66]"
