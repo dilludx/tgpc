@@ -186,10 +186,8 @@
     <section class="bg-white border border-[#e5e7eb] rounded-xl p-6 space-y-3">
       <h2 class="text-lg font-semibold text-[#111827] flex items-center gap-2">
         <svg class="w-5 h-5 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 13.25V21" />
-          <path d="M3 9v12" />
-          <path d="M12 3v18" />
-          <path d="M12 3h15a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+          <rect x="2" y="7" width="20" height="14" rx="2" />
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
         </svg>
         Work Experience
       </h2>
