@@ -340,7 +340,7 @@
       <p class="text-[0.85rem] text-[#9ca3af] py-8 text-center">No results</p>
     {:else}
       <!-- Result filters — slim modern single row -->
-      <div class="mb-3 flex flex-wrap items-end gap-2 rounded-xl border border-[#e5e7eb] bg-white p-2.5 shadow-sm lg:flex-nowrap">
+      <div class="mb-3 flex flex-wrap items-end gap-2 rounded-lg border border-[#e5e7eb] bg-white p-2 lg:flex-nowrap">
         <label class="flex min-w-[92px] flex-1 flex-col gap-1">
           <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[#9ca3af]">RPC</span>
           <input type="text" bind:value={advFilters.registration_number} placeholder="TG..."
