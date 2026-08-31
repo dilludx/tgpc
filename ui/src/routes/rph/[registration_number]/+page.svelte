@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
   import { CATEGORY_COLORS } from '$lib/colors';
   import type { PharmacistRecord } from '$lib/types';
 
@@ -33,7 +34,15 @@
   }
 
   function backToSearch() {
-    window.history.back();
+    if (window.history.length > 1 && document.referrer) window.history.back();
+    else goto('/');
+  }
+
+  function displayWork(v: string | null | undefined): string {
+    if (!v) return '—';
+    const t = v.trim();
+    if (t === '' || t === '----' || t === '—' || t === '--') return '—';
+    return v;
   }
 </script>
 
@@ -66,8 +75,8 @@
   </script>
 </svelte:head>
 
-<div class="max-w-3xl mx-auto space-y-4 px-4 py-4">
-  <div class="flex items-center gap-3 mb-4">
+<div class="max-w-3xl mx-auto space-y-3 px-4 py-3">
+  <div class="flex items-center gap-3 mb-2">
     <button
       onclick={backToSearch}
       class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#e5e7eb] text-[0.75rem] font-medium text-[#374151] hover:bg-[#f4f4f5] transition-colors"
@@ -81,8 +90,8 @@
   </div>
 
   <!-- Single Module -->
-  <div class="bg-white border border-[#e5e7eb] rounded-xl p-4 space-y-3">
-    <div class="flex flex-col md:flex-row gap-6 items-start md:items-center">
+  <div class="bg-white border border-[#e5e7eb] rounded-xl p-3 space-y-3">
+    <div class="flex flex-col md:flex-row gap-4 items-start md:items-center">
       <div class="flex-shrink-0 w-24 h-32 md:w-28 md:h-36 rounded-lg bg-[#f3f4f6] overflow-hidden relative">
         <img
           src={photo}
@@ -125,7 +134,7 @@
       </div>
     </div>
 
-    <div class="border-t border-[#f3f4f6] pt-4 flex flex-wrap gap-4 text-[0.875rem]">
+    <div class="border-t border-[#f3f4f6] pt-2 flex flex-wrap gap-3 text-[0.875rem]">
       <div class="flex items-center gap-1.5">
         <span class="text-[#9ca3af]">Father:</span>
         <span class="text-[#374151] font-medium">{record.father_name || '—'}</span>
@@ -139,8 +148,8 @@
     </div>
 
     {#if record.education && record.education.length > 0}
-      <div class="border-t border-[#f3f4f6] pt-4 space-y-3">
-        <h2 class="text-base font-semibold text-[#111827] flex items-center gap-2">
+      <div class="border-t border-[#f3f4f6] pt-2 space-y-2">
+        <h2 class="text-sm font-semibold text-[#111827] flex items-center gap-2">
           <svg class="w-5 h-5 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
             <path d="M6 12v5c3 3 9 3 12 0v-5" />
@@ -167,8 +176,8 @@
     {/if}
 
     {#if record.work_experience && (record.work_experience.Address || record.work_experience.State || record.work_experience.District || record.work_experience['Pin code'])}
-      <div class="border-t border-[#f3f4f6] pt-4 space-y-3">
-        <h2 class="text-base font-semibold text-[#111827] flex items-center gap-2">
+      <div class="border-t border-[#f3f4f6] pt-2 space-y-2">
+        <h2 class="text-sm font-semibold text-[#111827] flex items-center gap-2">
           <svg class="w-5 h-5 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="2" y="7" width="20" height="14" rx="2" />
             <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
@@ -178,53 +187,37 @@
         <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[0.875rem]">
           <div>
             <dt class="text-[#9ca3af] text-[0.7rem] font-semibold uppercase tracking-wider">Address</dt>
-            <dd class="text-[#374151] mt-0.5">{record.work_experience.Address || '—'}</dd>
-          </div>
-          <div>
-            <dt class="text-[#9ca3af] text-[0.7rem] font-semibold uppercase tracking-wider">State</dt>
-            <dd class="text-[#374151] mt-0.5">{record.work_experience.State || '—'}</dd>
-          </div>
-          <div>
-            <dt class="text-[#9ca3af] text-[0.7rem] font-semibold uppercase tracking-wider">District</dt>
-            <dd class="text-[#374151] mt-0.5">{record.work_experience.District || '—'}</dd>
-          </div>
-          <div>
-            <dt class="text-[#9ca3af] text-[0.7rem] font-semibold uppercase tracking-wider">Pin Code</dt>
-            <dd class="text-[#374151] mt-0.5">{record.work_experience['Pin code'] || '—'}</dd>
+          <dd class="text-[#374151] mt-0.5">{displayWork(record.work_experience.Address)}</dd>
+        </div>
+        <div>
+          <dt class="text-[#9ca3af] text-[0.7rem] font-semibold uppercase tracking-wider">State</dt>
+          <dd class="text-[#374151] mt-0.5">{displayWork(record.work_experience.State)}</dd>
+        </div>
+        <div>
+          <dt class="text-[#9ca3af] text-[0.7rem] font-semibold uppercase tracking-wider">District</dt>
+          <dd class="text-[#374151] mt-0.5">{displayWork(record.work_experience.District)}</dd>
+        </div>
+        <div>
+          <dt class="text-[#9ca3af] text-[0.7rem] font-semibold uppercase tracking-wider">Pin Code</dt>
+          <dd class="text-[#374151] mt-0.5">{displayWork(record.work_experience['Pin code'])}</dd>
           </div>
         </dl>
       </div>
     {/if}
-    <div class="border-t border-[#f3f4f6] pt-4 flex items-center justify-end gap-3">
+    <div class="border-t border-[#f3f4f6] pt-3 flex items-center justify-end">
       <button
         onclick={printPage}
-        class="flex items-center gap-1.5 px-4 py-2 rounded border border-[#e5e7eb] text-[0.75rem] font-medium text-[#374151] hover:bg-[#f4f4f5] transition-colors"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#e5e7eb] text-xs font-medium text-[#374151] hover:bg-[#f4f4f5] transition-colors"
       >
-        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 6 2 18 2 18 9" />
           <path d="M6 18H4a2 2 0 0 1-2-2v-5" />
           <path d="M18 18h2a2 2 0 0 0 2-2v-5" />
           <rect x="6" y="14" width="12" height="8" />
         </svg>
-        Print / Save as PDF
+        Print
       </button>
     </div>
-  </div>
-
-  <!-- Actions -->
-  <div class="flex items-center justify-end gap-3 pt-2">
-    <button
-      onclick={printPage}
-      class="flex items-center gap-1.5 px-4 py-2 rounded border border-[#e5e7eb] text-[0.75rem] font-medium text-[#374151] hover:bg-[#f4f4f5] transition-colors"
-    >
-      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="6 9 6 2 18 2 18 9" />
-        <path d="M6 18H4a2 2 0 0 1-2-2v-5" />
-        <path d="M18 18h2a2 2 0 0 0 2-2v-5" />
-        <rect x="6" y="14" width="12" height="8" />
-      </svg>
-      Print / Save as PDF
-    </button>
   </div>
 
   <footer class="text-center text-[0.7rem] text-[#9ca3af] py-4 border-t border-[#e5e7eb]">

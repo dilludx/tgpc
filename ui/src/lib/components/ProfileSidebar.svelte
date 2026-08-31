@@ -23,6 +23,12 @@
   function statusColor(s: string | null | undefined) { return s === 'Active' ? '#111827' : '#ef4444'; }
   function categoryColor(cat: string) { return CATEGORY_COLORS[cat as keyof typeof CATEGORY_COLORS] || '#6b7280'; }
   function printPage() { window.print(); }
+  function displayWork(v: string | null | undefined): string {
+    if (!v) return '—';
+    const t = v.trim();
+    if (t === '' || t === '----' || t === '—' || t === '--') return '—';
+    return v;
+  }
   function onKeydown(e: KeyboardEvent) { if (e.key === 'Escape' && open) onClose(); }
 
   $effect(() => {
@@ -92,13 +98,13 @@
               </div>
             </div>
           </div>
-          <div class="border-t border-[#f3f4f6] pt-3 flex flex-wrap gap-3 text-sm">
+          <div class="border-t border-[#f3f4f6] pt-2 flex flex-wrap gap-3 text-sm">
             <div class="flex items-center gap-1.5"><span class="text-[#9ca3af] text-xs">Father:</span><span class="text-[#374151] font-medium text-sm">{record.father_name || '—'}</span></div>
             {#if record.gender}<div class="flex items-center gap-1.5"><span class="text-[#9ca3af] text-xs">Gender:</span><span class="text-[#374151] font-medium text-sm">{record.gender}</span></div>{/if}
           </div>
 
           {#if record.education && record.education.length > 0}
-            <div class="border-t border-[#f3f4f6] pt-3 space-y-2">
+            <div class="border-t border-[#f3f4f6] pt-2 space-y-2">
               <h3 class="text-xs font-semibold text-[#111827] flex items-center gap-2"><svg class="w-4 h-4 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Education</h3>
               <div class="space-y-3">
                 {#each record.education as edu}
@@ -120,15 +126,15 @@
           {/if}
 
           {#if record.work_experience && (record.work_experience.Address || record.work_experience.State || record.work_experience.District || record.work_experience['Pin code'])}
-            <div class="border-t border-[#f3f4f6] pt-3 space-y-2">
+            <div class="border-t border-[#f3f4f6] pt-2 space-y-2">
               <h3 class="text-xs font-semibold text-[#111827] flex items-center gap-2"><svg class="w-4 h-4 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> Work Experience</h3>
               <dl class="grid grid-cols-1 gap-2 text-xs">
-                <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">Address</dt><dd class="text-[#374151] mt-0.5">{record.work_experience.Address || '—'}</dd></div>
+                <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">Address</dt><dd class="text-[#374151] mt-0.5">{displayWork(record.work_experience.Address)}</dd></div>
                 <div class="grid grid-cols-2 gap-2">
-                  <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">State</dt><dd class="text-[#374151] mt-0.5">{record.work_experience.State || '—'}</dd></div>
-                  <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">District</dt><dd class="text-[#374151] mt-0.5">{record.work_experience.District || '—'}</dd></div>
+                  <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">State</dt><dd class="text-[#374151] mt-0.5">{displayWork(record.work_experience.State)}</dd></div>
+                  <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">District</dt><dd class="text-[#374151] mt-0.5">{displayWork(record.work_experience.District)}</dd></div>
                 </div>
-                <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">Pin Code</dt><dd class="text-[#374151] mt-0.5">{record.work_experience['Pin code'] || '—'}</dd></div>
+                <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">Pin Code</dt><dd class="text-[#374151] mt-0.5">{displayWork(record.work_experience['Pin code'])}</dd></div>
               </dl>
             </div>
           {/if}
