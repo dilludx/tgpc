@@ -87,7 +87,7 @@
       }
     }}
     onkeydown={onKeydown}
-    class="w-full h-7 px-2.5 text-xs rounded border border-[#e5e7eb] bg-white outline-none transition-colors focus:border-[#00cc66] focus:ring-1 focus:ring-[#00cc66] cursor-pointer"
+    class="w-full h-8 px-3 text-xs rounded-lg border border-[#e5e7eb] bg-white outline-none transition-colors focus:border-[#00cc66] focus:ring-2 focus:ring-[rgba(0,204,102,0.15)] cursor-pointer"
   />
   {#if isOpen()}
 <div

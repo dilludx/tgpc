@@ -339,68 +339,61 @@
     {:else if filtered.length === 0}
       <p class="text-[0.85rem] text-[#9ca3af] py-8 text-center">No results</p>
     {:else}
-      <!-- Result filters — client-side over fetched results -->
-      <div class="mb-2 p-1 bg-[#f9fafb] border border-[#e5e7eb] rounded-lg">
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-1">
-          <div class="col-span-1">
-            <div class="flex flex-col pt-0.5">
-              <span class="text-[0.5rem] font-semibold text-[#9ca3af] uppercase tracking-wider">RPC</span>
-              <input type="text" bind:value={advFilters.registration_number} placeholder="TG..."
-                class="h-6 px-2 text-xs rounded border border-[#e5e7eb] bg-white outline-none transition-colors focus:border-[#00cc66] focus:ring-1 focus:ring-[#00cc66]" />
+      <!-- Result filters — modern slim 2-row deck -->
+      <div class="mb-3 rounded-xl border border-[#e5e7eb] bg-white p-3 shadow-sm">
+        <div class="mb-2 flex items-center justify-between">
+          <span class="text-[0.65rem] font-bold uppercase tracking-widest text-[#6b7280]">Filter results</span>
+          {#if refinersActive}
+            <button onclick={clearAdvanced} class="rounded-full border border-[rgba(239,68,68,0.2)] bg-white px-3 py-1 text-xs font-semibold text-[#ef4444] transition-colors hover:bg-[rgba(239,68,68,0.06)]">Clear</button>
+          {/if}
+        </div>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label class="flex flex-col gap-1.5">
+            <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[#9ca3af]">RPC</span>
+            <input type="text" bind:value={advFilters.registration_number} placeholder="TG..."
+              class="h-8 w-full rounded-lg border border-[#e5e7eb] bg-white px-3 text-sm outline-none transition-all focus:border-[#00cc66] focus:ring-2 focus:ring-[rgba(0,204,102,0.15)]" />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[#9ca3af]">Name</span>
+            <input type="text" bind:value={advFilters.name} placeholder="Name"
+              class="h-8 w-full rounded-lg border border-[#e5e7eb] bg-white px-3 text-sm outline-none transition-all focus:border-[#00cc66] focus:ring-2 focus:ring-[rgba(0,204,102,0.15)]" />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[#9ca3af]">Gender</span>
+            <div class="flex h-8 rounded-full bg-[#f3f4f6] p-1">
+              <button onclick={() => advFilters.gender = ''} class="flex-1 rounded-full px-2 text-xs font-semibold transition-all" style="{!advFilters.gender ? 'background:#00cc66;color:#fff' : 'background:transparent;color:#6b7280'}">All</button>
+              <button onclick={() => advFilters.gender = 'Male'} class="flex-1 rounded-full px-2 text-xs font-semibold transition-all" style="{advFilters.gender === 'Male' ? 'background:#00cc66;color:#fff' : 'background:transparent;color:#6b7280'}">Male</button>
+              <button onclick={() => advFilters.gender = 'Female'} class="flex-1 rounded-full px-2 text-xs font-semibold transition-all" style="{advFilters.gender === 'Female' ? 'background:#00cc66;color:#fff' : 'background:transparent;color:#6b7280'}">Female</button>
             </div>
-          </div>
-          <div class="col-span-1">
-            <div class="flex flex-col pt-0.5">
-              <span class="text-[0.5rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Name</span>
-              <input type="text" bind:value={advFilters.name} placeholder="Name"
-                class="h-6 px-2 text-xs rounded border border-[#e5e7eb] bg-white outline-none transition-colors focus:border-[#00cc66] focus:ring-1 focus:ring-[#00cc66]" />
-            </div>
-          </div>
-          <div class="col-span-1">
-            <div class="flex flex-col pt-0.5">
-              <span class="text-[0.5rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Father</span>
-              <input type="text" bind:value={advFilters.father_name} placeholder="Father"
-                class="h-6 px-2 text-xs rounded border border-[#e5e7eb] bg-white outline-none transition-colors focus:border-[#00cc66] focus:ring-1 focus:ring-[#00cc66]" />
-            </div>
-          </div>
-          <div class="col-span-1 lg:col-span-2">
-            <div class="flex flex-col pt-0.5">
-              <span class="text-[0.5rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Category</span>
-              <div class="flex flex-wrap gap-0.5">
-                {#each CAT_NAMES as cat}
-                  <button onclick={() => toggleAdvCat(cat)} class="px-2 h-6 rounded text-xs font-medium border-none transition-colors" style={advCatStyle(cat)}>{cat}</button>
-                {/each}
-              </div>
-            </div>
-          </div>
-          <div class="col-span-1 lg:col-span-2">
-            <div class="flex flex-col pt-0.5">
-              <span class="text-[0.5rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Valid Till</span>
-              <DatePicker bind:value={advFilters.valid_till} placeholder="DD/MM/YYYY" />
-            </div>
-          </div>
-          <div class="col-span-1">
-            <div class="flex flex-col pt-0.5">
-              <span class="text-[0.5rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Status</span>
-              <div class="flex h-6 rounded border border-[#e5e7eb] overflow-hidden bg-white">
-                <button onclick={() => advFilters.status = ''} class="flex-1 px-1.5 text-xs font-medium border-none transition-colors" style="{!advFilters.status ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">All</button>
-                <button onclick={() => advFilters.status = 'Active'} class="flex-1 px-1.5 text-xs font-medium border-l border-[#e5e7eb] transition-colors" style="{advFilters.status === 'Active' ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">Active</button>
-                <button onclick={() => advFilters.status = 'Inactive'} class="flex-1 px-1.5 text-xs font-medium border-l border-[#e5e7eb] transition-colors" style="{advFilters.status === 'Inactive' ? 'background:#ef4444;color:#fff' : 'background:#fff;color:#6b7280'}">Inactive</button>
-              </div>
-            </div>
-          </div>
-          <div class="col-span-1">
-            <div class="flex flex-col pt-0.5">
-              <span class="text-[0.5rem] font-semibold text-[#9ca3af] uppercase tracking-wider">Gender</span>
-              <div class="flex h-6 rounded border border-[#e5e7eb] overflow-hidden bg-white">
-                <button onclick={() => advFilters.gender = ''} class="flex-1 px-1.5 text-xs font-medium border-none transition-colors" style="{!advFilters.gender ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">All</button>
-                <button onclick={() => advFilters.gender = 'Male'} class="flex-1 px-1.5 text-xs font-medium border-l border-[#e5e7eb] transition-colors" style="{advFilters.gender === 'Male' ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">Male</button>
-                <button onclick={() => advFilters.gender = 'Female'} class="flex-1 px-1.5 text-xs font-medium border-l border-[#e5e7eb] transition-colors" style="{advFilters.gender === 'Female' ? 'background:#00cc66;color:#fff' : 'background:#fff;color:#6b7280'}">Female</button>
-              </div>
+          </label>
+          <div class="flex flex-col gap-1.5">
+            <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[#9ca3af]">Category</span>
+            <div class="flex min-h-8 flex-wrap items-center gap-1.5">
+              {#each CAT_NAMES as cat}
+                <button onclick={() => toggleAdvCat(cat)} class="h-7 rounded-full px-3 text-xs font-medium transition-colors" style={advCatStyle(cat)}>{cat}</button>
+              {/each}
             </div>
           </div>
         </div>
-        <button onclick={clearAdvanced} class="col-span-7 mt-1 px-2 rounded text-xs font-semibold border border-[rgba(239,68,68,0.35)] text-[#ef4444] bg-white hover:bg-[rgba(239,68,68,0.05)] transition-colors">Clear filters</button>
+        <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <label class="flex flex-col gap-1.5">
+            <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[#9ca3af]">Valid Till</span>
+            <DatePicker bind:value={advFilters.valid_till} placeholder="DD/MM/YYYY" />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[#9ca3af]">Father Name</span>
+            <input type="text" bind:value={advFilters.father_name} placeholder="Father"
+              class="h-8 w-full rounded-lg border border-[#e5e7eb] bg-white px-3 text-sm outline-none transition-all focus:border-[#00cc66] focus:ring-2 focus:ring-[rgba(0,204,102,0.15)]" />
+          </label>
+          <label class="flex flex-col gap-1.5">
+            <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[#9ca3af]">Status</span>
+            <div class="flex h-8 rounded-full bg-[#f3f4f6] p-1">
+              <button onclick={() => advFilters.status = ''} class="flex-1 rounded-full px-2 text-xs font-semibold transition-all" style="{!advFilters.status ? 'background:#00cc66;color:#fff' : 'background:transparent;color:#6b7280'}">All</button>
+              <button onclick={() => advFilters.status = 'Active'} class="flex-1 rounded-full px-2 text-xs font-semibold transition-all" style="{advFilters.status === 'Active' ? 'background:#00cc66;color:#fff' : 'background:transparent;color:#6b7280'}">Active</button>
+              <button onclick={() => advFilters.status = 'Inactive'} class="flex-1 rounded-full px-2 text-xs font-semibold transition-all" style="{advFilters.status === 'Inactive' ? 'background:#ef4444;color:#fff' : 'background:transparent;color:#6b7280'}">Inactive</button>
+            </div>
+          </label>
+        </div>
       </div>
       <div class="hidden md:block">
         <div style="max-height:{resultsMaxH};min-height:{resultsMinH};overflow-y:auto;overflow-x:auto" bind:this={resultsBox}>
