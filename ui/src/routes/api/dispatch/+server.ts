@@ -69,7 +69,7 @@ export async function GET({ platform }) {
         size: obj.size
       }));
       if (files.length > 0) {
-        return json(files, { headers: { 'Cache-Control': 'public, max-age=300' } });
+        return json(files, { headers: { 'Cache-Control': 'public, max-age=60' } });
       }
     }
   } catch {}
@@ -78,5 +78,5 @@ export async function GET({ platform }) {
   // so the dispatch page stays usable, but flag every entry stale and omit
   // fabricated sizes (CODE_REVIEW.md M3).
   const files = FALLBACK_FILES.map((n) => ({ name: n, stale: true }));
-  return json(files, { headers: { 'Cache-Control': 'public, max-age=300' } });
+  return json(files, { headers: { 'Cache-Control': 'public, max-age=60' } });
 }

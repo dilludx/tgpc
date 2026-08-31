@@ -25,7 +25,7 @@ export const GET: RequestHandler = async ({ params, platform }) => {
         const headers = new Headers();
         headers.set('Content-Type', 'application/pdf');
         headers.set('Content-Disposition', `inline; filename="${name}"; filename*=UTF-8''${encodeURIComponent(name)}`);
-        headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+        headers.set('Cache-Control', 'public, max-age=60');
         headers.set('Pragma', 'no-cache');
         headers.set('Content-Length', String(bytes.byteLength));
         return new Response(bytes, { headers });
