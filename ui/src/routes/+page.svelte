@@ -3,6 +3,8 @@
   import { searchRecords, type AdvancedFilters } from '$lib/api';
   import DatePicker from '$lib/DatePicker.svelte';
   import { CATEGORY_COLORS, CATEGORIES as CAT_NAMES } from '$lib/colors';
+  import ProfileSidebar from '$lib/components/ProfileSidebar.svelte';
+  import { getRecord } from '$lib/api';
   import { PUBLIC_R2_PHOTO_BASE } from '$env/static/public';
   import jsPDF from 'jspdf';
   import autoTable from 'jspdf-autotable';
@@ -130,6 +132,30 @@
       loading = false;
     }
   }
+
+  let drawerOpen = $state(false);
+  let drawerReg = $state<string | null>(null);
+  let drawerRecord = $state<PharmacistRecord | null>(null);
+  let drawerLoading = $state(false);
+  let drawerError = $state<string | null>(null);
+  let drawerPhoto = $derived(drawerRecord ? (drawerRecord.photo_url || `${PUBLIC_R2_PHOTO_BASE}/${drawerRecord.registration_number}.webp`) : '');
+
+  async function openDrawer(reg: string) {
+    const clean = reg.trim().toUpperCase();
+    if (drawerOpen && drawerReg === clean) { closeDrawer(); return; }
+    drawerReg = clean;
+    drawerOpen = true;
+    drawerLoading = true;
+    drawerError = null;
+    drawerRecord = null;
+    try {
+      const rec = await getRecord(clean);
+      if (!rec) { drawerError = `No record found for ${clean}`; }
+      else drawerRecord = rec;
+    } catch { drawerError = 'Failed to load profile'; }
+    finally { drawerLoading = false; }
+  }
+  function closeDrawer() { drawerOpen = false; drawerReg = null; }
 
   function clearAdvanced() {
     advFilters = { valid_till: '' };
@@ -417,7 +443,7 @@
                   <img src={photoUrl(r)} alt="" loading="lazy" class="w-9 h-11 rounded object-cover bg-[#f3f4f6]" />
                 </td>
                 <td class="py-2.5 text-[#2563eb]" style="font-weight:600">
-                  <a href="/rph/{r.registration_number}" class="hover:underline no-underline" aria-label="View profile for {r.registration_number}">
+                  <a href="/rph/{r.registration_number}" onclick={(e) => { e.preventDefault(); openDrawer(r.registration_number); }} class="hover:underline no-underline cursor-pointer" aria-label="View profile for {r.registration_number}">
                     {r.registration_number}
                   </a>
                 </td>
@@ -444,7 +470,7 @@
             <div class="flex gap-3 py-2 border-b border-[#f3f4f6] text-[0.875rem]" style="content-visibility:auto;contain-intrinsic-size:110px">
               <img src={photoUrl(r)} alt="" loading="lazy" class="w-10 h-12 rounded object-cover bg-[#f3f4f6] flex-shrink-0" />
               <div class="min-w-0">
-                <a href="/rph/{r.registration_number}" class="text-[#2563eb] hover:underline no-underline" style="font-weight:600" aria-label="View profile for {r.registration_number}">{r.registration_number}</a>
+                <a href="/rph/{r.registration_number}" onclick={(e) => { e.preventDefault(); openDrawer(r.registration_number); }} class="text-[#2563eb] hover:underline no-underline cursor-pointer" style="font-weight:600" aria-label="View profile for {r.registration_number}">{r.registration_number}</a>
                 <div class="mt-0.5 text-[#374151] truncate">{r.name}</div>
                 <div class="mt-0.5 text-[#374151] truncate">{r.father_name || '—'}</div>
                 <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[#374151]">
@@ -463,4 +489,5 @@
     {/if}
     </div>
   {/if}
+  <ProfileSidebar open={drawerOpen} record={drawerRecord} photo={drawerPhoto} loading={drawerLoading} error={drawerError} onClose={closeDrawer} />
 </div>

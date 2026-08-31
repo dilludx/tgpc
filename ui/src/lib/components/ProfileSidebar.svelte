@@ -1,0 +1,157 @@
+<script lang="ts">
+  import { CATEGORY_COLORS } from '$lib/colors';
+  import type { PharmacistRecord } from '$lib/types';
+  import { fly, fade } from 'svelte/transition';
+
+  let { open = false, record = null as PharmacistRecord | null, photo = '', loading = false, error = null as string | null, onClose = () => {} }: {
+    open?: boolean;
+    record?: PharmacistRecord | null;
+    photo?: string;
+    loading?: boolean;
+    error?: string | null;
+    onClose?: () => void;
+  } = $props();
+
+  let photoError = $state(false);
+
+  $effect(() => {
+    if (open) photoError = false;
+  });
+
+  function handlePhotoError() { photoError = true; }
+  function formatDate(v: string | null | undefined) { return v || '—'; }
+  function statusColor(s: string | null | undefined) { return s === 'Active' ? '#111827' : '#ef4444'; }
+  function categoryColor(cat: string) { return CATEGORY_COLORS[cat as keyof typeof CATEGORY_COLORS] || '#6b7280'; }
+  function printPage() { window.print(); }
+  function onKeydown(e: KeyboardEvent) { if (e.key === 'Escape' && open) onClose(); }
+
+  $effect(() => {
+    if (open) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
+    return () => { document.body.style.overflow = ''; };
+  });
+</script>
+
+<svelte:window onkeydown={onKeydown} />
+
+{#if open}
+  <!-- Overlay -->
+  <button
+    type="button"
+    aria-label="Close profile"
+    class="fixed inset-0 z-40 bg-[#111827]/30 border-0 p-0 cursor-pointer"
+    onclick={onClose}
+    transition:fade={{ duration: 150 }}
+  ></button>
+  <!-- Drawer -->
+  <aside
+    class="fixed right-0 top-0 z-50 h-dvh w-full sm:w-[420px] bg-white border-l border-[#e5e7eb] overflow-y-auto flex flex-col"
+    role="dialog"
+    aria-modal="true"
+    aria-label={record ? `${record.name} profile` : 'Pharmacist profile'}
+    transition:fly={{ x: 420, duration: 220 }}
+  >
+    <div class="sticky top-0 z-10 flex items-center justify-between gap-2 bg-white border-b border-[#e5e7eb] px-4 py-3">
+      <span class="text-sm font-semibold text-[#111827] truncate">{record ? record.name : loading ? 'Loading…' : error ? 'Not found' : 'Profile'}</span>
+      <button onclick={onClose} aria-label="Close" class="w-8 h-8 flex items-center justify-center rounded-full border border-[#e5e7eb] text-[#6b7280] hover:bg-[#f9fafb] transition-colors">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="flex-1 p-4 space-y-4">
+      {#if loading}
+        <div class="space-y-3 py-4">
+          {#each Array(6) as _}
+            <div class="h-4 bg-[#f3f4f6] rounded animate-pulse" style="width:{40 + Math.random()*60}%"></div>
+          {/each}
+        </div>
+      {:else if error}
+        <p class="text-sm text-[#ef4444] py-8 text-center">{error}</p>
+      {:else if record}
+        <!-- Header Card -->
+        <div class="bg-white border border-[#e5e7eb] rounded-xl p-4 space-y-4">
+          <div class="flex gap-4 items-start">
+            <div class="flex-shrink-0 w-24 h-30 rounded-lg bg-[#f3f4f6] overflow-hidden relative" style="width:96px;height:120px">
+              <img src={photo} alt={`${record.name}'s photo`} onerror={handlePhotoError} class="w-full h-full object-cover {photoError ? 'hidden' : ''}" />
+              {#if photoError}
+                <div class="w-full h-full flex items-center justify-center bg-[#f3f4f6]">
+                  <svg class="w-12 h-12 text-[#d1d5db]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+              {/if}
+            </div>
+            <div class="flex-1 min-w-0 space-y-2">
+              <h2 class="text-lg font-bold text-[#111827] truncate">{record.name}</h2>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="px-2.5 py-1 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider tabular-nums" style="background:#2563eb15;color:#2563eb">RPC: {record.registration_number}</span>
+                <span class="px-2.5 py-1 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider" style="background:{categoryColor(record.category)}15;color:{categoryColor(record.category)}">{record.category}</span>
+                <span class="px-2.5 py-1 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider" style="background:{record.status === 'Active' ? 'rgba(0,204,102,0.1)' : 'rgba(239,68,68,0.1)'};color:{statusColor(record.status)}">{record.status || 'Unknown'}</span>
+              </div>
+              <div class="flex flex-wrap gap-3 text-xs text-[#6b7280]">
+                <span>Serial: <span class="text-[#374151] font-medium">#{record.serial_number || '—'}</span></span>
+                <span>Valid till: <span class="text-[#374151] font-medium">{formatDate(record.validity_date)}</span></span>
+              </div>
+            </div>
+          </div>
+          <div class="border-t border-[#f3f4f6] pt-3 flex flex-wrap gap-3 text-sm">
+            <div class="flex items-center gap-1.5"><span class="text-[#9ca3af] text-xs">Father:</span><span class="text-[#374151] font-medium text-sm">{record.father_name || '—'}</span></div>
+            {#if record.gender}<div class="flex items-center gap-1.5"><span class="text-[#9ca3af] text-xs">Gender:</span><span class="text-[#374151] font-medium text-sm">{record.gender}</span></div>{/if}
+          </div>
+        </div>
+
+        {#if record.education && record.education.length > 0}
+          <section class="bg-white border border-[#e5e7eb] rounded-xl p-4 space-y-3">
+            <h3 class="text-sm font-semibold text-[#111827] flex items-center gap-2"><svg class="w-4 h-4 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Education</h3>
+            <div class="overflow-x-auto -mx-4 px-4">
+              <table class="w-full text-xs" style="table-layout:auto">
+                <thead>
+                  <tr class="text-[0.6rem] font-semibold text-[#9ca3af] uppercase tracking-wider border-b border-[#e5e7eb]">
+                    <th class="text-left py-1.5 px-2">Category</th>
+                    <th class="text-left py-1.5 px-2">Board / Univ</th>
+                    <th class="text-left py-1.5 px-2">College</th>
+                    <th class="text-left py-1.5 px-2">HT No</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {#each record.education as edu}
+                    <tr class="border-b border-[#f3f4f6] text-[#374151]">
+                      <td class="py-1.5 px-2 font-medium" style="color:{categoryColor(edu.Category || '')}">{edu.Category || '—'}</td>
+                      <td class="py-1.5 px-2 truncate max-w-[120px]" title={edu['Board/University'] || ''}>{edu['Board/University'] || '—'}</td>
+                      <td class="py-1.5 px-2 truncate max-w-[120px]" title={edu['College Name'] || ''}>{edu['College Name'] || '—'}</td>
+                      <td class="py-1.5 px-2 tabular-nums">{edu['HT No'] || '—'}</td>
+                    </tr>
+                  {/each}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        {/if}
+
+        {#if record.work_experience && (record.work_experience.Address || record.work_experience.State || record.work_experience.District || record.work_experience['Pin code'])}
+          <section class="bg-white border border-[#e5e7eb] rounded-xl p-4 space-y-3">
+            <h3 class="text-sm font-semibold text-[#111827] flex items-center gap-2"><svg class="w-4 h-4 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 13.25V21"/><path d="M3 9v12"/><path d="M12 3v18"/><path d="M12 3h15a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg> Work Experience</h3>
+            <dl class="grid grid-cols-1 gap-2 text-xs">
+              <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">Address</dt><dd class="text-[#374151] mt-0.5">{record.work_experience.Address || '—'}</dd></div>
+              <div class="grid grid-cols-2 gap-2">
+                <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">State</dt><dd class="text-[#374151] mt-0.5">{record.work_experience.State || '—'}</dd></div>
+                <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">District</dt><dd class="text-[#374151] mt-0.5">{record.work_experience.District || '—'}</dd></div>
+              </div>
+              <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">Pin Code</dt><dd class="text-[#374151] mt-0.5">{record.work_experience['Pin code'] || '—'}</dd></div>
+            </dl>
+          </section>
+        {/if}
+
+        <div class="flex justify-end pt-2">
+          <button onclick={printPage} class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#e5e7eb] text-xs font-medium text-[#374151] hover:bg-[#f4f4f5] transition-colors">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5"/><path d="M18 18h2a2 2 0 0 0 2-2v-5"/><rect x="6" y="14" width="12" height="8"/></svg> Print
+          </button>
+        </div>
+      {/if}
+    </div>
+  </aside>
+{/if}
+
+<style>
+  @media print {
+    aside { display: none !important; }
+  }
+</style>
