@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PharmacistRecord, Category, CategoryFilter } from '$lib/types';
+  import type { PharmacistRecord, CategoryFilter } from '$lib/types';
   import { searchRecords, type AdvancedFilters } from '$lib/api';
   import DatePicker from '$lib/DatePicker.svelte';
   import { CATEGORY_COLORS, CATEGORIES as CAT_NAMES } from '$lib/colors';
@@ -20,11 +20,10 @@
   const CATEGORY_FILTERS: CategoryFilter[] = ['all', ...CAT_NAMES];
 
   let advFilters = $state<AdvancedFilters>({ valid_till: '' });
-  let advCats = $state<Category[]>([]);
 
   function hasAnyRefiner(): boolean {
     return (advFilters.name ?? '').trim() !== '' || (advFilters.father_name ?? '').trim() !== '' || (advFilters.registration_number ?? '').trim() !== ''
-      || advCats.length > 0 || (advFilters.gender ?? '') !== '' || (advFilters.status ?? '') !== '' || (advFilters.valid_till ?? '') !== '';
+      || (advFilters.gender ?? '') !== '' || (advFilters.status ?? '') !== '' || (advFilters.valid_till ?? '') !== '';
   }
 
   let refinersActive = $derived(hasAnyRefiner());
@@ -51,7 +50,6 @@
       const q = advFilters.registration_number.trim().toLowerCase();
       base = base.filter(r => r.registration_number.toLowerCase().startsWith(q));
     }
-    if (advCats.length > 0) base = base.filter(r => advCats.includes(r.category as Category));
     if (advFilters.gender && advFilters.gender !== '') base = base.filter(r => r.gender === advFilters.gender);
     if (advFilters.status && advFilters.status !== '') base = base.filter(r => r.status === advFilters.status);
     if (advFilters.valid_till?.trim()) {
@@ -135,7 +133,6 @@
 
   function clearAdvanced() {
     advFilters = { valid_till: '' };
-    advCats = [];
   }
 
 
@@ -149,15 +146,7 @@
     return 'background:#00cc66;color:#fff';
   }
 
-  function advCatStyle(cat: Category): string {
-    return advCats.includes(cat)
-      ? 'background:#00cc66;color:#fff'
-      : 'background:#f3f4f6;color:#6b7280';
-  }
 
-  function toggleAdvCat(cat: Category) {
-    advCats = advCats.includes(cat) ? advCats.filter(c => c !== cat) : [...advCats, cat];
-  }
 
   function reset() {
     query = '';
@@ -165,7 +154,6 @@
     results = [];
     searched = false;
     advFilters = { valid_till: '' };
-    advCats = [];
   }
 
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -376,14 +364,6 @@
           <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[#9ca3af]">Valid Till</span>
           <DatePicker bind:value={advFilters.valid_till} placeholder="DD/MM/YYYY" />
         </label>
-        <div class="flex min-w-[168px] flex-col gap-1">
-          <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[#9ca3af]">Category</span>
-          <div class="flex h-7 flex-wrap items-center gap-1">
-            {#each CAT_NAMES as cat}
-              <button onclick={() => toggleAdvCat(cat)} class="h-6 rounded-full px-2.5 text-xs font-medium transition-colors" style={advCatStyle(cat)}>{cat}</button>
-            {/each}
-          </div>
-        </div>
         {#if refinersActive}
           <button onclick={clearAdvanced} class="h-7 self-end rounded-full border border-[rgba(239,68,68,0.2)] bg-white px-3 text-xs font-semibold text-[#ef4444] transition-colors hover:bg-[rgba(239,68,68,0.06)]">Clear</button>
         {/if}
