@@ -173,6 +173,16 @@
     const now = new Date();
     const kw = query.trim() || '(all)';
     const title = `TGPC RPh Index - Search: ${kw} - ${fmtDate(now)}`;
+    const countLine = `Results: ${filtered.length.toLocaleString()} of ${results.length.toLocaleString()}${refinersActive || category !== 'all' ? ' (filtered)' : ''}`;
+    const filtParts: string[] = [];
+    if (category !== 'all') filtParts.push(`Category: ${category}`);
+    if (advFilters.registration_number?.trim()) filtParts.push(`RPC: ${advFilters.registration_number.trim()}`);
+    if (advFilters.name?.trim()) filtParts.push(`Name: ${advFilters.name.trim()}`);
+    if (advFilters.father_name?.trim()) filtParts.push(`Father: ${advFilters.father_name.trim()}`);
+    if (advFilters.gender) filtParts.push(`Gender: ${advFilters.gender}`);
+    if (advFilters.status) filtParts.push(`Status: ${advFilters.status}`);
+    if (advFilters.valid_till) filtParts.push(`Valid Till: ${advFilters.valid_till}`);
+    const filterLine = filtParts.length ? `Filters: ${filtParts.join(' | ')}` : 'Filters: none';
     const body = filtered.map(r => [r.registration_number, r.name, r.father_name || '—', r.gender || '—', r.category, r.validity_date || '—', r.status || '—']);
 
     const TEXTS = Object.fromEntries(
@@ -183,14 +193,14 @@
     );
 
     autoTable(doc, {
-      startY: 15,
+      startY: 22,
       head: [['RPC NUMBER', 'NAME', 'FATHER NAME', 'GENDER', 'CATEGORY', 'VALID TILL', 'STATUS']],
       body,
       theme: 'striped',
       headStyles: { fillColor: [0, 204, 102], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
       bodyStyles: { fontSize: 8, cellPadding: 2 },
       alternateRowStyles: { fillColor: [247, 247, 247] },
-      margin: { top: 12, left: 10, right: 10, bottom: 12 },
+      margin: { top: 20, left: 10, right: 10, bottom: 12 },
       tableWidth: 'auto',
       didParseCell: (data) => {
         if (data.section === 'body' && data.column.index === 4) {
@@ -203,6 +213,10 @@
         doc.setFontSize(11);
         doc.setTextColor(0, 204, 102);
         doc.text(title, 10, 10);
+        doc.setFontSize(7);
+        doc.setTextColor(100, 100, 100);
+        doc.text(countLine, 10, 14);
+        doc.text(filterLine, 10, 17);
       }
     });
     const total = doc.getNumberOfPages();
@@ -231,6 +245,16 @@
     if (filtered.length === 0) return;
     const now = new Date();
     const kw = query.trim() || '(all)';
+    const countLineCsv = `# Results: ${filtered.length.toLocaleString()} of ${results.length.toLocaleString()}${refinersActive || category !== 'all' ? ' (filtered)' : ''}`;
+    const filtPartsCsv: string[] = [];
+    if (category !== 'all') filtPartsCsv.push(`Category: ${category}`);
+    if (advFilters.registration_number?.trim()) filtPartsCsv.push(`RPC: ${advFilters.registration_number.trim()}`);
+    if (advFilters.name?.trim()) filtPartsCsv.push(`Name: ${advFilters.name.trim()}`);
+    if (advFilters.father_name?.trim()) filtPartsCsv.push(`Father: ${advFilters.father_name.trim()}`);
+    if (advFilters.gender) filtPartsCsv.push(`Gender: ${advFilters.gender}`);
+    if (advFilters.status) filtPartsCsv.push(`Status: ${advFilters.status}`);
+    if (advFilters.valid_till) filtPartsCsv.push(`Valid Till: ${advFilters.valid_till}`);
+    const filterLineCsv = filtPartsCsv.length ? `# Filters: ${filtPartsCsv.join(' | ')}` : '# Filters: none';
     const header = ['RPC NUMBER', 'NAME', 'FATHER NAME', 'GENDER', 'CATEGORY', 'VALID TILL', 'STATUS'];
     const rows = filtered.map(r => [
       csvCell(r.registration_number),
@@ -241,7 +265,7 @@
       csvCell(r.validity_date),
       csvCell(r.status)
     ]);
-    const csv = [`# TGPC RPh Index - Search: ${kw} - ${fmtDate(now)}`, header.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const csv = [`# TGPC RPh Index - Search: ${kw} - ${fmtDate(now)}`, countLineCsv, filterLineCsv, header.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
