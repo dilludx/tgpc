@@ -58,7 +58,7 @@
       </button>
     </div>
 
-    <div class="flex-1 p-4 space-y-4">
+    <div class="flex-1 p-3 space-y-3">
       {#if loading}
         <div class="space-y-3 py-4">
           {#each Array(6) as _}
@@ -69,22 +69,22 @@
         <p class="text-sm text-[#ef4444] py-8 text-center">{error}</p>
       {:else if record}
         <!-- Single Module -->
-        <div class="bg-white border border-[#e5e7eb] rounded-xl p-4 space-y-4">
+        <div class="bg-white border border-[#e5e7eb] rounded-xl p-3 space-y-3">
           <div class="flex gap-4 items-start">
-            <div class="flex-shrink-0 w-24 h-30 rounded-lg bg-[#f3f4f6] overflow-hidden relative" style="width:96px;height:120px">
+            <div class="flex-shrink-0 w-24 h-30 rounded-lg bg-[#f3f4f6] overflow-hidden relative" style="width:80px;height:100px">
               <img src={photo} alt={`${record.name}'s photo`} onerror={handlePhotoError} class="w-full h-full object-cover {photoError ? 'hidden' : ''}" />
               {#if photoError}
                 <div class="w-full h-full flex items-center justify-center bg-[#f3f4f6]">
-                  <svg class="w-12 h-12 text-[#d1d5db]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <svg class="w-10 h-10 text-[#d1d5db]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 </div>
               {/if}
             </div>
             <div class="flex-1 min-w-0 space-y-2">
-              <h2 class="text-lg font-bold text-[#111827] truncate">{record.name}</h2>
+              <h2 class="text-base font-bold text-[#111827] truncate">{record.name}</h2>
               <div class="flex flex-wrap items-center gap-2">
-                <span class="px-2.5 py-1 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider tabular-nums" style="background:#2563eb15;color:#2563eb">RPC: {record.registration_number}</span>
-                <span class="px-2.5 py-1 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider" style="background:{categoryColor(record.category)}15;color:{categoryColor(record.category)}">{record.category}</span>
-                <span class="px-2.5 py-1 rounded-full text-[0.65rem] font-semibold uppercase tracking-wider" style="background:{record.status === 'Active' ? 'rgba(0,204,102,0.1)' : 'rgba(239,68,68,0.1)'};color:{statusColor(record.status)}">{record.status || 'Unknown'}</span>
+                <span class="px-2.5 py-1 rounded-full text-[0.6rem] font-semibold uppercase tracking-wider tabular-nums" style="background:#2563eb15;color:#2563eb">RPC: {record.registration_number}</span>
+                <span class="px-2.5 py-1 rounded-full text-[0.6rem] font-semibold uppercase tracking-wider" style="background:{categoryColor(record.category)}15;color:{categoryColor(record.category)}">{record.category}</span>
+                <span class="px-2.5 py-1 rounded-full text-[0.6rem] font-semibold uppercase tracking-wider" style="background:{record.status === 'Active' ? 'rgba(0,204,102,0.1)' : 'rgba(239,68,68,0.1)'};color:{statusColor(record.status)}">{record.status || 'Unknown'}</span>
               </div>
               <div class="flex flex-wrap gap-3 text-xs text-[#6b7280]">
                 <span>Serial: <span class="text-[#374151] font-medium">#{record.serial_number || '—'}</span></span>
@@ -98,11 +98,11 @@
           </div>
 
           {#if record.education && record.education.length > 0}
-            <div class="border-t border-[#f3f4f6] pt-4 space-y-3">
-              <h3 class="text-sm font-semibold text-[#111827] flex items-center gap-2"><svg class="w-4 h-4 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Education</h3>
+            <div class="border-t border-[#f3f4f6] pt-3 space-y-2">
+              <h3 class="text-xs font-semibold text-[#111827] flex items-center gap-2"><svg class="w-4 h-4 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Education</h3>
               <div class="space-y-3">
                 {#each record.education as edu}
-                  <div class="rounded-lg border border-[#f3f4f6] bg-[#f9fafb] p-3 space-y-2">
+                  <div class="rounded-lg border border-[#f3f4f6] bg-[#f9fafb] p-2 space-y-1.5">
                     <div class="flex items-center justify-between gap-2">
                       <span class="text-[0.6rem] font-semibold uppercase tracking-wider text-[#9ca3af]">Category</span>
                       <span class="text-xs font-semibold" style="color:{categoryColor(edu.Category || '')}">{edu.Category || '—'}</span>
@@ -120,8 +120,8 @@
           {/if}
 
           {#if record.work_experience && (record.work_experience.Address || record.work_experience.State || record.work_experience.District || record.work_experience['Pin code'])}
-            <div class="border-t border-[#f3f4f6] pt-4 space-y-3">
-              <h3 class="text-sm font-semibold text-[#111827] flex items-center gap-2"><svg class="w-4 h-4 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> Work Experience</h3>
+            <div class="border-t border-[#f3f4f6] pt-3 space-y-2">
+              <h3 class="text-xs font-semibold text-[#111827] flex items-center gap-2"><svg class="w-4 h-4 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> Work Experience</h3>
               <dl class="grid grid-cols-1 gap-2 text-xs">
                 <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">Address</dt><dd class="text-[#374151] mt-0.5">{record.work_experience.Address || '—'}</dd></div>
                 <div class="grid grid-cols-2 gap-2">
@@ -134,7 +134,7 @@
           {/if}
 
           <div class="border-t border-[#f3f4f6] pt-3 flex justify-end">
-            <button onclick={printPage} class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#e5e7eb] text-xs font-medium text-[#374151] hover:bg-[#f4f4f5] transition-colors">
+            <button onclick={printPage} class="flex items-center gap-1.5 px-2.5 py-1 rounded border border-[#e5e7eb] text-xs font-medium text-[#374151] hover:bg-[#f4f4f5] transition-colors">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5"/><path d="M18 18h2a2 2 0 0 0 2-2v-5"/><rect x="6" y="14" width="12" height="8"/></svg> Print
             </button>
           </div>

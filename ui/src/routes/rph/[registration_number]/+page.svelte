@@ -66,7 +66,7 @@
   </script>
 </svelte:head>
 
-<div class="max-w-3xl mx-auto space-y-6 px-4 py-6">
+<div class="max-w-3xl mx-auto space-y-4 px-4 py-4">
   <div class="flex items-center gap-3 mb-4">
     <button
       onclick={backToSearch}
@@ -81,9 +81,9 @@
   </div>
 
   <!-- Single Module -->
-  <div class="bg-white border border-[#e5e7eb] rounded-xl p-6 space-y-4">
+  <div class="bg-white border border-[#e5e7eb] rounded-xl p-4 space-y-3">
     <div class="flex flex-col md:flex-row gap-6 items-start md:items-center">
-      <div class="flex-shrink-0 w-32 h-40 md:w-36 md:h-44 rounded-lg bg-[#f3f4f6] overflow-hidden relative">
+      <div class="flex-shrink-0 w-24 h-32 md:w-28 md:h-36 rounded-lg bg-[#f3f4f6] overflow-hidden relative">
         <img
           src={photo}
           alt={`${record.name}'s photo`}
@@ -92,7 +92,7 @@
         />
         {#if photoError}
           <div class="w-full h-full flex items-center justify-center bg-[#f3f4f6]">
-            <svg class="w-16 h-16 text-[#d1d5db]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <svg class="w-12 h-12 text-[#d1d5db]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
@@ -101,7 +101,7 @@
       </div>
 
       <div class="flex-1 min-w-0 space-y-2">
-        <h1 class="text-2xl md:text-3xl font-bold text-[#111827] truncate">{record.name}</h1>
+        <h1 class="text-xl md:text-2xl font-bold text-[#111827] truncate">{record.name}</h1>
 
         <div class="flex flex-wrap items-center gap-2.5">
           <span class="px-3 py-1 rounded-full text-[0.7rem] font-semibold uppercase tracking-wider tabular-nums"
@@ -140,7 +140,7 @@
 
     {#if record.education && record.education.length > 0}
       <div class="border-t border-[#f3f4f6] pt-4 space-y-3">
-        <h2 class="text-lg font-semibold text-[#111827] flex items-center gap-2">
+        <h2 class="text-base font-semibold text-[#111827] flex items-center gap-2">
           <svg class="w-5 h-5 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
             <path d="M6 12v5c3 3 9 3 12 0v-5" />
@@ -149,7 +149,7 @@
         </h2>
         <div class="space-y-3">
           {#each record.education as edu}
-            <div class="rounded-lg border border-[#f3f4f6] bg-[#f9fafb] p-3 space-y-2">
+            <div class="rounded-lg border border-[#f3f4f6] bg-[#f9fafb] p-2.5 space-y-1.5">
               <div class="flex items-center justify-between gap-2">
                 <span class="text-[0.6rem] font-semibold uppercase tracking-wider text-[#9ca3af]">Category</span>
                 <span class="text-sm font-semibold" style="color:{categoryColor(edu.Category || '')}">{edu.Category || '—'}</span>
@@ -168,7 +168,7 @@
 
     {#if record.work_experience && (record.work_experience.Address || record.work_experience.State || record.work_experience.District || record.work_experience['Pin code'])}
       <div class="border-t border-[#f3f4f6] pt-4 space-y-3">
-        <h2 class="text-lg font-semibold text-[#111827] flex items-center gap-2">
+        <h2 class="text-base font-semibold text-[#111827] flex items-center gap-2">
           <svg class="w-5 h-5 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="2" y="7" width="20" height="14" rx="2" />
             <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
