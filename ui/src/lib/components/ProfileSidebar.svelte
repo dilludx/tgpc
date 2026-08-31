@@ -58,7 +58,7 @@
     transition:fly={{ x: 420, duration: 220 }}
   >
     <div class="sticky top-0 z-10 flex items-center justify-between gap-2 bg-white border-b border-[#e5e7eb] px-4 py-3">
-      <span class="text-sm font-semibold text-[#111827] truncate">{record ? record.name : loading ? 'Loading…' : error ? 'Not found' : 'Profile'}</span>
+      <span class="text-sm font-semibold text-[#111827] truncate">{loading ? 'Loading…' : error ? 'Not found' : 'Profile'}</span>
       <button onclick={onClose} aria-label="Close" class="w-8 h-8 flex items-center justify-center rounded-full border border-[#e5e7eb] text-[#6b7280] hover:bg-[#f9fafb] transition-colors">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
