@@ -68,7 +68,7 @@
       {:else if error}
         <p class="text-sm text-[#ef4444] py-8 text-center">{error}</p>
       {:else if record}
-        <!-- Header Card -->
+        <!-- Single Module -->
         <div class="bg-white border border-[#e5e7eb] rounded-xl p-4 space-y-4">
           <div class="flex gap-4 items-start">
             <div class="flex-shrink-0 w-24 h-30 rounded-lg bg-[#f3f4f6] overflow-hidden relative" style="width:96px;height:120px">
@@ -96,54 +96,48 @@
             <div class="flex items-center gap-1.5"><span class="text-[#9ca3af] text-xs">Father:</span><span class="text-[#374151] font-medium text-sm">{record.father_name || '—'}</span></div>
             {#if record.gender}<div class="flex items-center gap-1.5"><span class="text-[#9ca3af] text-xs">Gender:</span><span class="text-[#374151] font-medium text-sm">{record.gender}</span></div>{/if}
           </div>
-        </div>
 
-        {#if record.education && record.education.length > 0}
-          <section class="bg-white border border-[#e5e7eb] rounded-xl p-4 space-y-3">
-            <h3 class="text-sm font-semibold text-[#111827] flex items-center gap-2"><svg class="w-4 h-4 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Education</h3>
-            <div class="overflow-x-auto -mx-4 px-4">
-              <table class="w-full text-xs" style="table-layout:auto">
-                <thead>
-                  <tr class="text-[0.6rem] font-semibold text-[#9ca3af] uppercase tracking-wider border-b border-[#e5e7eb]">
-                    <th class="text-left py-1.5 px-2">Category</th>
-                    <th class="text-left py-1.5 px-2">Board / Univ</th>
-                    <th class="text-left py-1.5 px-2">College</th>
-                    <th class="text-left py-1.5 px-2">HT No</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {#each record.education as edu}
-                    <tr class="border-b border-[#f3f4f6] text-[#374151]">
-                      <td class="py-1.5 px-2 font-medium" style="color:{categoryColor(edu.Category || '')}">{edu.Category || '—'}</td>
-                      <td class="py-1.5 px-2 truncate max-w-[120px]" title={edu['Board/University'] || ''}>{edu['Board/University'] || '—'}</td>
-                      <td class="py-1.5 px-2 truncate max-w-[120px]" title={edu['College Name'] || ''}>{edu['College Name'] || '—'}</td>
-                      <td class="py-1.5 px-2 tabular-nums">{edu['HT No'] || '—'}</td>
-                    </tr>
-                  {/each}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        {/if}
-
-        {#if record.work_experience && (record.work_experience.Address || record.work_experience.State || record.work_experience.District || record.work_experience['Pin code'])}
-          <section class="bg-white border border-[#e5e7eb] rounded-xl p-4 space-y-3">
-            <h3 class="text-sm font-semibold text-[#111827] flex items-center gap-2"><svg class="w-4 h-4 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> Work Experience</h3>
-            <dl class="grid grid-cols-1 gap-2 text-xs">
-              <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">Address</dt><dd class="text-[#374151] mt-0.5">{record.work_experience.Address || '—'}</dd></div>
-              <div class="grid grid-cols-2 gap-2">
-                <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">State</dt><dd class="text-[#374151] mt-0.5">{record.work_experience.State || '—'}</dd></div>
-                <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">District</dt><dd class="text-[#374151] mt-0.5">{record.work_experience.District || '—'}</dd></div>
+          {#if record.education && record.education.length > 0}
+            <div class="border-t border-[#f3f4f6] pt-4 space-y-3">
+              <h3 class="text-sm font-semibold text-[#111827] flex items-center gap-2"><svg class="w-4 h-4 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Education</h3>
+              <div class="space-y-3">
+                {#each record.education as edu}
+                  <div class="rounded-lg border border-[#f3f4f6] bg-[#f9fafb] p-3 space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-[0.6rem] font-semibold uppercase tracking-wider text-[#9ca3af]">Category</span>
+                      <span class="text-xs font-semibold" style="color:{categoryColor(edu.Category || '')}">{edu.Category || '—'}</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-1.5 text-xs">
+                      <div><span class="text-[#9ca3af]">Board / University:</span> <span class="text-[#374151] font-medium">{edu['Board/University'] || '—'}</span></div>
+                      <div><span class="text-[#9ca3af]">College:</span> <span class="text-[#374151] font-medium">{edu['College Name'] || '—'}</span></div>
+                      {#if edu['College Address']}<div><span class="text-[#9ca3af]">Address:</span> <span class="text-[#374151]">{edu['College Address']}</span></div>{/if}
+                      <div class="flex gap-4"><span class="text-[#9ca3af]">HT No:</span> <span class="text-[#374151] font-medium tabular-nums">{edu['HT No'] || '—'}</span> {#if edu.From || edu.To}<span class="text-[#9ca3af]">From–To:</span> <span class="text-[#374151]">{edu.From || ''}{#if edu.From && edu.To} – {/if}{edu.To || ''}</span>{/if}</div>
+                    </div>
+                  </div>
+                {/each}
               </div>
-              <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">Pin Code</dt><dd class="text-[#374151] mt-0.5">{record.work_experience['Pin code'] || '—'}</dd></div>
-            </dl>
-          </section>
-        {/if}
+            </div>
+          {/if}
 
-        <div class="flex justify-end pt-2">
-          <button onclick={printPage} class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#e5e7eb] text-xs font-medium text-[#374151] hover:bg-[#f4f4f5] transition-colors">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5"/><path d="M18 18h2a2 2 0 0 0 2-2v-5"/><rect x="6" y="14" width="12" height="8"/></svg> Print
-          </button>
+          {#if record.work_experience && (record.work_experience.Address || record.work_experience.State || record.work_experience.District || record.work_experience['Pin code'])}
+            <div class="border-t border-[#f3f4f6] pt-4 space-y-3">
+              <h3 class="text-sm font-semibold text-[#111827] flex items-center gap-2"><svg class="w-4 h-4 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> Work Experience</h3>
+              <dl class="grid grid-cols-1 gap-2 text-xs">
+                <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">Address</dt><dd class="text-[#374151] mt-0.5">{record.work_experience.Address || '—'}</dd></div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">State</dt><dd class="text-[#374151] mt-0.5">{record.work_experience.State || '—'}</dd></div>
+                  <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">District</dt><dd class="text-[#374151] mt-0.5">{record.work_experience.District || '—'}</dd></div>
+                </div>
+                <div><dt class="text-[#9ca3af] text-[0.65rem] font-semibold uppercase tracking-wider">Pin Code</dt><dd class="text-[#374151] mt-0.5">{record.work_experience['Pin code'] || '—'}</dd></div>
+              </dl>
+            </div>
+          {/if}
+
+          <div class="border-t border-[#f3f4f6] pt-3 flex justify-end">
+            <button onclick={printPage} class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-[#e5e7eb] text-xs font-medium text-[#374151] hover:bg-[#f4f4f5] transition-colors">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5"/><path d="M18 18h2a2 2 0 0 0 2-2v-5"/><rect x="6" y="14" width="12" height="8"/></svg> Print
+            </button>
+          </div>
         </div>
       {/if}
     </div>
