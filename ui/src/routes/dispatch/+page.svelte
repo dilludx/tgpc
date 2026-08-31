@@ -57,10 +57,6 @@
 </script>
 
 <div class="space-y-4">
-  <div>
-    <h1 class="text-xl font-bold text-[#111827]">Dispatch Lists</h1>
-    <p class="mt-1 text-sm text-[#6b7280]">Official dispatch lists from Telangana State Pharmacy Council — sorted by dispatch date. Filter by year or search by date.</p>
-  </div>
   <div class="flex items-center gap-2">
     <div class="relative flex-1">
       <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af] pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
