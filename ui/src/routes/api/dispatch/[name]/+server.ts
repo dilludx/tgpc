@@ -10,12 +10,24 @@ export const GET: RequestHandler = async ({ params, platform }) => {
     if (bucket && typeof bucket.get === 'function') {
       const obj = await bucket.get(`dispatch/${name}`);
       if (obj) {
+        const buf = await obj.arrayBuffer();
+        let bytes = new Uint8Array(buf);
+        // Rewrite PDF Title metadata so tab shows filename, not 858a…xlsx hash
+        try {
+          const text = new TextDecoder('latin1').decode(bytes);
+          let mod = text.replace(/\/Title\s*\([^)]*\)/g, `/Title (${name})`);
+          // Replace XMP dc:title rdf:li value
+          mod = mod.replace(/<dc:title>[\s\S]*?<\/dc:title>/g, `<dc:title><rdf:Alt><rdf:li xml:lang="x-default">${name}</rdf:li></rdf:Alt></dc:title>`);
+          if (mod !== text) {
+            bytes = Uint8Array.from(mod, (ch) => ch.charCodeAt(0) & 0xff);
+          }
+        } catch {}
         const headers = new Headers();
         headers.set('Content-Type', 'application/pdf');
-        headers.set('Content-Disposition', `inline; filename="${name}"`);
+        headers.set('Content-Disposition', `inline; filename="${name}"; filename*=UTF-8''${encodeURIComponent(name)}`);
         headers.set('Cache-Control', 'public, max-age=300');
-        if (obj.size) headers.set('Content-Length', String(obj.size));
-        return new Response(obj.body, { headers });
+        headers.set('Content-Length', String(bytes.byteLength));
+        return new Response(bytes, { headers });
       }
     }
   } catch {}
