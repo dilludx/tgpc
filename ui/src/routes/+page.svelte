@@ -324,10 +324,9 @@
           <div class="h-4 bg-[#f3f4f6] rounded animate-pulse" style="width:{40 + Math.random() * 60}%"></div>
         {/each}
       </div>
-    {:else if filtered.length === 0}
-      <p class="text-[0.85rem] text-[#9ca3af] py-8 text-center">No results</p>
     {:else}
-      <!-- Result filters — slim modern single row -->
+      {#if results.length > 0}
+        <!-- Result filters — slim modern single row (persistent when filtering) -->
       <div class="mb-2 flex flex-wrap items-end gap-2 rounded-lg border bg-white p-2 transition-colors lg:flex-nowrap" style="border-color:{refinersActive ? '#00cc66' : '#e5e7eb'}">
         <label class="flex min-w-[92px] flex-1 flex-col gap-1">
           <span class="text-[0.6rem] font-semibold uppercase tracking-widest text-[#9ca3af]">RPC</span>
@@ -368,7 +367,11 @@
           <button onclick={clearAdvanced} class="h-7 self-end rounded-full border border-[rgba(239,68,68,0.2)] bg-white px-3 text-xs font-semibold text-[#ef4444] transition-colors hover:bg-[rgba(239,68,68,0.06)]">Clear</button>
         {/if}
       </div>
-      <div class="hidden md:block">
+      {/if}
+      {#if filtered.length === 0}
+        <p class="text-[0.85rem] text-[#9ca3af] py-8 text-center">No results</p>
+      {:else}
+        <div class="hidden md:block">
         <div style="max-height:{resultsMaxH};min-height:{resultsMinH};overflow-y:auto;overflow-x:auto" bind:this={resultsBox}>
         <table class="w-full" style="table-layout:auto">
           <thead class="sticky top-0 bg-white z-10">
@@ -432,6 +435,7 @@
             </div>
           {/each}
         </div>
+      {/if}
     {/if}
     </div>
   {/if}
