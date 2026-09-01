@@ -87,12 +87,10 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: rph-data
-        path: data/rph.json
+        path: |
+          data/rph.json
+          data/update_details.json
         retention-days: 90
-
-    - name: Clean up update details
-      if: always()
-      run: rm -f data/update_details.json
 
     - name: Notify on failure
       if: failure()

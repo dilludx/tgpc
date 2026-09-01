@@ -205,7 +205,7 @@ def main():
     # removed (CODE_REVIEW.md L6).
     if args.command == "update":
         with Phase("Daily update", 1, 4):
-            status = manager.run_daily_update()
+            status = manager.run_daily_update(force=args.force)
         if status in ("source_unavailable", "blocked"):
             print(f"TGPC source {status} — no new data to sync.")
             return
@@ -218,6 +218,10 @@ def main():
                     delta_ids = new_regs | set(mod_regs)
                     delta = [r for r in all_records if r.registration_number in delta_ids] if delta_ids else []
                     sync_results = [manager.sync_to_supabase(delta_records=delta)]
+                    # Delete orphans that were removed from source
+                    removed_regs = getattr(manager, "_last_removed_regs", set())
+                    if removed_regs:
+                        sync_results.append(manager.delete_removed_from_supabase(removed_regs))
                     if delta_ids:
                         sync_results += [
                             manager.sync_to_supabase_storage(),

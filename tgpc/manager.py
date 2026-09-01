@@ -35,12 +35,20 @@ class FileManager:
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
     def save(self, records: List[PharmacistRecord], filename: str = "rph.json") -> Path:
-        """Save records to JSON."""
+        """Save records to JSON atomically."""
         path = self.data_dir / filename
+        tmp_path = path.with_suffix(path.suffix + ".tmp")
         data = [r.to_dict() for r in records]
-
-        with open(path, "w", encoding="utf-8") as f:
+        with open(tmp_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False, default=str)
+            f.flush()
+            os.fsync(f.fileno())
+        # Validate tmp before rename
+        with open(tmp_path, "r", encoding="utf-8") as f:
+            loaded = json.load(f)
+            if len(loaded) < 1000 and len(records) >= 1000:
+                raise ValueError(f"Tmp validation failed: {len(loaded)} < 1000")
+        tmp_path.replace(path)
         logger.info(f"Saved {len(records)} records to {path}")
         return path
 
@@ -72,12 +80,12 @@ class BackupManager:
         account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID")
         return f"https://{account_id}.r2.cloudflarestorage.com" if account_id else None
 
-    def _upload_to_r2(self, local_path: Path):
+    def _upload_to_r2(self, local_path: Path) -> bool:
         endpoint = self._r2_endpoint()
         env = self._r2_env()
         if not endpoint:
             logger.warning("Missing CLOUDFLARE_ACCOUNT_ID — skipping R2 backup upload")
-            return
+            return False
 
         r2_key = f"backups/{local_path.name}"
         result = subprocess.run(
@@ -103,7 +111,7 @@ class BackupManager:
         )
         if result.returncode != 0:
             logger.warning(f"R2 backup upload failed for {r2_key}: {result.stderr.strip()}")
-            return
+            return False
 
         logger.info(f"Backup uploaded to R2: {r2_key}")
 
@@ -127,11 +135,11 @@ class BackupManager:
             env=env,
         )
         if result.returncode != 0:
-            return
+            return True
 
         data = json.loads(result.stdout)
         objects = sorted(data.get("Contents", []), key=lambda o: o["Key"], reverse=True)
-        for obj in objects[5:]:
+        for obj in objects[30:]:
             subprocess.run(
                 [
                     "aws",
@@ -151,6 +159,7 @@ class BackupManager:
                 env=env,
             )
             logger.info(f"Removed old R2 backup: {obj['Key']}")
+        return True
 
     def create(self, source: Path) -> str:
         """Create timestamped backup, upload to R2, and remove local copy."""
@@ -163,10 +172,12 @@ class BackupManager:
         shutil.copy2(source, dest)
         logger.info(f"Backup created: {dest}")
 
-        self._upload_to_r2(dest)
-        if dest.exists():
+        uploaded = self._upload_to_r2(dest)
+        if uploaded and dest.exists():
             dest.unlink()
             logger.info(f"Local backup deleted: {dest}")
+        elif not uploaded:
+            logger.warning(f"Local backup kept (R2 upload failed): {dest}")
         return str(dest)
 
 
@@ -287,13 +298,27 @@ class Manager:
                     f.write(f"{key}={serialized}\n")
 
     def _restore_rph_from_backup(self) -> bool:
-        """Restore data/rph.json from latest R2 backup if local file is missing.
+        """Restore data/rph.json from latest R2 backup if local file is missing or corrupted.
 
         Returns True if file exists after this call (either already existed or restored).
         """
         rph_path = Path(self.config.data_directory) / "rph.json"
         if rph_path.exists():
-            return True
+            try:
+                with open(rph_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if isinstance(data, list) and len(data) >= 1:
+                    return True
+                logger.warning(
+                    f"rph.json small ({len(data) if isinstance(data, list) else 'invalid'}) — restoring from R2..."
+                )
+            except Exception as e:
+                logger.warning(f"data/rph.json failed validation ({e}) — restoring from R2...")
+            # Treat as missing, fall through to R2 restore
+            try:
+                rph_path.unlink(missing_ok=True)
+            except Exception:
+                pass
 
         logger.warning("data/rph.json not found — attempting restore from R2 backup...")
         endpoint = self.backup_manager._r2_endpoint()
@@ -334,6 +359,10 @@ class Manager:
 
         latest = max(contents, key=lambda x: x["LastModified"])
         backup_key = latest["Key"]
+        # Only restore if R2 backup is significantly larger than local (avoid overwriting test 1 with 1)
+        if latest.get("Size", 0) < 1000:
+            logger.warning(f"R2 backup {backup_key} too small ({latest.get('Size')} bytes) — not restoring")
+            return False
 
         rph_path.parent.mkdir(parents=True, exist_ok=True)
         r2 = subprocess.run(
@@ -365,7 +394,7 @@ class Manager:
         logger.info(f"Restored data/rph.json from {backup_key} ({size} bytes)")
         return True
 
-    def run_daily_update(self):
+    def run_daily_update(self, force: bool = False):
         """Execute daily update workflow."""
         logger.info("Starting daily update...")
 
@@ -494,6 +523,19 @@ class Manager:
             rem_cat_stats = get_cat_stats(sorted_removed_ids, existing_map)
             mod_cat_stats = get_cat_stats(modified_ids, current_map)  # Use modified_ids, NOT common_ids
 
+            # Safety abort for 1 vs 89k spike — require --force
+            if not force and (len(new_ids) + len(removed_ids) > 100 or len(new_ids) > 1000):
+                logger.error(
+                    f"SAFETY ABORT: {len(new_ids)} new + {len(removed_ids)} removed "
+                    f"(limit 100 total / 1000 new) — possible corruption. Run --force."
+                )
+                self._write_update_outputs(
+                    update_status="safety_abort",
+                    success=False,
+                    total_records=len(existing_records),
+                )
+                return "safety_abort"
+
             self.file_manager.save(list(sorted_records))
             self._last_new_regs = new_ids
             self._last_modified_regs = modified_ids
@@ -620,6 +662,29 @@ class Manager:
             return False
 
         return True
+
+    def delete_removed_from_supabase(self, removed_ids: set) -> bool:
+        """Delete removed records from Supabase."""
+        if not removed_ids:
+            return True
+        url = __import__("os").environ.get("SUPABASE_URL")
+        key = __import__("os").environ.get("SUPABASE_SECRET_KEY")
+        if not url or not key:
+            return False
+        try:
+            from supabase import create_client
+
+            supabase = create_client(url, key)
+            # Batch delete (Supabase IN limit)
+            ids = list(removed_ids)
+            batch = 500
+            for i in range(0, len(ids), batch):
+                supabase.table("rph").delete().in_("registration_number", ids[i : i + batch]).execute()
+            __import__("logging").getLogger("tgpc").info(f"Deleted {len(ids)} removed records from Supabase")
+            return True
+        except Exception as e:
+            __import__("logging").getLogger("tgpc").error(f"Delete failed: {e}")
+            return False
 
     def sync_to_supabase_storage(self):
         """Upload rph.json to Supabase Storage (tgpc bucket)."""
