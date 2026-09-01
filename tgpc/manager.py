@@ -984,7 +984,7 @@ class Manager:
         tag = "rphjson"
         file_path = str(self.file_manager.data_dir / "rph.json")
         archive_path = file_path + ".zip"
-        repo = os.environ.get("GITHUB_REPOSITORY", "dilludx/tgpc")
+        repo = os.environ.get("GITHUB_REPOSITORY", "tgpc-org/tgpc")
         password = os.environ.get("RELEASE_PASSWORD")
 
         if not password:

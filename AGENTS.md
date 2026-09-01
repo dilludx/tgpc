@@ -48,5 +48,4 @@ red/green may also appear as alpha tints: `rgba(239,68,68,a)` /
 ## Workflow
 
 - Do not commit or push unless explicitly asked.
-- When verifying UI changes, the page must load 200 and `svelte-check` must not
-  introduce new errors.
+- When verifying UI changes, the page must load 200 and `svelte-check` must not introduce new errors.

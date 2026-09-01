@@ -413,7 +413,7 @@ No Black, no trailing-whitespace, or end-of-file-fixer hooks.
 | Component | Method | URL |
 |---|---|---|---|
 | Frontend | Cloudflare Pages (auto-deploy from `main`, builds `ui/`) | `https://tgpc.pages.dev` |
-| CI/CD | GitHub Actions (manual trigger) | `github.com/dilludx/tgpc/actions` |
+| CI/CD | GitHub Actions (manual trigger) | `github.com/tgpc-org/tgpc/actions` |
 | Data download | GitHub Release | Tag `rphjson`, file `rph.json` |
 
 ---

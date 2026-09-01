@@ -50,7 +50,7 @@ jobs:
       run: |
         if [ ! -f data/rph.json ]; then
           echo "No local data found. Trying artifact restore..."
-          if gh run download --repo dilludx/tgpc -n rph-data --dir data/ 2>/dev/null && [ -f data/rph.json ]; then
+          if gh run download --repo "${GITHUB_REPOSITORY}" -n rph-data --dir data/ 2>/dev/null && [ -f data/rph.json ]; then
             echo "Restored rph.json from artifact ($(wc -c < data/rph.json) bytes)"
           else
             echo "No artifact found — will do full scrape"
@@ -71,7 +71,7 @@ jobs:
         RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
         RELEASE_PASSWORD: ${{ secrets.RELEASE_PASSWORD }}
-        GITHUB_REPOSITORY: dilludx/tgpc
+        GITHUB_REPOSITORY: ${{ github.repository }}
         GH_TOKEN: ${{ github.token }}
       run: |
         if [[ "${{ github.event.inputs.force_sync }}" == "true" && -f data/rph.json ]]; then

@@ -155,7 +155,7 @@ class SyncToReleaseTests(unittest.TestCase):
 
     @staticmethod
     def _env(password=None):
-        env = {"GITHUB_REPOSITORY": "dilludx/tgpc"}
+        env = {"GITHUB_REPOSITORY": "tgpc-org/tgpc"}
         if password is not None:
             env["RELEASE_PASSWORD"] = password
         return env
