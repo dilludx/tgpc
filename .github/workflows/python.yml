@@ -22,3 +22,10 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: python3 -m pytest tests/ -q
+
+      # Dependency vulnerability scan (PyPA pip-audit). Fails on any known
+      # vulnerable package in the installed environment.
+      - name: Audit Python dependencies
+        run: |
+          pip install pip-audit
+          pip-audit -r <(pip freeze) --progress-spinner off

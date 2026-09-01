@@ -19,7 +19,10 @@ The project consists of:
 
 ```
 tgpc/
+├── .github/dependabot.yml          # Automated dependency-update PRs (pip, npm, actions)
 ├── .github/workflows/rphsync.yml   # Manual CI: single job, scrapes + syncs to 4 destinations + email
+├── .github/workflows/python.yml    # ruff + pytest + pip-audit dependency scan
+├── .github/workflows/ui.yml        # eslint + svelte-check + brand-color gate + tests + npm audit
 ├── .husky/                         # Husky pre-commit hook → triggers pre-commit (ruff)
 ├── .pre-commit-config.yaml         # ruff lint + ruff-format only
 ├── pyproject.toml                  # Package: tgpc-data-extraction v2.0.0, pinned deps
@@ -253,6 +256,40 @@ CREATE TABLE metadata (
 
 RLS allows anonymous `SELECT` on `rph` and `metadata` tables. The Publishable Key in `config.js` is safe to commit.
 
+**⚠️ RLS verification (do this in the Supabase dashboard → SQL Editor):**
+
+The frontend uses the **publishable/anon key** against 87k rows, so protection from
+unauthorized writes/deletes depends entirely on RLS being enabled. Run this to
+confirm the right posture (public **read-only**, no writes from anon):
+
+```sql
+-- Confirm RLS is enabled and anon can only SELECT
+select schemaname, tablename, rowsecurity
+from pg_tables
+where schemaname = 'public' and tablename in ('rph', 'metadata');
+
+-- Anon should have a SELECT (read) policy and NO insert/update/delete policy.
+-- If the query below returns any rows for rph/metadata, tighten it:
+select polname, polcmd, pg_get_expr(polqual, polrelid)
+from pg_policy
+join pg_class on pg_class.oid = polrelid
+join pg_namespace on pg_namespace.oid = relnamespace
+where nspname = 'public' and relname in ('rph', 'metadata');
+
+-- Correct anon posture — read-only. Run these if the SELECT policy is missing:
+alter table public.rph enable row level security;
+alter table public.metadata enable row level security;
+
+create policy "anon select rph" on public.rph
+  for select to anon using (true);
+
+create policy "anon select metadata" on public.metadata
+  for select to anon using (true);
+```
+
+The service-role key (used server-side / by the Python pipeline) bypasses RLS, so
+writes continue to work via `sync_to_supabase()`.
+
 ### Data File Formats
 
 **`rph.json`** — standard JSON array:
@@ -327,7 +364,11 @@ Server-only modules under `ui/src/lib/server/` (`auth.ts`, `adminLinks.ts`, `rat
 - **Realtime** — Supabase Realtime subscription on `metadata` table for live stats/timestamp updates
 - **Search** — client-side Supabase query (min 3 chars), sorted by prefix priority then numeric, paginated 50/page (25 mobile), results capped at 500
 - **Export** — PDF via jsPDF + jspdf-autotable; CSV via Blob download with formula-injection guard
-- **Security headers** — CSP/HSTS/nosniff/frame-deny applied globally in `hooks.server.ts` (+ `ui/static/_headers`)
+- **Security headers** — applied globally in `hooks.server.ts` (+ `ui/static/_headers` for static assets):
+  - **CSP** with a per-request **nonce** for inline scripts on route HTML (`script-src 'self' 'nonce-<n>' 'strict-dynamic'`) plus `img-src`/`connect-src` allowlists for the R2 photo CDN and Supabase origin
+  - `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Strict-Transport-Security`, `Permissions-Policy`
+  - `Cross-Origin-Opener-Policy: same-origin` + `Cross-Origin-Resource-Policy: same-origin` (cross-origin isolation)
+- **Admin auth** — HMAC-SHA256 signed, expiring session cookie (`HttpOnly`/`SameSite=Strict`); login uses constant-time comparison + a fixed 250ms delay on every attempt (timing side-channel + brute-force throttling); best-effort in-isolate rate limiter (defence-in-depth — pair with a Cloudflare Rate Limiting rule on `/api/admin`)
 - **Responsive** — single component, CSS toggles between table and cards at 768px
 - **Connection status** — status pill (Busy/Live/Offline) with live clock
 - **Design** — TGPC brand palette only, machine-enforced by `npm run check:colors`
@@ -368,8 +409,11 @@ Job permissions: `actions: write`, `contents: write` (release upload).
 | `RELEASE_PASSWORD` | Password for the encrypted release zip |
 
 **Quality gates:**
-- `.github/workflows/ui.yml` runs on push/PR touching `ui/` — ESLint + brand-color gate (`check:colors`) + svelte-check + the 18 unit tests + a build with placeholder PUBLIC env vars (real values live in the Cloudflare Pages dashboard). Auto-deploys from `main` build `ui/`.
-- `.github/workflows/python.yml` runs on push/PR touching `tgpc/`, `tests/`, or `pyproject.toml` — `ruff check`, `ruff format --check` (pinned 0.11.5, matching pre-commit), and the full pytest suite.
+- `.github/workflows/ui.yml` runs on push/PR touching `ui/` — ESLint + brand-color gate (`check:colors`) + svelte-check + the 18 unit tests + a build with placeholder PUBLIC env vars (real values live in the Cloudflare Pages dashboard) + `npm audit --audit-level=high`. Auto-deploys from `main` build `ui/`.
+- `.github/workflows/python.yml` runs on push/PR touching `tgpc/`, `tests/`, or `pyproject.toml` — `ruff check`, `ruff format --check` (pinned 0.11.5, matching pre-commit), the full pytest suite, and a `pip-audit` dependency vulnerability scan.
+
+**Dependency updates (`.github/dependabot.yml`):**
+Dependabot opens weekly PRs for the Python (`pip`), frontend (`npm`), and GitHub Actions ecosystems, targeting Monday 06:00 IST. Combined with the `pip-audit` / `npm audit` scans above, this keeps the pinned 2023-era Python deps (`requests==2.31.0`, etc.) patched against known CVEs.
 
 ---
 

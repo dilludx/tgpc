@@ -34,3 +34,8 @@ jobs:
       - run: npm run check
       - run: npm run test:unit
       - run: npm run build
+
+      # Dependency vulnerability scan. `--audit-level=high` fails the build on
+      # high/critical advisories without blocking on low/moderate noise.
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=high
