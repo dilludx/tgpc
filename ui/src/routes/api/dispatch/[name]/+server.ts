@@ -2,13 +2,19 @@ import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params, platform }) => {
   const name = params.name;
-  if (!/^DL\d{2}\d{2}\d{4}[A-Z]*\.pdf$/i.test(name)) {
+  // Strict validation: only allow DL files, no path separators, max 30 chars
+  if (!/^DL\d{2}\d{2}\d{4}[A-Z]*\.pdf$/i.test(name) || name.includes('/') || name.length > 30) {
     return new Response('Not found', { status: 404 });
   }
   try {
     const bucket: any = platform?.env?.DISPATCH;
     if (bucket && typeof bucket.get === 'function') {
-      const obj = await bucket.get(`dispatch/${name}`);
+      // R2 key must not contain ../ or start with /
+      const r2Key = `dispatch/${name}`;
+      if (r2Key.includes('..') || r2Key.startsWith('/')) {
+        return new Response('Not found', { status: 404 });
+      }
+      const obj = await bucket.get(r2Key);
       if (obj) {
         const buf = await obj.arrayBuffer();
         let bytes = new Uint8Array(buf);

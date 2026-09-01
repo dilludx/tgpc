@@ -2,6 +2,11 @@
 # HTML pages and /api/* also get these via src/hooks.server.ts (the hook
 # cannot set headers on static-asset responses, and _headers cannot see
 # function responses, so both are needed). Keep these in sync.
+#
+# NOTE: static assets cannot carry a per-request CSP nonce (unlike the hook,
+# which injects one via transformPageChunk). Non-HTML assets (JS/CSS/images/
+# PDFs) don't execute inline scripts, so 'unsafe-inline' here is safe. The
+# hook serves all route HTML with a nonce-based CSP, which is stricter.
 
 /*
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://pub-4591c8c5282040459ade2ed1e5e3d5be.r2.dev; connect-src 'self' https://vhgpyvzgmvhijqgsapnk.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
@@ -10,6 +15,8 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
 
 /favicon.*
   Cache-Control: no-cache

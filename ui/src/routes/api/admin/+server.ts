@@ -26,13 +26,23 @@ export const POST: RequestHandler = async (event) => {
   }
 
   const body = await request.json().catch(() => null);
-  const secret = (body as { secret?: unknown } | null)?.secret;
+  const rawSecret = (body as { secret?: unknown } | null)?.secret;
 
-  if (typeof secret !== 'string' || !(await safeEqual(secret, adminSecret))) {
+  // Always create a session token and always await the same amount of time
+  // (crypto constant-time compare + a fixed artificial delay), so responses
+  // are indistinguishable for correct and incorrect secrets (timing side
+  // channel). Also throttles brute force to ~120 attempts/minute per isolate.
+  const [isValid, token] = await Promise.all([
+    typeof rawSecret === 'string' ? safeEqual(rawSecret, adminSecret) : Promise.resolve(false),
+    createSession(adminSecret),
+    new Promise((r) => setTimeout(r, 250))
+  ]);
+
+  if (!isValid) {
     return new Response('Unauthorized', { status: 403 });
   }
 
-  cookies.set(SESSION_COOKIE, await createSession(adminSecret), {
+  cookies.set(SESSION_COOKIE, token, {
     path: '/',
     httpOnly: true,
     secure: !dev,

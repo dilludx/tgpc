@@ -10,6 +10,31 @@ function sanitizeQuery(s: string): string {
   return s.replace(/[,()%_*]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+// Validate and sanitize raw search input (CODE_REVIEW.md H4).
+// Rejects overly long strings; strips characters that could break
+// PostgREST filter expressions or cause pathological LIKE patterns.
+// Unicode letters (incl. transliterated Indian names) are preserved.
+const MAX_QUERY_LENGTH = 200;
+
+function validateQuery(raw: string): string {
+  const trimmed = raw.trim();
+  if (trimmed.length === 0 || trimmed.length > MAX_QUERY_LENGTH) return '';
+  // Reject control characters directly via charCode checks (avoids
+  // no-control-regex lint); strip structural metacharacters that could break
+  // PostgREST filter expressions or produce pathological LIKE patterns.
+  let out = '';
+  for (const ch of trimmed) {
+    const cp = ch.codePointAt(0)!;
+    const isControl = cp < 0x20 || cp === 0x7f;
+    if (isControl || ',()%_*'.includes(ch)) {
+      out += ' ';
+    } else {
+      out += ch;
+    }
+  }
+  return out.replace(/\s+/g, ' ').trim();
+}
+
 // ilike values are escaped by supabase-js, but % and _ would still act as
 // wildcards — strip them so user input matches literally.
 function stripWildcards(s: string): string {
@@ -17,7 +42,7 @@ function stripWildcards(s: string): string {
 }
 
 export async function searchRecords(query: string): Promise<PharmacistRecord[]> {
-  const q = query.trim();
+  const q = validateQuery(query);
   if (q.length < 3) return [];
   try {
     // No cap — fetch all matches via RPC with high limit (Phase 1: RPC now ranked via ts_rank + similarity)
