@@ -67,7 +67,7 @@
     <div class="flex-1 p-3 space-y-3">
       {#if loading}
         <div class="space-y-3 py-4">
-          {#each Array(6) as _}
+          {#each Array(6) as _, i (i)}
             <div class="h-4 bg-[#f3f4f6] rounded animate-pulse" style="width:{40 + Math.random()*60}%"></div>
           {/each}
         </div>
@@ -107,7 +107,7 @@
             <div class="border-t border-[#f3f4f6] pt-2 space-y-2">
               <h3 class="text-xs font-semibold text-[#111827] flex items-center gap-2"><svg class="w-4 h-4 text-[#00cc66]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> Education</h3>
               <div class="space-y-3">
-                {#each record.education as edu}
+                {#each record.education as edu (edu['HT No'] || edu.Category)}
                   <div class="rounded-lg border border-[#f3f4f6] bg-[#f9fafb] p-2 space-y-1.5">
                     <div class="flex items-center justify-between gap-2">
                       <span class="text-[0.6rem] font-semibold uppercase tracking-wider text-[#9ca3af]">Category</span>

@@ -208,7 +208,7 @@
           {/if}
 
           {#if report}
-            {#each report.services as service}
+            {#each report.services as service (service.name)}
               <div class="mb-5 border border-[#e5e7eb] rounded-lg overflow-hidden">
                 <div class="bg-[#f8f9fa] px-3 py-2 font-semibold text-sm border-b border-[#e5e7eb]">
                   {service.name}
@@ -226,7 +226,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      {#each service.items as item}
+                      {#each service.items as item (item.label)}
                         <tr class="border-b border-[#e5e7eb] last:border-b-0">
                           <td class="px-3 py-1.5">{item.label}</td>
                           <td class="px-3 py-1.5 text-right font-mono">{item.used}</td>
@@ -244,13 +244,13 @@
       {:else}
         <div class="border border-[#e5e7eb] rounded-lg overflow-hidden" style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column">
           <div class="divide-y divide-[#e5e7eb]" style="flex:1;display:flex;flex-direction:column">
-            {#each groups as group}
+            {#each groups as group (group.name)}
               <div style="flex:1">
                 <div class="bg-[#f8f9fa] px-3 py-2 font-semibold text-sm border-b border-[#e5e7eb] text-[#111827]">
                   {group.name}
                 </div>
                 <div class="divide-y divide-[#e5e7eb]">
-                  {#each group.items as item}
+                  {#each group.items as item (item.url)}
                     <div class="flex items-center gap-2 px-3 py-1.5">
                       <span class="flex-1 text-xs font-mono text-[#2563eb] break-all">{item.url}</span>
                       <button

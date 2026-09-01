@@ -157,7 +157,7 @@
           Education
         </h2>
         <div class="space-y-3">
-          {#each record.education as edu}
+          {#each record.education as edu (edu['HT No'] || edu.Category)}
             <div class="rounded-lg border border-[#f3f4f6] bg-[#f9fafb] p-2.5 space-y-1.5">
               <div class="flex items-center justify-between gap-2">
                 <span class="text-[0.6rem] font-semibold uppercase tracking-wider text-[#9ca3af]">Category</span>

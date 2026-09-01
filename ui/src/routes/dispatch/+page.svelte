@@ -69,7 +69,7 @@
   </div>
 
   <div class="flex items-center gap-1 text-[0.75rem]">
-    {#each years as y}
+    {#each years as y (y)}
       <button onclick={() => tab = y}
         class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none"
         style={y === tab ? 'background:#00cc66;color:#fff' : 'background:#f3f4f6;color:#6b7280'}>
@@ -80,7 +80,7 @@
 
   {#if loading}
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-      {#each Array(8) as _}
+      {#each Array(8) as _, i (i)}
         <div class="h-16 bg-[#f3f4f6] rounded"></div>
       {/each}
     </div>
@@ -89,11 +89,11 @@
   {:else}
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5">
       {#if tab === null}
-        {#each years as y}
+        {#each years as y (y)}
           {@const fy = filtered.filter(f => f.parsed?.y === y)}
           {#if fy.length > 0}
             <div class="col-span-full text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider py-2">{y} — {fy.length}</div>
-            {#each fy as f}
+            {#each fy as f (f.name)}
               <a href={`/api/dispatch/${f.name}`} target="_blank" rel="noopener"
                 class="flex items-center gap-2 p-2.5 border border-[#e5e7eb] rounded-lg no-underline text-[#111827] hover:bg-[#f9fafb] transition-colors">
                 <img src="/pdf.svg" alt="" width="24" height="24" class="block flex-shrink-0" />
@@ -107,7 +107,7 @@
           {/if}
         {/each}
       {:else}
-        {#each filtered as f}
+        {#each filtered as f (f.name)}
           <a href={`/api/dispatch/${f.name}`} target="_blank" rel="noopener"
             class="flex items-center gap-2 p-2.5 border border-[#e5e7eb] rounded-lg no-underline text-[#111827] hover:bg-[#f9fafb] transition-colors">
             <img src="/pdf.svg" alt="" width="24" height="24" class="block flex-shrink-0" />

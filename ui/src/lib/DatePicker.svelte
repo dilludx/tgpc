@@ -110,10 +110,10 @@
         </button>
       </div>
       <div class="grid grid-cols-7 text-center mb-0.25">
-        {#each WEEKDAYS as w}
+        {#each WEEKDAYS as w (w)}
           <span class="text-[0.5rem] font-semibold text-[#9ca3af] py-0.25">{w}</span>
         {/each}
-        {#each cells() as d}
+        {#each cells() as d, index (d?.toISOString() || index)}
           {#if d}
             <button type="button" onclick={() => select(d)}
               class="h-4 text-[0.6rem] rounded transition-colors hover:bg-[rgba(0,204,102,0.08)] cursor-pointer border-none"

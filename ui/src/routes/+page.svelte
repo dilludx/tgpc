@@ -351,7 +351,7 @@
           <span class="text-[0.65rem] font-semibold uppercase rounded px-1.5 py-0.5 flex-shrink-0" style="background:rgba(0,204,102,0.08);color:#00cc66">Filtered</span>
         {/if}
         <span class="ml-auto flex flex-wrap items-center gap-1.5">
-          {#each CATEGORY_FILTERS as cat}
+          {#each CATEGORY_FILTERS as cat (cat)}
             <button onclick={() => { category = cat; }}
               class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none"
               style={chipStyle(cat)}>
@@ -370,7 +370,7 @@
     <div transition:fly={{ y: 10, duration: 250, opacity: 0 }}>
     {#if loading}
       <div class="space-y-3 py-4">
-        {#each Array(8) as _}
+        {#each Array(8) as _, i (i)}
           <div class="h-4 bg-[#f3f4f6] rounded animate-pulse" style="width:{40 + Math.random() * 60}%"></div>
         {/each}
       </div>
@@ -437,7 +437,7 @@
             </tr>
           </thead>
           <tbody>
-            {#each filtered as r}
+            {#each filtered as r (r.registration_number)}
               <tr class="text-[0.875rem] text-[#374151] border-b border-[#f3f4f6]" style="content-visibility:auto;contain-intrinsic-size:48px">
                 <td class="py-1.5">
                   <img src={photoUrl(r)} alt="" loading="lazy" class="w-9 h-11 rounded object-cover bg-[#f3f4f6]" />
@@ -466,7 +466,7 @@
         </div>
       </div>
       <div class="md:hidden space-y-0.5">
-          {#each filtered as r}
+          {#each filtered as r (r.registration_number)}
             <div class="flex gap-3 py-2 border-b border-[#f3f4f6] text-[0.875rem]" style="content-visibility:auto;contain-intrinsic-size:110px">
               <img src={photoUrl(r)} alt="" loading="lazy" class="w-10 h-12 rounded object-cover bg-[#f3f4f6] flex-shrink-0" />
               <div class="min-w-0">

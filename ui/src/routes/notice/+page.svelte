@@ -72,7 +72,7 @@
   </div>
 
   <div class="flex items-center gap-1 text-[0.75rem]">
-    {#each years as y}
+    {#each years as y (y)}
       <button onclick={() => tab = y}
         class="px-2.5 py-1 rounded text-[0.7rem] font-medium transition-all cursor-pointer border-none"
         style={y === tab ? 'background:#00cc66;color:#fff' : 'background:#f3f4f6;color:#6b7280'}>
@@ -83,7 +83,7 @@
 
   {#if loading}
     <div class="space-y-3 py-4">
-      {#each Array(4) as _}
+      {#each Array(4) as _, i (i)}
         <div class="h-4 bg-[#f3f4f6] rounded" style="width:{50 + Math.random() * 40}%"></div>
       {/each}
     </div>
@@ -98,17 +98,17 @@
           <span style="justify-self:start">Links</span>
         </div>
         {#if tab === null}
-          {#each years as y}
+          {#each years as y (y)}
             {@const fy = filtered.filter(n => getYr(n.date) === y)}
             {#if fy.length > 0}
               <div class="text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider py-2 px-1">{y} — {fy.length}</div>
-              {#each fy as n}
+              {#each fy as n (n.title)}
                 <div style="display:grid;grid-template-columns:96px 1fr 160px;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:0.875rem">
                   <span class="text-[#6b7280] tabular-nums">{fmtDate(n.date)}</span>
                   <span style="min-width:0">{n.title}</span>
                   <span class="flex gap-1 flex-wrap" style="min-width:0">
                     {#if n.links?.length}
-                      {#each n.links as link}
+                      {#each n.links as link (link.url)}
                         <a href={resolve(link.url)} target="_blank" rel="noopener"
                           class="px-2 py-0.5 rounded text-[0.7rem] font-medium no-underline transition-colors"
                           style="color:{linkType(link.url)};background:{linkType(link.url)}10"
@@ -126,13 +126,13 @@
             {/if}
           {/each}
         {:else}
-          {#each filtered as n}
+          {#each filtered as n (n.title)}
             <div style="display:grid;grid-template-columns:96px 1fr 160px;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:0.875rem">
               <span class="text-[#6b7280] tabular-nums">{fmtDate(n.date)}</span>
               <span style="min-width:0">{n.title}</span>
               <span class="flex gap-1 flex-wrap" style="min-width:0">
                 {#if n.links?.length}
-                  {#each n.links as link}
+                  {#each n.links as link (link.url)}
                     <a href={resolve(link.url)} target="_blank" rel="noopener"
                       class="px-2 py-0.5 rounded text-[0.7rem] font-medium no-underline transition-colors"
                       style="color:{linkType(link.url)};background:{linkType(link.url)}10"
@@ -152,17 +152,17 @@
 
       <div class="md:hidden space-y-1">
         {#if tab === null}
-          {#each years as y}
+          {#each years as y (y)}
             {@const fy = filtered.filter(n => getYr(n.date) === y)}
             {#if fy.length > 0}
               <div class="text-[0.65rem] font-semibold text-[#9ca3af] uppercase tracking-wider py-2">{y} — {fy.length}</div>
-              {#each fy as n}
+              {#each fy as n (n.title)}
                 <div class="py-2.5 border-b border-[#f3f4f6]">
                   <div class="text-[0.75rem] text-[#6b7280] tabular-nums">{fmtDate(n.date)}</div>
                   <div class="text-[0.875rem] mt-0.5">{n.title}</div>
                   {#if n.links?.length}
                     <div class="flex gap-1.5 mt-1">
-                      {#each n.links as link}
+                      {#each n.links as link (link.url)}
                         <a href={resolve(link.url)} target="_blank" rel="noopener"
                           class="px-2 py-0.5 rounded text-[0.7rem] font-medium no-underline"
                           style="color:{linkType(link.url)};background:{linkType(link.url)}10">
@@ -176,13 +176,13 @@
             {/if}
           {/each}
         {:else}
-          {#each filtered as n}
+          {#each filtered as n (n.title)}
             <div class="py-2.5 border-b border-[#f3f4f6]">
               <div class="text-[0.75rem] text-[#6b7280] tabular-nums">{fmtDate(n.date)}</div>
               <div class="text-[0.875rem] mt-0.5">{n.title}</div>
               {#if n.links?.length}
                 <div class="flex gap-1.5 mt-1">
-                  {#each n.links as link}
+                  {#each n.links as link (link.url)}
                     <a href={resolve(link.url)} target="_blank" rel="noopener"
                       class="px-2 py-0.5 rounded text-[0.7rem] font-medium no-underline"
                       style="color:{linkType(link.url)};background:{linkType(link.url)}10">
