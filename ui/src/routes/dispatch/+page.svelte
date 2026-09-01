@@ -44,8 +44,10 @@
   }));
 
   const cached = browser && cachedOrNull<{ name: string; size?: number; stale?: boolean }[]>("tgpc_dispatch");
-  const initial = cached || data.files;
-  if (initial.length > 0) { build(initial); loading = false; }
+  let initial = $derived(cached || data.files);
+  $effect(() => {
+    if (initial.length > 0) { build(initial); loading = false; }
+  });
 
   if (!cached && browser) {
     fetchDispatchFiles().then(raw => {

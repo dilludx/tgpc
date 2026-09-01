@@ -29,16 +29,33 @@
     if (t === '' || t === '----' || t === '—' || t === '--') return '—';
     return v;
   }
-  function onKeydown(e: KeyboardEvent) { if (e.key === 'Escape' && open) onClose(); }
+
+  let drawerEl = $state<HTMLDivElement | undefined>(undefined);
+  let closeBtn = $state<HTMLButtonElement | undefined>(undefined);
 
   $effect(() => {
-    if (open) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = '';
+    if (open) {
+      document.body.style.overflow = 'hidden';
+      // Focus close button on open
+      setTimeout(() => closeBtn?.focus(), 50);
+    } else document.body.style.overflow = '';
     return () => { document.body.style.overflow = ''; };
   });
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape' && open) { onClose(); return; }
+    if (e.key === 'Tab' && open && drawerEl) {
+      const nodes = drawerEl.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }
 </script>
 
-<svelte:window onkeydown={onKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 {#if open}
   <!-- Overlay -->
@@ -50,8 +67,10 @@
     transition:fade={{ duration: 150 }}
   ></button>
   <!-- Drawer -->
-  <aside
-    class="fixed right-0 top-0 z-50 h-dvh w-full sm:w-[420px] bg-white border-l border-[#e5e7eb] overflow-y-auto flex flex-col"
+  <div
+    bind:this={drawerEl}
+    tabindex="-1"
+    class="fixed right-0 top-0 z-50 h-dvh w-full sm:w-[420px] bg-white border-l border-[#e5e7eb] overflow-y-auto flex flex-col focus:outline-none"
     role="dialog"
     aria-modal="true"
     aria-label={record ? `${record.name} profile` : 'Pharmacist profile'}
@@ -59,7 +78,7 @@
   >
     <div class="sticky top-0 z-10 flex items-center justify-between gap-2 bg-white border-b border-[#e5e7eb] px-4 py-3">
       <span class="text-sm font-semibold text-[#111827] truncate">{loading ? 'Loading…' : error ? 'Not found' : 'Profile'}</span>
-      <button onclick={onClose} aria-label="Close" class="w-8 h-8 flex items-center justify-center rounded-full border border-[#e5e7eb] text-[#6b7280] hover:bg-[#f9fafb] transition-colors">
+      <button bind:this={closeBtn} onclick={onClose} aria-label="Close" class="w-8 h-8 flex items-center justify-center rounded-full border border-[#e5e7eb] text-[#6b7280] hover:bg-[#f9fafb] transition-colors">
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
     </div>
@@ -147,11 +166,11 @@
         </div>
       {/if}
     </div>
-  </aside>
+  </div>
 {/if}
 
 <style>
   @media print {
-    aside { display: none !important; }
+    div[role="dialog"] { display: none !important; }
   }
 </style>

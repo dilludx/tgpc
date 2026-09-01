@@ -4,11 +4,9 @@
   import type { PharmacistRecord } from '$lib/types';
 
   let { data } = $props();
-  const { record, photo, seo } = data as {
-    record: PharmacistRecord;
-    photo: string;
-    seo: { title: string; description: string; ogImage: string; canonical: string };
-  };
+  let record = $derived((data as { record: PharmacistRecord }).record);
+  let photo = $derived((data as { photo: string }).photo);
+  let seo = $derived((data as { seo: { title: string; description: string; ogImage: string; canonical: string } }).seo);
 
   let photoError = $state(false);
 
@@ -227,7 +225,6 @@
 
 <style>
   @media print {
-    .no-print { display: none !important; }
     .max-w-3xl { max-width: none !important; padding: 0 !important; }
     .bg-white { box-shadow: none !important; border: 1px solid #e5e7eb !important; break-inside: avoid; }
     button { display: none !important; }

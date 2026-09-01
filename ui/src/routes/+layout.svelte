@@ -13,7 +13,10 @@
   import Clock from '$lib/components/Clock.svelte';
 
   let { children, data } = $props();
-  let { stats: ssrStats, lastSync: ssrSync } = data;
+  // svelte-ignore state_referenced_locally
+  let ssrStats = data.stats;
+  // svelte-ignore state_referenced_locally
+  let ssrSync = data.lastSync;
 
   let status = $state<ConnectionStatus>(ssrStats ? 'Live' : 'Busy');
   let stats = $state<Stats | null>(ssrStats);
