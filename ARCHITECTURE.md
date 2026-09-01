@@ -290,6 +290,12 @@ create policy "anon select metadata" on public.metadata
 The service-role key (used server-side / by the Python pipeline) bypasses RLS, so
 writes continue to work via `sync_to_supabase()`.
 
+**✅ Verified state (2026-09-01):** RLS is enabled on both tables
+(`rowsecurity = true` on `rph` and `metadata`). Six policies are in place —
+the anon/public/`realtime` roles have **read-only** (`SELECT`) policies only,
+and the service role has full access. This is the correct read-only posture for
+a public search portal; the publishable/anon key is safe to expose.
+
 ### Data File Formats
 
 **`rph.json`** — standard JSON array:
