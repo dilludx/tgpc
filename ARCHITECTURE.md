@@ -6,7 +6,7 @@
 
 ## Repository Overview
 
-Code-only repository for the **Telangana Pharmacy Council (TGPC)** pharmacist registration search tool. Tracks source code but excludes data artifacts (e.g., `data/rph.json`, `data/update_details.json`, `data/jsn/`, `data/img/`), credentials, and IDE files.
+Code-only repository for the **Telangana Pharmacy Council (TGPC)** pharmacist registration search tool. Tracks source code but excludes data artifacts (e.g., `data/rph.json`, `data/update_details.json`, `data/webp/`, sweep JSONLs), credentials, and IDE files.
 
 The project consists of:
 - **Python pipeline** (`tgpc/`) — scrapes data from the Telangana Pharmacy Council website, syncs to Supabase, Cloudflare R2, Google Drive, GitHub Release, and sends email notification
@@ -19,29 +19,32 @@ The project consists of:
 
 ```
 tgpc/
-├── .github/dependabot.yml          # Automated dependency-update PRs (pip, npm, actions)
-├── .github/workflows/rphsync.yml   # Manual CI: single job, scrapes + syncs to 4 destinations + email
+├── .github/workflows/rphsync.yml   # Manual CI: single job, scrapes + syncs to all destinations + email
 ├── .github/workflows/python.yml    # ruff + pytest + pip-audit dependency scan
 ├── .github/workflows/ui.yml        # eslint + svelte-check + brand-color gate + tests + npm audit
 ├── .husky/                         # Husky pre-commit hook → triggers pre-commit (ruff)
 ├── .pre-commit-config.yaml         # ruff lint + ruff-format only
-├── pyproject.toml                  # Package: tgpc-data-extraction v2.0.0, pinned deps
-├── LICENSE                         # (present but not referenced)
+├── pyproject.toml                  # Package: tgpc-data-extraction v2.0.0, min-version deps
 ├── .gitignore
 ├── ARCHITECTURE.md
 ├── README.md
 ├── data/
 │   ├── rph.json                     # ~87K pharmacist records (JSON array) — gitignored but tracked historically
 │   ├── update_details.json         # Sync diff summary — gitignored
-│   ├── jsn/                        # Per-record enrichment JSON (deleted, retained in gitignore)
-│   ├── img/                        # Per-record photos — gitignored
-│   └── backups/                    # Timestamped rph.json backups — gitignored
-├── tgpc/                           # Python package (5 files)
+│   ├── webp/                       # Per-record enrichment photos (WebP) — gitignored
+│   ├── inactive_records.jsonl      # Inactive-sweep phase 1 output — gitignored
+│   ├── now_active_from_inactive.jsonl # Inactive-sweep phase 2 output — gitignored
+│   └── backups/                    # Timestamped rph.json backups (R2-backed) — gitignored
+├── tgpc/                           # Python package
 │   ├── __init__.py                 # Imports Config, setup_logging, Scraper, Manager; __version__ = "2.0.0"
-│   ├── __main__.py                 # CLI: python3 -m tgpc {update, sync, creds}
-│   ├── utils.py                    # Config dataclass, TGPCError, setup_logging
-│   ├── scraper.py                  # Scraper, RateLimiter, PharmacistRecord, extractors
-│   └── manager.py                  # FileManager, BackupManager, Manager (1004 lines)
+│   ├── __main__.py                 # CLI: python3 -m tgpc {update, sync, enrich, retry-photos, quota, creds} + WARP mgmt
+│   ├── utils.py                    # Config dataclass, TGPCError/BlockedError, setup_logging, credentials (Keychain/env/file)
+│   ├── progress.py                 # ProgressBar, Phase, heartbeat, BarHandler (TTY + CI-safe output)
+│   ├── quota.py                    # Free-tier quota report (Supabase, R2, Resend, GDrive)
+│   ├── scraper.py                  # Scraper, RateLimiter, PharmacistRecord, extractors, TLS adapter
+│   ├── manager.py                  # FileManager, BackupManager, Manager (~1490 lines)
+│   ├── inactive_sweep.py           # Detect inactive→active reactivations (2-phase, resumable)
+│   └── enrich_actives.py           # Parallel enrichment + upsert of reactivated records
 ├── ui/                            # Production frontend (SvelteKit)
 │   ├── src/
 │   │   ├── routes/
@@ -49,24 +52,38 @@ tgpc/
 │   │   │   ├── +page.svelte       # Search page
 │   │   │   ├── notice/+page.svelte
 │   │   │   ├── dispatch/+page.svelte
+│   │   │   ├── rph/[registration_number]/  # SSR profile page with SEO
+│   │   │   ├── admin/+page.svelte (server load gates payload)
 │   │   │   └── api/
-│   │   │       ├── dispatch/+server.ts  # R2 bucket listing proxy
-│   │   │       └── notice/+server.ts    # Static notice JSON
+│   │   │       ├── admin/+server.ts      # POST login / DELETE logout (session cookie)
+│   │   │       ├── usage/+server.ts      # Service quota report (fail-closed)
+│   │   │       ├── dispatch/+server.ts   # R2 bucket listing proxy (stale fallback)
+│   │   │       ├── dispatch/[name]/+server.ts # PDF proxy w/ title rewrite
+│   │   │       ├── health/+server.ts     # Connectivity + staleness health check
+│   │   │       └── notice/+server.ts     # Static notice JSON
 │   │   └── lib/
-│   │       ├── supabase.ts
-│   │       ├── types.ts
-│   │       └── utils.ts
+│   │       ├── supabase.ts        # Supabase client (anon key)
+│   │       ├── api.ts              # Search/record/stats API + input sanitization + ranking
+│   │       ├── cache.ts            # localStorage TTL cache helpers
+│   │       ├── colors.ts          # CATEGORY_COLORS (exempt from brand gate)
+│   │       ├── r2.ts              # R2 public URLs from PUBLIC_R2_PHOTO_BASE
+│   │       ├── types.ts            # Shared TS interfaces
+│   │       ├── DatePicker.svelte
+│   │       ├── components/         # Clock.svelte, ProfileSidebar.svelte
+│   │       └── server/             # Compiler-enforced server-only: auth.ts, adminLinks.ts, rateLimit.ts, auth.test.ts
 │   ├── static/
 │   │   ├── favicon.svg, .ico, -192.png
-│   │   ├── pdf.svg, og-image.png, notice.json
-│   ├── wrangler.toml
+│   │   ├── pdf.svg, notice.json, manifest.json
+│   ├── wrangler.toml              # R2 DISPATCH bucket binding
 │   └── svelte.config.js
-├── docs/                           # v1 (legacy, retained as reference)
-├── tests/
-│   ├── test_scraper.py             # 7 tests: timeouts, record parsing, empty tables, no-records, detailed info, legacy headers, missing tables
-│   ├── test_manager_update.py      # 7 tests: safety guard, dedup/sorting, deterministic order, source-unavailable, +3 sync return-value regressions
-│   ├── test_manager_enrichment.py  # 3 tests: enrichment save, registration mismatch, null serial_number regression
-│   └── sanity.py                   # Quick sanity check (not a unittest)
+├── tests/                          # 62 tests, 7 files (all mocked — no real HTTP/Supabase)
+│   ├── test_scraper.py             # 10: timeouts, WAF/blocked detection, table fallback, bad rows, detail parsing, legacy headers, missing tables
+│   ├── test_manager_update.py      # 7: safety guard, dedup/sort/GITHUB_OUTPUT, deterministic ordering, source-unavailable, +3 sync return-value regressions
+│   ├── test_manager_enrichment.py  # 3: enrichment save, registration mismatch, null serial_number regression
+│   ├── test_manager_sync.py        # 17: every sync destination's fail-closed/success/failure contract
+│   ├── test_manager_photos.py      # 11: photo upload/verify/retry pipeline, batch error isolation
+│   ├── test_quota.py               # 8: quota reporter helpers + fail-closed paths
+│   └── test_inactive_sweep.py      # 6: JSONL parsing, checkpoint roundtrip, resume/partial runs
 └── (credentials stored in macOS Keychain, not files)
 ```
 
@@ -97,18 +114,31 @@ __main__.py ─── Manager ─── Config (utils.py)
 ### Entry Point: `tgpc/__main__.py`
 
 ```bash
-python3 -m tgpc update              # Health check → backup → scrape → dedup → safety guard → save → sync to all destinations + email
+python3 -m tgpc update              # Restore-if-missing → health check → backup → scrape → dedup → safety guard → save → sync to all destinations + email → enrich new records
 python3 -m tgpc update --no-sync    # Scrape only, skip cloud sync
+python3 -m tgpc update --force      # Override the 100-churn/1000-new safety caps
 python3 -m tgpc sync                # Sync to all destinations
+python3 -m tgpc enrich              # Enrich records (photo, gender, status, validity) for pending records
+python3 -m tgpc retry-photos        # Retry uploading failed photos from data/webp/ to R2
+python3 -m tgpc quota               # Show free quota usage for all services
+python3 -m tgpc creds {set,list,delete}  # Manage credentials in macOS Keychain
+python3 -m tgpc.inactive_sweep {inactive,sweep}  # Detect inactive→active reactivations (resumable)
+python3 -m tgpc.enrich_actives      # Parallel enrichment of reactivated records
 ```
 
-`load_credentials()` reads credentials from macOS Keychain via `security` command and exports vars into `os.environ`.
+For `update`/`sync`/`enrich`/`retry-photos`, the CLI connects Cloudflare WARP for network routing (auto-disconnects via `atexit`) when `warp-cli` is available.
+
+`load_credentials()` loads env vars first, then macOS Keychain (via `security`), then `~/.config/tgpc/creds.sh` / `tgpc-creds.sh` file fallback.
 
 ### `tgpc/utils.py` — Config & Exceptions
 
 ```python
 class TGPCError(Exception):
     def __init__(self, message: str, original_error: Optional[Exception] = None)
+
+class BlockedError(TGPCError):
+    # Raised when the source serves a block/WAF page (200 + markers) —
+    # recoverable as "source unavailable", distinct from parser bugs
 
 @dataclass
 class Config:
@@ -152,7 +182,7 @@ Config is loaded via `Config.load()` classmethod (reads env vars for proxy and e
 - `extract_basic_records()` → `List[PharmacistRecord]` — fetches total endpoint, finds `<table id="tablesorter-demo">` (fallback to any `<table>`), extracts rows with ≥5 cells (serial, reg_no, name, father, category)
 - `extract_detailed_info(reg_no, img_dir)` → `Optional[PharmacistRecord]` — POSTs to search endpoint, parses detail page for: registration table (name, father, gender, category, status, validity), education table (qualification → category, university, college, years, HT No), work experience table (address, state, district, pin code), and photos (base64 data URI or URL download → saved to `img_dir`)
 
-### `tgpc/manager.py` — Orchestration (~1004 lines)
+### `tgpc/manager.py` — Orchestration (~1490 lines)
 
 **`DataIntegrityError`** — raised when enrichment scraped data doesn't match the expected registration.
 
@@ -205,34 +235,43 @@ Config is loaded via `Config.load()` classmethod (reads env vars for proxy and e
 - Sends via Resend API using `requests` (POST to `https://api.resend.com/emails`)
 - Capped at 200 items per section in email
 
-**`Manager.run_enrichment(start, stop, force)`**:
+**`Manager.run_enrichment(start, stop)`**:
 - Health check → queries Supabase `rph` table for records missing enrichment fields
 - Load `rph.json`, filter pending records sorted by serial
 - Optionally restrict to `start`/`stop` serial range
-- `force` flag re-extracts even already-done records
-- Calls `_process_records_sequential()` → for each record: scrapes detail page, validates registration/name/father/category match (raises `DataIntegrityError` on mismatch), upserts all 10 fields directly to Supabase, saves photo to `data/img/`
+- Calls `_process_records_sequential()` → for each record: scrapes detail page, validates registration/name/father/category match (raises `DataIntegrityError` on mismatch), converts photo to WebP in `data/webp/`, uploads to R2 (`photos/{reg}.webp`) with size verification, deletes the local copy, then upserts all 10 fields directly to Supabase
 
-### `tgpc/__main__.py` — CLI
+**`Manager.enrich_new_records(force)`** — auto-enriches records newly discovered by the last update (skips already-enriched via a Supabase check; aborts above 1000 records without `--force`).
+**`Manager.retry_photos()`** — retries R2 uploads for files left in `data/webp/` from a failed session.
 
-Uses `argparse` with subparsers:
-- `update` → `manager.run_daily_update()`, optionally `--no-sync`
-- `sync` → sync to all destinations
-- `creds` → manage credentials in macOS Keychain (`set`, `list`, `delete`)
+### `tgpc/inactive_sweep.py` + `tgpc/enrich_actives.py` — reactivation pipeline
+- `inactive` (phase 1): pull `status='Inactive'` rows from Supabase, join with `rph.json` identity fields → `data/inactive_records.jsonl`
+- `sweep` (phase 2): re-scrape each record in batches of 1000, appending now-`Active` ones to `data/now_active_from_inactive.jsonl`; checkpoint file makes the run resumable; `--workers N` parallelizes with per-worker Scrapers
+- `enrich_actives.py`: parallel enrichment + Supabase upsert of the reactivated records (same integrity guard and photo contract as `_process_records_sequential`)
 
-Credentials loaded from macOS Keychain via `load_credentials()` before sync operations. Auto-enrich runs automatically after successful `update`.
+### `tgpc/progress.py` — output plumbing
+- `ProgressBar` — animated single-line bar on a TTY (background spinner thread, survives `sleep`/`subprocess`); discrete lines every N updates + heartbeats otherwise (CI-friendly)
+- `Phase` — `[N/M] label` headers with `— done`/`— FAILED` footers; `heartbeat()` — indeterminate progress for single-shot operations
+- `step()` — granular sub-steps routed to the active bar; `BarHandler` — logging to stderr that clears/redraws the bar so log lines never corrupt it
+
+### `tgpc/quota.py` — quota report
+- `python3 -m tgpc quota` prints free-tier usage for Supabase (DB size, storage, API requests), Cloudflare R2 (storage, objects, Class A/B ops via GraphQL), Resend (daily/monthly quota headers), and Google Drive (`rclone about`)
+- Each `check_*` fails closed with a `Missing … credentials` message rather than raising
 
 ### Dependencies (`pyproject.toml`)
 
 ```toml
 dependencies = [
-    "requests==2.31.0",
-    "beautifulsoup4==4.12.3",
-    "tenacity==8.2.3",        # @retry decorator in scraper._request
-    "supabase==2.28.0",       # create_client for sync_to_supabase
-    "Pillow==12.2.0",         # Image.open() in validate_batch_files
-    "pyzipper==0.3.6",        # AES-256 release archive in sync_to_release
+    "requests>=2.32.3",
+    "beautifulsoup4>=4.12.3",
+    "tenacity>=8.2.3",        # @retry decorator in scraper._request
+    "supabase>=2.28.0",       # create_client for sync_to_supabase
+    "Pillow>=12.3.0",         # EXIF/alpha flattening + WebP conversion in enrichment
+    "pyzipper>=0.4.0",        # AES-256 release archive in sync_to_release
 ]
 ```
+
+Deps are floor-pinned (min versions, not exact). CVE patching is handled by manual bumps (e.g. commit 51ad6c6) plus the `pip-audit` / `npm audit --audit-level=high` gates in CI.
 
 ### Supabase Schema
 
@@ -242,7 +281,14 @@ CREATE TABLE rph (
   name TEXT,
   father_name TEXT,
   category TEXT,
-  serial_number TEXT
+  serial_number TEXT,
+  -- enrichment columns (written by the enrichment pipeline):
+  gender TEXT,
+  validity_date TEXT,          -- 'DD-Mon-YYYY' as scraped
+  status TEXT,                 -- 'Active' | 'Inactive' | …
+  education JSONB,             -- [{Category, Board/University, College Name, College Address, From, To, HT No}]
+  work_experience JSONB,       -- {Address, State, District, Pin code}
+  photo_url TEXT               -- R2 public URL, only set after a verified upload
 );
 
 CREATE TABLE metadata (
@@ -250,11 +296,12 @@ CREATE TABLE metadata (
   value TEXT
 );
 
--- RPC function (created via Supabase dashboard):
--- get_rph_stats() → { total: int, categories: { BPharm: int, DPharm: int, MPharm: int, PharmD: int, QC: int, QP: int } }
+-- RPC functions (created via Supabase dashboard):
+-- get_rph_stats() → { total: int, active: int, inactive: int, categories: { BPharm: int, DPharm: int, MPharm: int, PharmD: int, QC: int, QP: int } }
+-- search_pharmacists(q text, lim int) → ranked rows via ts_rank + similarity
 ```
 
-RLS allows anonymous `SELECT` on `rph` and `metadata` tables. The Publishable Key in `config.js` is safe to commit.
+RLS allows anonymous `SELECT` on `rph` and `metadata` tables. The publishable/anon key (set as `PUBLIC_SUPABASE_PUBLISHABLE_KEY` in the Cloudflare Pages dashboard / local `ui/.env`, which is gitignored) is safe to expose.
 
 **⚠️ RLS verification (do this in the Supabase dashboard → SQL Editor):**
 
@@ -314,24 +361,31 @@ a public search portal; the publishable/anon key is safe to expose.
   "removed_details": [],
   "new_cat_stats": {"BPharm": 5, "DPharm": 2},
   "rem_cat_stats": {},
-  "mod_cat_stats": {"BPharm": 1}
+  "mod_cat_stats": {"BPharm": 1},
+  "total_records": 87500
 }
 ```
+
+**Sweep JSONLs** — `data/inactive_records.jsonl` (phase 1: one identity-fields object per line) and `data/now_active_from_inactive.jsonl` (phase 2: now-Active records with gender/validity/status). `data/inactive_sweep_checkpoint.json` records completed batch indices for resumability.
 
 ### Environment Variables
 
 | Variable | Used By | Purpose |
 |---|---|---|
-| `SUPABASE_URL` | `sync_to_supabase()`, CI | Supabase project URL |
+| `SUPABASE_URL` | `sync_to_supabase()`, quota, CI | Supabase project URL |
 | `SUPABASE_SECRET_KEY` | `sync_to_supabase()`, CI | Service role key (NOT the anon key) |
-| `CLOUDFLARE_ACCOUNT_ID` | `sync_to_r2()`, CI | R2 endpoint account ID |
+| `SUPABASE_PAT` | `quota` | Supabase account-level PAT for the quota report (also the `/api/usage` endpoint) |
+| `CLOUDFLARE_ACCOUNT_ID` | `sync_to_r2()`, quota, CI | R2 endpoint account ID |
+| `CLOUDFLARE_API_TOKEN` | `quota` | Cloudflare API token for R2 usage queries (quota only — not R2 data sync) |
 | `R2_ACCESS_KEY_ID` | `sync_to_r2()`, CI | R2 S3-compatible access key |
 | `R2_SECRET_ACCESS_KEY` | `sync_to_r2()`, CI | R2 S3-compatible secret key |
 | `RCLONE_GDRIVE_CONFIG` | `sync_to_gdrive()`, CI | Base64-encoded rclone Google Drive config |
 | `RESEND_API_KEY` | `sync_to_email()`, CI | Resend.com API key |
 | `NOTIFICATION_EMAIL` | `sync_to_email()`, CI | Email recipient for sync report |
+| `RELEASE_PASSWORD` | `sync_to_release()`, CI | Password for the AES-256 encrypted release zip |
 | `TGPC_PROXY_URL` | `Config.load()` | Optional outbound proxy for scraping |
 | `TGPC_ENRICHMENT_DIR` | `Config.load()` | Override enrichment working directory |
+| `TGPC_R2_PUBLIC_BASE` | `Config.load()` | R2 public bucket base URL (default: the `pub-…r2.dev` host) |
 
 ---
 
@@ -353,13 +407,16 @@ Built with SvelteKit 5 + Tailwind CSS v4 + TypeScript.
 
 | Path | Description |
 |---|---|
-| `/` | Search: table (desktop) / cards (mobile), filter chips, pagination, PDF/CSV export |
+| `/` | Search: table (desktop) / cards (mobile), filter chips, result refiners (RPC/name/father/gender/status/valid-till), PDF/CSV export |
 | `/notice` | Notices table with year tabs, search, link badges |
 | `/dispatch` | Dispatch PDF grid with year tabs, search |
+| `/rph/[registration_number]` | SSR pharmacist profile page (SEO title/description/OG image, education + work experience sections) |
 | `/admin` | Operator console (usage report + internal TGPC links); payload served server-side only to a valid session |
 | `/api/admin` | POST login (rate-limited, constant-time compare) issues an HttpOnly signed-cookie session; DELETE logs out |
 | `/api/usage` | Service quota report; fails closed without `ADMIN_SECRET`/`QUOTA_SECRET`; accepts session cookie or `x-quota-secret` header |
 | `/api/dispatch` | JSON — lists PDFs from R2 bucket (`dispatch/` prefix); stale-flagged fallback list when the binding is unavailable |
+| `/api/dispatch/[name]` | Streams a dispatch PDF from R2 (strict `DL…pdf` name validation) and rewrites its `/Title` metadata so the tab shows the filename |
+| `/api/health` | Connectivity + staleness health check (Supabase latency, last_sync freshness; 503 when down) |
 | `/api/notice` | JSON — notice data from `static/notice.json` |
 
 Server-only modules under `ui/src/lib/server/` (`auth.ts`, `adminLinks.ts`, `rateLimit.ts`) are compiler-enforced: SvelteKit fails the build if client code imports them.
@@ -368,7 +425,7 @@ Server-only modules under `ui/src/lib/server/` (`auth.ts`, `adminLinks.ts`, `rat
 
 - **Stats bar** — 7 category cards with live counts from Supabase RPC, cached in localStorage
 - **Realtime** — Supabase Realtime subscription on `metadata` table for live stats/timestamp updates
-- **Search** — client-side Supabase query (min 3 chars), sorted by prefix priority then numeric, paginated 50/page (25 mobile), results capped at 500
+- **Search** — client-side Supabase query (min 3 chars, debounced 300ms) via `search_pharmacists` RPC (no row cap — all matches returned), ranked by prefix priority then numeric; falls back to a sanitized PostgREST `.or()` query if the RPC fails. Result refiners (RPC/name/father/gender/status/valid-till) filter client-side; results render in a single scrollable list sized to the viewport (`content-visibility: auto` on rows)
 - **Export** — PDF via jsPDF + jspdf-autotable; CSV via Blob download with formula-injection guard
 - **Security headers** — applied globally in `hooks.server.ts` (+ `ui/static/_headers` for static assets):
   - **CSP** with a per-request **nonce** for inline scripts on route HTML (`script-src 'self' 'nonce-<n>' 'strict-dynamic'`) plus `img-src`/`connect-src` allowlists for the R2 photo CDN and Supabase origin
@@ -396,8 +453,7 @@ Server-only modules under `ui/src/lib/server/` (`auth.ts`, `adminLinks.ts`, `rat
 5. **Restore artifact** — `gh run download` artifact `rph-data` if `data/rph.json` doesn't exist locally
 6. **Run data update** — `python3 -m tgpc update`; when `force_sync` is true and local data exists, runs `python3 -m tgpc sync` instead. All cloud syncs happen inside the CLI (delta to Supabase; Storage/R2/GDrive/Release/email only when there are changes); any destination failure exits non-zero and fails the job
 7. **Upload data artifact** — `rph-data` with 90-day retention (`if: always()`)
-8. **Clean up update details** — `rm -f data/update_details.json`
-9. **Notify on failure** — prints failure message
+8. **Notify on failure** — sends a failure-report email via Resend when `RESEND_API_KEY`/`NOTIFICATION_EMAIL` are configured
 
 Job permissions: `actions: write`, `contents: write` (release upload).
 
@@ -418,8 +474,8 @@ Job permissions: `actions: write`, `contents: write` (release upload).
 - `.github/workflows/ui.yml` runs on push/PR touching `ui/` — ESLint + brand-color gate (`check:colors`) + svelte-check + the 18 unit tests + a build with placeholder PUBLIC env vars (real values live in the Cloudflare Pages dashboard) + `npm audit --audit-level=high`. Auto-deploys from `main` build `ui/`.
 - `.github/workflows/python.yml` runs on push/PR touching `tgpc/`, `tests/`, or `pyproject.toml` — `ruff check`, `ruff format --check` (pinned 0.11.5, matching pre-commit), the full pytest suite, and a `pip-audit` dependency vulnerability scan.
 
-**Dependency updates (`.github/dependabot.yml`):**
-Dependabot opens weekly PRs for the Python (`pip`), frontend (`npm`), and GitHub Actions ecosystems, targeting Monday 06:00 IST. Combined with the `pip-audit` / `npm audit` scans above, this keeps the pinned 2023-era Python deps (`requests==2.31.0`, etc.) patched against known CVEs.
+**Dependency updates:**
+Dependabot was removed (2026-09) in favour of manual bumps. CVE coverage comes from the two audit gates: `pip-audit` in `python.yml` and `npm audit --audit-level=high` in `ui.yml` — both fail the build on known-vulnerable dependencies.
 
 ---
 
@@ -429,16 +485,19 @@ Dependabot opens weekly PRs for the Python (`pip`), frontend (`npm`), and GitHub
 python3 -m pytest tests/ -v
 ```
 
-37 tests across 4 files:
+62 tests across 7 files:
 
 | File | Tests | What's tested |
 |---|---|---|
-| `test_scraper.py` | 7 | `_request` timeouts, `extract_basic_records` (no table, bad rows, fallback table), `extract_detailed_info` (no records, full parse with photo/education/work, legacy headers, missing tables) |
-| `test_manager_update.py` | 7 | Safety guard (90% threshold), dedup/sort/GITHUB_OUTPUT, deterministic detail ordering, source-unavailable skip, +3 regressions covering `sync_to_*` return values (missing-creds failure, success, R2 missing-creds failure) |
+| `test_scraper.py` | 10 | `_request` timeouts + clean pass-through, WAF/blocked detection (`BlockedError`), `extract_basic_records` (no table, bad rows, fallback table), `extract_detailed_info` (no records, full parse with photo/education/validity, legacy headers, missing tables) |
+| `test_manager_update.py` | 7 | Safety guard (90% threshold), dedup/sort/GITHUB_OUTPUT, deterministic detail ordering, source-unavailable skip, +3 regressions covering `sync_to_*` return values |
 | `test_manager_enrichment.py` | 3 | Enrichment saves first pending record, raises DataIntegrityError on registration mismatch, resolves records with `serial_number = None` (M2 regression) |
 | `test_manager_sync.py` | 17 | Every `sync_to_*` destination's contract: fail-closed on missing credentials, True on success, False on transport/API failure. Release test uses real pyzipper and verifies encryption at upload time; email test asserts the Resend request shape |
+| `test_manager_photos.py` | 11 | Photo upload→verify→local-delete pipeline, retry/backoff, size-mismatch rejection, batch error isolation (scrape/upsert failures don't abort the batch), `retry_photos` |
+| `test_quota.py` | 8 | Quota reporter helpers (ref parsing, formatting) and every `check_*` fail-closed path on missing credentials |
+| `test_inactive_sweep.py` | 6 | JSONL parsing (good/bad lines), checkpoint save/load roundtrip, resume skipping completed batches, partial-run slicing |
 
-All tests use mocking (no real HTTP or Supabase calls). The `supabase` and `requests` modules are mocked globally before imports. `sanity.py` — standalone script (not a test), parses sample HTML and verifies one record extraction. Run manually.
+All tests use mocking (no real HTTP or Supabase calls). The `supabase` module is mocked globally before imports.
 
 ### Frontend
 
